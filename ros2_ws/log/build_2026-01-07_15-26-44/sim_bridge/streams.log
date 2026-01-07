@@ -1,0 +1,57 @@
+[0.008s] Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge': AMENT_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:/home/arka/aqua_sentinel/install/sim_bridge:/home/arka/aqua_sentinel/install/mqtt_bridge:/home/arka/aqua_sentinel/install/aqua_msgs:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble /usr/bin/cmake /home/arka/aqua_sentinel/ros2_ws/src/sim_bridge -DCMAKE_INSTALL_PREFIX=/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge
+[0.044s] -- The C compiler identification is GNU 11.4.0
+[0.085s] -- The CXX compiler identification is GNU 11.4.0
+[0.092s] -- Detecting C compiler ABI info
+[0.136s] -- Detecting C compiler ABI info - done
+[0.148s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.148s] -- Detecting C compile features
+[0.149s] -- Detecting C compile features - done
+[0.153s] -- Detecting CXX compiler ABI info
+[0.209s] -- Detecting CXX compiler ABI info - done
+[0.218s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.218s] -- Detecting CXX compile features
+[0.218s] -- Detecting CXX compile features - done
+[0.221s] -- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.499s] -- Found Python3: /usr/bin/python3 (found version "3.10.13") found components: Interpreter 
+[0.563s] -- Found rclcpp: 16.0.16 (/opt/ros/humble/share/rclcpp/cmake)
+[0.595s] -- Found rosidl_generator_c: 3.1.7 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.599s] -- Found rosidl_adapter: 3.1.7 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.604s] -- Found rosidl_generator_cpp: 3.1.7 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.614s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.625s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.660s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.662s] -- Found rmw_fastrtps_cpp: 6.2.9 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+[0.716s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+[0.737s] -- Found FastRTPS: /opt/ros/humble/include  
+[0.768s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.774s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[0.822s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[0.823s] -- Found Threads: TRUE  
+[0.860s] -- Found aqua_msgs: 0.0.0 (/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/cmake)
+[0.862s] -- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[0.932s] -- Added test 'lint_cmake' to check CMake code style
+[0.932s] -- Added test 'xmllint' to check XML markup files
+[0.934s] -- Configuring done
+[0.949s] -- Generating done
+[0.957s] -- Build files have been written to: /home/arka/aqua_sentinel/ros2_ws/build/sim_bridge
+[0.963s] Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge' returned '0': AMENT_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:/home/arka/aqua_sentinel/install/sim_bridge:/home/arka/aqua_sentinel/install/mqtt_bridge:/home/arka/aqua_sentinel/install/aqua_msgs:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble /usr/bin/cmake /home/arka/aqua_sentinel/ros2_ws/src/sim_bridge -DCMAKE_INSTALL_PREFIX=/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge
+[0.964s] Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge': AMENT_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:/home/arka/aqua_sentinel/install/sim_bridge:/home/arka/aqua_sentinel/install/mqtt_bridge:/home/arka/aqua_sentinel/install/aqua_msgs:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/sim_bridge -- -j8 -l8
+[0.977s] Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge' returned '0': AMENT_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:/home/arka/aqua_sentinel/install/sim_bridge:/home/arka/aqua_sentinel/install/mqtt_bridge:/home/arka/aqua_sentinel/install/aqua_msgs:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/sim_bridge -- -j8 -l8
+[0.978s] Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge': AMENT_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:/home/arka/aqua_sentinel/install/sim_bridge:/home/arka/aqua_sentinel/install/mqtt_bridge:/home/arka/aqua_sentinel/install/aqua_msgs:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble /usr/bin/cmake --install /home/arka/aqua_sentinel/ros2_ws/build/sim_bridge
+[0.980s] -- Install configuration: ""
+[0.980s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/ament_index/resource_index/package_run_dependencies/sim_bridge
+[0.981s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/ament_index/resource_index/parent_prefix_path/sim_bridge
+[0.982s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/environment/ament_prefix_path.sh
+[0.983s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/environment/ament_prefix_path.dsv
+[0.983s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/environment/path.sh
+[0.983s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/environment/path.dsv
+[0.984s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/local_setup.bash
+[0.984s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/local_setup.sh
+[0.985s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/local_setup.zsh
+[0.985s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/local_setup.dsv
+[0.985s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/package.dsv
+[0.985s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/ament_index/resource_index/packages/sim_bridge
+[0.986s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/cmake/sim_bridgeConfig.cmake
+[0.987s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/cmake/sim_bridgeConfig-version.cmake
+[0.987s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/package.xml
+[0.989s] Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge' returned '0': AMENT_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs:/home/arka/aqua_sentinel/install/sim_bridge:/home/arka/aqua_sentinel/install/mqtt_bridge:/home/arka/aqua_sentinel/install/aqua_msgs:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble /usr/bin/cmake --install /home/arka/aqua_sentinel/ros2_ws/build/sim_bridge

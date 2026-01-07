@@ -1,0 +1,15 @@
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/ament_index/resource_index/package_run_dependencies/aqua_msgs
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/ament_index/resource_index/parent_prefix_path/aqua_msgs
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/environment/ament_prefix_path.sh
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/environment/ament_prefix_path.dsv
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/environment/path.sh
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/environment/path.dsv
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/local_setup.bash
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/local_setup.sh
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/local_setup.zsh
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/local_setup.dsv
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/package.dsv
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/ament_index/resource_index/packages/aqua_msgs
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/cmake/aqua_msgsConfig.cmake
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/cmake/aqua_msgsConfig-version.cmake
+/home/arka/aqua_sentinel/ros2_ws/install/aqua_msgs/share/aqua_msgs/package.xml

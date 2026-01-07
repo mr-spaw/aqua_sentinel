@@ -1,0 +1,4 @@
+Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs -- -j8 -l8
+Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs -- -j8 -l8
+Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs
+Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs

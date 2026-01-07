@@ -1,0 +1,15 @@
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/ament_index/resource_index/package_run_dependencies/sim_bridge
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/ament_index/resource_index/parent_prefix_path/sim_bridge
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/environment/ament_prefix_path.sh
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/environment/ament_prefix_path.dsv
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/environment/path.sh
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/environment/path.dsv
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/local_setup.bash
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/local_setup.sh
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/local_setup.zsh
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/local_setup.dsv
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/package.dsv
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/ament_index/resource_index/packages/sim_bridge
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/cmake/sim_bridgeConfig.cmake
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/cmake/sim_bridgeConfig-version.cmake
+/home/arka/aqua_sentinel/ros2_ws/install/sim_bridge/share/sim_bridge/package.xml
