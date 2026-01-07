@@ -1,16 +1,19 @@
 /*
- * SCADA-GRADE WATER & SEWAGE DIGITAL TWIN
- * ========================================
+ * ROS2-INTEGRATED SCADA WATER & SEWAGE DIGITAL TWIN
+ * ==================================================
  * 
- * STRICTLY EMBEDDED-SYSTEM DRIVEN
- * ALL DATA FROM EXTERNAL SOURCES
- * NO INTERNAL SIMULATION LOGIC
+ * - ROS2 controlled sensors (valve + pressure + level)
+ * - Default: Valve ON, Pressure 15 kPa, Level 70%
+ * - NO leaks by default (leak logic external)
+ * - Highly visible sewage pipes
+ * - Dynamic facility positioning
+ * - Unique IDs for all sensors and pipes
  * 
  * COMPILE:
- * g++ -o water_scada water_scada_twin.cpp -lGL -lGLU -lglut -lm -O2 -std=c++11
+ * g++ -o water_ros2 water_ros2_scada.cpp -lGL -lGLU -lglut -lm -O2 -std=c++11
  * 
  * RUN:
- * ./water_scada
+ * ./water_ros2
  */
 
 #include <GL/gl.h>
@@ -26,6 +29,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <algorithm>
 
 // ============================================================================
 // ENGINEERING CONSTANTS
@@ -33,7 +37,7 @@
 
 const int BUILDINGS_PER_CLUSTER = 10;
 const float CITY_GRID_SPACING = 20.0f;
-const float CLUSTER_SPACING = 60.0f;
+const float CLUSTER_SPACING = 80.0f;  // Increased spacing
 
 const int FLOOR_OPTIONS[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 15};
 const int NUM_FLOOR_OPTIONS = 11;
@@ -45,6 +49,11 @@ const float TRUNK_DIAMETER = 0.8f;
 const float SECONDARY_DIAMETER = 0.4f;
 const float RING_DIAMETER = 0.25f;
 const float SERVICE_DIAMETER = 0.05f;
+
+// Default sensor values (ROS2 controllable)
+const float DEFAULT_VALVE_STATE = 100.0f;  // ON (100%)
+const float DEFAULT_PRESSURE = 15.0f;      // kPa
+const float DEFAULT_WATER_LEVEL = 70.0f;   // %
 
 // ============================================================================
 // UTILITY STRUCTURES
@@ -72,70 +81,60 @@ struct Color {
 };
 
 // ============================================================================
-// SENSOR & VALVE STRUCTURES (FIRST-CLASS OBJECTS)
+// SENSOR STRUCTURE (VALVE + PRESSURE + LEVEL combined)
 // ============================================================================
 
 enum SensorType {
-    PRESSURE_SENSOR,
-    FLOW_SENSOR,
-    LEVEL_SENSOR,
-    SEWAGE_LEVEL_SENSOR
+    WATER_SENSOR,
+    SEWAGE_SENSOR
 };
 
 struct Sensor {
-    int id;
+    int id;                    // Unique sensor ID
     std::string name;
-    SensorType type;
+    SensorType type;           // WATER or SEWAGE
     Vec3 position;
-    float value;              // Current reading from embedded system
-    float minValue, maxValue; // Range
+    
+    // ROS2 controllable values
+    float valveState;          // 0-100% (DEFAULT: 100)
+    float pressure;            // kPa (DEFAULT: 15)
+    float waterLevel;          // % (DEFAULT: 70)
+    
     bool active;
     int connectedPipeID;
     
     Sensor(int id, std::string name, SensorType type, Vec3 pos)
         : id(id), name(name), type(type), position(pos),
-          value(0), minValue(0), maxValue(100), active(true),
-          connectedPipeID(-1) {}
+          valveState(DEFAULT_VALVE_STATE),
+          pressure(DEFAULT_PRESSURE),
+          waterLevel(DEFAULT_WATER_LEVEL),
+          active(true), connectedPipeID(-1) {}
     
     Color getColor() const {
         if (!active) return Color(0.3f, 0.3f, 0.3f);
         
-        float ratio = (value - minValue) / (maxValue - minValue);
-        ratio = std::max(0.0f, std::min(1.0f, ratio));
-        
-        if (type == PRESSURE_SENSOR) {
-            return Color(0.2f, 0.5f + ratio * 0.5f, 1.0f - ratio * 0.3f);
-        } else if (type == FLOW_SENSOR) {
-            return Color(0.3f + ratio * 0.6f, 0.8f, 0.3f + ratio * 0.3f);
-        } else if (type == LEVEL_SENSOR) {
-            return Color(0.2f + ratio * 0.6f, 0.4f + ratio * 0.4f, 0.9f);
+        // Different colors for WATER vs SEWAGE
+        if (type == WATER_SENSOR) {
+            // WATER: Blue/Cyan based on valve state
+            if (valveState > 80.0f) return Color(0.2f, 0.7f, 1.0f);      // Bright blue = open
+            else if (valveState > 20.0f) return Color(0.5f, 0.8f, 0.9f); // Light cyan = partial
+            else return Color(0.3f, 0.5f, 0.7f);                          // Dark blue = closed
         } else {
-            return Color(0.6f + ratio * 0.3f, 0.4f, 0.2f);
+            // SEWAGE: Orange/Brown based on valve state
+            if (valveState > 80.0f) return Color(1.0f, 0.6f, 0.0f);      // Bright orange = open
+            else if (valveState > 20.0f) return Color(0.9f, 0.7f, 0.3f); // Yellow-orange = partial
+            else return Color(0.6f, 0.4f, 0.2f);                          // Brown = closed
         }
     }
-};
-
-struct Valve {
-    int id;
-    std::string name;
-    Vec3 position;
-    float openPercentage;  // 0-100% from Python control
-    bool isControlled;     // true = external control, false = manual
-    int connectedPipeID;
     
-    Valve(int id, std::string name, Vec3 pos)
-        : id(id), name(name), position(pos),
-          openPercentage(100.0f), isControlled(false),
-          connectedPipeID(-1) {}
+    std::string getTypeString() const {
+        return (type == WATER_SENSOR) ? "WATER" : "SEWAGE";
+    }
     
-    Color getColor() const {
-        if (openPercentage > 80.0f) {
-            return Color(0.2f, 0.9f, 0.2f);  // Green = open
-        } else if (openPercentage > 20.0f) {
-            return Color(0.9f, 0.9f, 0.2f);  // Yellow = partial
-        } else {
-            return Color(0.9f, 0.2f, 0.2f);  // Red = closed
-        }
+    void updateFromROS2(float valve, float press, float level) {
+        valveState = valve;
+        pressure = press;
+        waterLevel = level;
     }
 };
 
@@ -149,34 +148,33 @@ enum PipeType {
 };
 
 struct Pipe {
-    int id;
+    int id;                    // Unique pipe ID
     Vec3 start, end;
     PipeType type;
     float diameter;
     float length;
     
-    // Embedded system inputs
-    float embeddedPressure;   // kPa
-    float embeddedFlow;       // L/s
-    bool embeddedLeakFlag;
-    float embeddedLeakRate;   // L/s
+    // Leak state (NO leak by default, controlled externally)
+    bool hasLeak;
+    float leakRate;            // L/s
+    
+    // Computed flow (from sensor states)
+    float flowRate;
     
     Pipe(int id, Vec3 s, Vec3 e, PipeType t, float diam)
         : id(id), start(s), end(e), type(t), diameter(diam),
-          embeddedPressure(0), embeddedFlow(0),
-          embeddedLeakFlag(false), embeddedLeakRate(0) {
+          hasLeak(false), leakRate(0.0f), flowRate(0.0f) {
         length = (end - start).length();
     }
     
     Color getColor() const {
         if (type >= SEWAGE_LATERAL) {
-            // SEWAGE: BRIGHT BROWN/ORANGE for visibility
-            float flowIntensity = std::min(1.0f, embeddedFlow / 30.0f);
-            return Color(0.85f, 0.55f + flowIntensity * 0.25f, 0.15f);
+            // SEWAGE: SUPER BRIGHT ORANGE for maximum visibility
+            return Color(1.0f, 0.6f, 0.0f);
         } else {
-            // WATER: Blue gradient based on pressure
-            float pressureRatio = std::min(1.0f, embeddedPressure / 500.0f);
-            return Color(0.15f, 0.4f + pressureRatio * 0.5f, 0.75f + pressureRatio * 0.25f);
+            // WATER: Cyan/blue
+            float intensity = std::min(1.0f, flowRate / 50.0f);
+            return Color(0.2f, 0.5f + intensity * 0.4f, 0.9f);
         }
     }
 };
@@ -191,25 +189,16 @@ struct Building {
     int numFloors;
     float height;
     
-    // Sensors and valves (POINT1_SUB)
-    int inletValveID;
-    int pressureSensorID;
-    int flowSensorID;
-    int sewageOutletSensorID;
-    
+    int waterSensorID;         // Fresh water inlet sensor
+    int sewageSensorID;        // Sewage outlet sensor
     int servicePipeID;
     int sewerPipeID;
     
     Building(int id, Vec3 pos, int floors, int cluster)
         : id(id), clusterID(cluster), position(pos), numFloors(floors),
           height(floors * FLOOR_HEIGHT),
-          inletValveID(-1), pressureSensorID(-1),
-          flowSensorID(-1), sewageOutletSensorID(-1),
+          waterSensorID(-1), sewageSensorID(-1),
           servicePipeID(-1), sewerPipeID(-1) {}
-    
-    Color getBuildingColor() const {
-        return Color(0.55f, 0.55f, 0.6f);
-    }
 };
 
 // ============================================================================
@@ -224,23 +213,14 @@ struct Cluster {
     std::vector<int> servicePipeIDs;
     std::vector<int> sewerPipeIDs;
     
-    // Cluster-level sensors/valves (POINT1_MAIN)
-    int clusterInletValveID;
-    int clusterPressureSensorID;
-    int clusterFlowSensorID;
-    int clusterSewerSensorID;
-    
+    int waterSensorID;         // Cluster water inlet sensor
+    int sewageSensorID;        // Cluster sewage outlet sensor
     int secondaryMainID;
     int sewageCollectorID;
     
-    bool highlighted;
-    
     Cluster(int id, Vec3 center)
-        : id(id), centerPos(center),
-          clusterInletValveID(-1), clusterPressureSensorID(-1),
-          clusterFlowSensorID(-1), clusterSewerSensorID(-1),
-          secondaryMainID(-1), sewageCollectorID(-1),
-          highlighted(false) {}
+        : id(id), centerPos(center), waterSensorID(-1), sewageSensorID(-1),
+          secondaryMainID(-1), sewageCollectorID(-1) {}
 };
 
 // ============================================================================
@@ -252,40 +232,24 @@ struct CityNetwork {
     std::vector<Cluster> clusters;
     std::vector<Pipe> pipes;
     std::vector<Sensor> sensors;
-    std::vector<Valve> valves;
     
     Vec3 reservoirPos, stpPos;
+    float cityExtent;          // For dynamic positioning
     
-    // Reservoir sensors
-    int reservoirValveID;
-    int reservoirPressureSensorID;
-    int reservoirLevelSensorID;
-    
-    // STP sensors
-    int stpInletLevelSensorID;
-    int stpFlowSensorID;
+    int reservoirWaterSensorID;    // Main trunk water sensor
+    int stpSewerSensorID;          // STP sewage inlet sensor
     
     float simulationTime;
-    bool embeddedDataConnected;
     
-    CityNetwork()
-        : reservoirPos(-100, 35, -100),
-          stpPos(100, 0, 100),
-          reservoirValveID(-1),
-          reservoirPressureSensorID(-1),
-          reservoirLevelSensorID(-1),
-          stpInletLevelSensorID(-1),
-          stpFlowSensorID(-1),
-          simulationTime(0),
-          embeddedDataConnected(false) {}
+    CityNetwork() : cityExtent(100), reservoirWaterSensorID(-1), stpSewerSensorID(-1), simulationTime(0) {}
     
     void generateCity(int numBuildings);
+    void updateDynamicPositions();
     void generateWaterNetwork();
     void generateSewageNetwork();
-    void createSensorsAndValves();
-    void loadEmbeddedPressureData(const char* filename);
-    void loadEmbeddedLeakData(const char* filename);
-    void loadValveControlData(const char* filename);
+    void createSensors();
+    void loadLeakData(const char* filename);
+    void updateFromROS2(int sensorID, float valve, float pressure, float level);
     void updateSimulation(float dt);
 };
 
@@ -293,14 +257,30 @@ struct CityNetwork {
 // CITY GENERATION
 // ============================================================================
 
+void CityNetwork::updateDynamicPositions() {
+    // Calculate city extent
+    float maxDist = 0;
+    for (const auto& cluster : clusters) {
+        float dist = sqrt(cluster.centerPos.x * cluster.centerPos.x + 
+                         cluster.centerPos.z * cluster.centerPos.z);
+        maxDist = std::max(maxDist, dist);
+    }
+    cityExtent = maxDist + CLUSTER_SPACING;
+    
+    // Position reservoir far from city
+    reservoirPos = Vec3(-cityExtent - 50, 35, -cityExtent - 50);
+    
+    // Position STP far from city (opposite side)
+    stpPos = Vec3(cityExtent + 50, 0, cityExtent + 50);
+}
+
 void CityNetwork::generateCity(int numBuildings) {
     buildings.clear();
     clusters.clear();
     pipes.clear();
     sensors.clear();
-    valves.clear();
     
-    std::cout << "\n=== GENERATING SCADA-GRADE CITY ===\n";
+    std::cout << "\n=== GENERATING ROS2 SCADA CITY ===\n";
     std::cout << "Target buildings: " << numBuildings << "\n";
     
     int numClusters = (numBuildings + BUILDINGS_PER_CLUSTER - 1) / BUILDINGS_PER_CLUSTER;
@@ -345,31 +325,38 @@ void CityNetwork::generateCity(int numBuildings) {
         }
     }
     
+    updateDynamicPositions();
+    
     std::cout << "Created " << buildings.size() << " buildings in " << clusters.size() << " clusters\n";
+    std::cout << "City extent: " << cityExtent << "m\n";
+    std::cout << "Reservoir at: (" << reservoirPos.x << ", " << reservoirPos.z << ")\n";
+    std::cout << "STP at: (" << stpPos.x << ", " << stpPos.z << ")\n";
     
     generateWaterNetwork();
     generateSewageNetwork();
-    createSensorsAndValves();
+    createSensors();
     
     std::cout << "Total pipes: " << pipes.size() << "\n";
     std::cout << "Total sensors: " << sensors.size() << "\n";
-    std::cout << "Total valves: " << valves.size() << "\n";
     std::cout << "=== CITY GENERATION COMPLETE ===\n\n";
 }
 
 void CityNetwork::generateWaterNetwork() {
     int pipeID = 0;
     
+    // Main trunk from reservoir
     Vec3 trunkStart = reservoirPos + Vec3(0, -30, 0);
     Vec3 trunkEnd(0, 0, 0);
     pipes.push_back(Pipe(pipeID++, trunkStart, trunkEnd, TRUNK_MAIN, TRUNK_DIAMETER));
     
+    // Secondary mains to clusters
     for (auto& cluster : clusters) {
         Vec3 secondaryEnd = cluster.centerPos + Vec3(0, 1, 0);
         cluster.secondaryMainID = pipeID;
         pipes.push_back(Pipe(pipeID++, trunkEnd, secondaryEnd, SECONDARY_MAIN, SECONDARY_DIAMETER));
     }
     
+    // Ring mains within clusters
     for (auto& cluster : clusters) {
         if (cluster.buildingIDs.empty()) continue;
         
@@ -392,6 +379,7 @@ void CityNetwork::generateWaterNetwork() {
         pipes.push_back(Pipe(pipeID++, center, ringPoints[0], RING_MAIN, RING_DIAMETER));
     }
     
+    // Service pipes to buildings
     for (auto& cluster : clusters) {
         for (int bid : cluster.buildingIDs) {
             Building& bldg = buildings[bid];
@@ -415,143 +403,128 @@ void CityNetwork::generateWaterNetwork() {
 
 void CityNetwork::generateSewageNetwork() {
     int pipeID = pipes.size();
+    int sewagePipeCount = 0;
     
+    // Building laterals and cluster collectors
     for (auto& cluster : clusters) {
-        Vec3 collectorPoint = cluster.centerPos + Vec3(0, -1.5f, CLUSTER_SPACING * 0.6f);
+        Vec3 collectorPoint = cluster.centerPos + Vec3(0, -2.5f, CLUSTER_SPACING * 0.7f);
         
         for (int bid : cluster.buildingIDs) {
             Building& bldg = buildings[bid];
-            Vec3 lateralStart = bldg.position + Vec3(BUILDING_FOOTPRINT * 0.75f, 0.5f, BUILDING_FOOTPRINT * 0.75f);
+            Vec3 lateralStart = bldg.position + Vec3(BUILDING_FOOTPRINT * 0.75f, 1.0f, BUILDING_FOOTPRINT * 0.75f);
             Vec3 lateralEnd = collectorPoint;
-            lateralEnd.y = lateralStart.y - 1.0f;
+            lateralEnd.y = -2.0f; // Underground
             
             bldg.sewerPipeID = pipeID;
             cluster.sewerPipeIDs.push_back(pipeID);
-            pipes.push_back(Pipe(pipeID++, lateralStart, lateralEnd, SEWAGE_LATERAL, SERVICE_DIAMETER * 1.5f));
+            pipes.push_back(Pipe(
+    pipeID++,
+    lateralStart,
+    lateralEnd,
+    SEWAGE_LATERAL,
+   SERVICE_DIAMETER * 1.5f
+));
+
         }
         
-        Vec3 collectorEnd = Vec3(collectorPoint.x, -2.0f, stpPos.z - 20.0f);
+        Vec3 collectorEnd = Vec3(collectorPoint.x, -3.5f, stpPos.z - 30.0f);
         cluster.sewageCollectorID = pipeID;
-        pipes.push_back(Pipe(pipeID++, collectorPoint, collectorEnd, SEWAGE_COLLECTOR, SECONDARY_DIAMETER));
+        pipes.push_back(Pipe(
+    pipeID++,
+    collectorPoint,
+    collectorEnd,
+    SEWAGE_COLLECTOR,
+    SECONDARY_DIAMETER * 1.2f
+));
+
     }
     
-    Vec3 interceptorStart(0, -2.5f, stpPos.z - 20.0f);
-    Vec3 interceptorEnd = stpPos + Vec3(0, 1.0f, -10.0f);
-    pipes.push_back(Pipe(pipeID++, interceptorStart, interceptorEnd, SEWAGE_INTERCEPTOR, TRUNK_DIAMETER));
+    // Main interceptor to STP - DEEP UNDERGROUND
+    Vec3 interceptorStart(0, -4.0f, stpPos.z - 30.0f);
+    Vec3 interceptorEnd = stpPos + Vec3(0, 0.5f, -15.0f);
+    pipes.push_back(Pipe(
+    pipeID++,
+    interceptorStart,
+    interceptorEnd,
+    SEWAGE_INTERCEPTOR,
+    TRUNK_DIAMETER
+));
+
+    
+    std::cout << "  Sewage pipes: pipe_s0 to pipe_s" << (sewagePipeCount-1) << "\n";
 }
 
-void CityNetwork::createSensorsAndValves() {
+void CityNetwork::createSensors() {
     int sensorID = 0;
-    int valveID = 0;
+    int waterSensorCount = 0;
+    int sewageSensorCount = 0;
     
-    // RESERVOIR sensors and valve
-    reservoirValveID = valveID;
-    valves.push_back(Valve(valveID++, "RESERVOIR_MAIN_VALVE", reservoirPos + Vec3(0, -28, 0)));
+    // ===== WATER SIDE SENSORS =====
     
-    reservoirPressureSensorID = sensorID;
-    sensors.push_back(Sensor(sensorID++, "RES_PRESSURE", PRESSURE_SENSOR, reservoirPos + Vec3(3, -25, 0)));
-    sensors.back().maxValue = 500;
+    // RESERVOIR WATER SENSOR (main trunk)
+    reservoirWaterSensorID = sensorID;
+    Vec3 resSensorPos = reservoirPos + Vec3(0, -26, 0);
+    sensors.push_back(Sensor(sensorID++, "sensor_f" + std::to_string(waterSensorCount++), WATER_SENSOR, resSensorPos));
+    sensors.back().connectedPipeID = 0; // Trunk main
+    std::cout << "  Created " << sensors.back().name << " (Reservoir Water) ID: " << reservoirWaterSensorID << "\n";
     
-    reservoirLevelSensorID = sensorID;
-    sensors.push_back(Sensor(sensorID++, "RES_LEVEL", LEVEL_SENSOR, reservoirPos + Vec3(0, 15, 0)));
-    sensors.back().maxValue = 100;
-    
-    // PER CLUSTER sensors/valves (POINT1_MAIN)
+    // CLUSTER WATER SENSORS
     for (auto& cluster : clusters) {
-        Vec3 clusterValvePos = cluster.centerPos + Vec3(0, 2, 0);
-        
-        cluster.clusterInletValveID = valveID;
-        valves.push_back(Valve(valveID++, "CLUSTER_" + std::to_string(cluster.id) + "_VALVE", clusterValvePos));
-        valves.back().connectedPipeID = cluster.secondaryMainID;
-        
-        cluster.clusterPressureSensorID = sensorID;
-        sensors.push_back(Sensor(sensorID++, "CL" + std::to_string(cluster.id) + "_PRESS", PRESSURE_SENSOR, clusterValvePos + Vec3(2, 0, 0)));
-        sensors.back().maxValue = 400;
-        
-        cluster.clusterFlowSensorID = sensorID;
-        sensors.push_back(Sensor(sensorID++, "CL" + std::to_string(cluster.id) + "_FLOW", FLOW_SENSOR, clusterValvePos + Vec3(-2, 0, 0)));
-        sensors.back().maxValue = 100;
-        
-        cluster.clusterSewerSensorID = sensorID;
-        Vec3 sewerSensorPos = cluster.centerPos + Vec3(0, -1, CLUSTER_SPACING * 0.6f);
-        sensors.push_back(Sensor(sensorID++, "CL" + std::to_string(cluster.id) + "_SEWER", SEWAGE_LEVEL_SENSOR, sewerSensorPos));
-        sensors.back().maxValue = 50;
+        cluster.waterSensorID = sensorID;
+        Vec3 clusterWaterPos = cluster.centerPos + Vec3(-3, 2.5, 0);
+        sensors.push_back(Sensor(sensorID++, "sensor_f" + std::to_string(waterSensorCount++), WATER_SENSOR, clusterWaterPos));
+        sensors.back().connectedPipeID = cluster.secondaryMainID;
     }
+    std::cout << "  Created " << clusters.size() << " Cluster Water Sensors (sensor_f1 to sensor_f" << (waterSensorCount-1) << ")\n";
     
-    // PER BUILDING sensors/valves (POINT1_SUB)
+    // BUILDING WATER SENSORS
     for (auto& bldg : buildings) {
-        Vec3 valvePos = bldg.position + Vec3(BUILDING_FOOTPRINT * 0.25f, 1.5f, BUILDING_FOOTPRINT * 0.25f);
-        
-        bldg.inletValveID = valveID;
-        valves.push_back(Valve(valveID++, "BLD_" + std::to_string(bldg.id) + "_VALVE", valvePos));
-        valves.back().connectedPipeID = bldg.servicePipeID;
-        
-        bldg.pressureSensorID = sensorID;
-        sensors.push_back(Sensor(sensorID++, "B" + std::to_string(bldg.id) + "_PRESS", PRESSURE_SENSOR, valvePos + Vec3(0.5f, 0, 0)));
-        sensors.back().maxValue = 300;
-        
-        bldg.flowSensorID = sensorID;
-        sensors.push_back(Sensor(sensorID++, "B" + std::to_string(bldg.id) + "_FLOW", FLOW_SENSOR, valvePos + Vec3(-0.5f, 0, 0)));
-        sensors.back().maxValue = 20;
-        
-        bldg.sewageOutletSensorID = sensorID;
-        Vec3 sewerPos = bldg.position + Vec3(BUILDING_FOOTPRINT * 0.75f, 0.8f, BUILDING_FOOTPRINT * 0.75f);
-        sensors.push_back(Sensor(sensorID++, "B" + std::to_string(bldg.id) + "_SEW", SEWAGE_LEVEL_SENSOR, sewerPos));
-        sensors.back().maxValue = 10;
+        bldg.waterSensorID = sensorID;
+        Vec3 bldgWaterPos = bldg.position + Vec3(BUILDING_FOOTPRINT * 0.15f, 1.8f, BUILDING_FOOTPRINT * 0.25f);
+        sensors.push_back(Sensor(sensorID++, "sensor_f" + std::to_string(waterSensorCount++), WATER_SENSOR, bldgWaterPos));
+        sensors.back().connectedPipeID = bldg.servicePipeID;
     }
+    std::cout << "  Created " << buildings.size() << " Building Water Sensors\n";
+    std::cout << "  Total Water Sensors: sensor_f0 to sensor_f" << (waterSensorCount-1) << "\n";
     
-    // STP sensors
-    stpInletLevelSensorID = sensorID;
-    sensors.push_back(Sensor(sensorID++, "STP_INLET_LEVEL", LEVEL_SENSOR, stpPos + Vec3(0, 3, -10)));
-    sensors.back().maxValue = 100;
+    // ===== SEWAGE SIDE SENSORS =====
     
-    stpFlowSensorID = sensorID;
-    sensors.push_back(Sensor(sensorID++, "STP_FLOW", FLOW_SENSOR, stpPos + Vec3(5, 2, -10)));
-    sensors.back().maxValue = 200;
+    // BUILDING SEWAGE SENSORS
+    for (auto& bldg : buildings) {
+        bldg.sewageSensorID = sensorID;
+        Vec3 bldgSewerPos = bldg.position + Vec3(BUILDING_FOOTPRINT * 0.85f, 1.8f, BUILDING_FOOTPRINT * 0.75f);
+        sensors.push_back(Sensor(sensorID++, "sensor_s" + std::to_string(sewageSensorCount++), SEWAGE_SENSOR, bldgSewerPos));
+        sensors.back().connectedPipeID = bldg.sewerPipeID;
+    }
+    std::cout << "  Created " << buildings.size() << " Building Sewage Sensors\n";
+    
+    // CLUSTER SEWAGE SENSORS
+    for (auto& cluster : clusters) {
+        cluster.sewageSensorID = sensorID;
+        Vec3 clusterSewerPos = cluster.centerPos + Vec3(3, -0.5, CLUSTER_SPACING * 0.6f);
+        sensors.push_back(Sensor(sensorID++, "sensor_s" + std::to_string(sewageSensorCount++), SEWAGE_SENSOR, clusterSewerPos));
+        sensors.back().connectedPipeID = cluster.sewageCollectorID;
+    }
+    std::cout << "  Created " << clusters.size() << " Cluster Sewage Sensors\n";
+    
+    // STP SEWAGE SENSOR
+    stpSewerSensorID = sensorID;
+    Vec3 stpSensorPos = stpPos + Vec3(0, 3, -15);
+    sensors.push_back(Sensor(sensorID++, "sensor_s" + std::to_string(sewageSensorCount++), SEWAGE_SENSOR, stpSensorPos));
+    std::cout << "  Created " << sensors.back().name << " (STP Sewage) ID: " << stpSewerSensorID << "\n";
+    std::cout << "  Total Sewage Sensors: sensor_s0 to sensor_s" << (sewageSensorCount-1) << "\n";
+    
+    std::cout << "\n=== SENSOR SUMMARY ===\n";
+    std::cout << "Total Water Sensors: " << waterSensorCount << " (sensor_f0 to sensor_f" << (waterSensorCount-1) << ")\n";
+    std::cout << "Total Sewage Sensors: " << sewageSensorCount << " (sensor_s0 to sensor_s" << (sewageSensorCount-1) << ")\n";
+    std::cout << "Grand Total Sensors: " << sensors.size() << "\n";
 }
 
-// ============================================================================
-// EMBEDDED DATA LOADING (CSV/JSON placeholder)
-// ============================================================================
-
-void CityNetwork::loadEmbeddedPressureData(const char* filename) {
-    std::cout << "Loading embedded pressure data from: " << filename << "\n";
+void CityNetwork::loadLeakData(const char* filename) {
+    std::cout << "Loading leak data from: " << filename << "\n";
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cout << "  WARNING: File not found, using defaults\n";
-        embeddedDataConnected = false;
-        return;
-    }
-    
-    std::string line;
-    std::getline(file, line); // Skip header
-    
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string item;
-        int sensorID;
-        float value;
-        
-        std::getline(ss, item, ',');
-        sensorID = std::stoi(item);
-        std::getline(ss, item, ',');
-        value = std::stof(item);
-        
-        if (sensorID < (int)sensors.size()) {
-            sensors[sensorID].value = value;
-        }
-    }
-    
-    file.close();
-    embeddedDataConnected = true;
-    std::cout << "  Loaded pressure data successfully\n";
-}
-
-void CityNetwork::loadEmbeddedLeakData(const char* filename) {
-    std::cout << "Loading embedded leak data from: " << filename << "\n";
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cout << "  WARNING: File not found, no leaks flagged\n";
+        std::cout << "  No leak file found - NO LEAKS (default)\n";
         return;
     }
     
@@ -573,63 +546,47 @@ void CityNetwork::loadEmbeddedLeakData(const char* filename) {
         leakRate = std::stof(item);
         
         if (pipeID < (int)pipes.size()) {
-            pipes[pipeID].embeddedLeakFlag = hasLeak;
-            pipes[pipeID].embeddedLeakRate = leakRate;
+            pipes[pipeID].hasLeak = hasLeak;
+            pipes[pipeID].leakRate = leakRate;
             if (hasLeak) {
-                std::cout << "  LEAK FLAGGED: Pipe " << pipeID << " (" << leakRate << " L/s)\n";
+                std::cout << "  LEAK: Pipe " << pipeID << " = " << leakRate << " L/s\n";
             }
         }
     }
-    
     file.close();
 }
 
-void CityNetwork::loadValveControlData(const char* filename) {
-    std::cout << "Loading valve control data from: " << filename << "\n";
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cout << "  WARNING: File not found, valves remain at current state\n";
-        return;
+void CityNetwork::updateFromROS2(int sensorID, float valve, float pressure, float level) {
+    if (sensorID >= 0 && sensorID < (int)sensors.size()) {
+        sensors[sensorID].updateFromROS2(valve, pressure, level);
     }
-    
-    std::string line;
-    std::getline(file, line); // Skip header
-    
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string item;
-        int valveID;
-        float openPercentage;
-        
-        std::getline(ss, item, ',');
-        valveID = std::stoi(item);
-        std::getline(ss, item, ',');
-        openPercentage = std::stof(item);
-        
-        if (valveID < (int)valves.size()) {
-            valves[valveID].openPercentage = openPercentage;
-            valves[valveID].isControlled = true;
-            std::cout << "  Valve " << valveID << " set to " << openPercentage << "%\n";
-        }
-    }
-    
-    file.close();
 }
 
 void CityNetwork::updateSimulation(float dt) {
     simulationTime += dt;
     
-    // Apply valve states to pipe flow
-    for (const auto& valve : valves) {
-        if (valve.connectedPipeID >= 0 && valve.connectedPipeID < (int)pipes.size()) {
-            float flowFactor = valve.openPercentage / 100.0f;
-            pipes[valve.connectedPipeID].embeddedFlow *= flowFactor;
+    // Compute flow rates based on sensor states
+    for (auto& pipe : pipes) {
+        // Find controlling sensor
+        float valveFactor = 1.0f;
+        for (const auto& sensor : sensors) {
+            if (sensor.connectedPipeID == pipe.id) {
+                valveFactor = sensor.valveState / 100.0f;
+                break;
+            }
+        }
+        
+        // Simplified flow calculation
+        if (pipe.type < SEWAGE_LATERAL) {
+            pipe.flowRate = 10.0f * valveFactor; // Base flow modified by valve
+        } else {
+            pipe.flowRate = 5.0f; // Sewage flow
         }
     }
 }
 
 // ============================================================================
-// RENDERING FUNCTIONS
+// RENDERING
 // ============================================================================
 
 CityNetwork city;
@@ -642,15 +599,21 @@ bool showBuildings = true;
 bool showWaterNetwork = true;
 bool showSewageNetwork = true;
 bool showSensors = true;
-bool showValves = true;
 bool showLeaks = true;
-bool showFlowParticles = false;
 bool showSensorLabels = false;
+bool showGround = true;  // Toggle ground visibility
+bool transparentBuildings = false;  // Toggle building transparency
 int highlightedCluster = -1;
 int currentBuildingCount = 50;
 
 void drawCylinder(Vec3 start, Vec3 end, float radius, Color color) {
     glColor3f(color.r, color.g, color.b);
+    
+    // Enhanced material properties
+    GLfloat mat_specular[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+    GLfloat mat_shininess[] = { 50.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
     
     Vec3 dir = end - start;
     float length = dir.length();
@@ -674,7 +637,9 @@ void drawCylinder(Vec3 start, Vec3 end, float radius, Color color) {
     glMultMatrixf(matrix);
     
     GLUquadric* quad = gluNewQuadric();
-    gluCylinder(quad, radius, radius, length, 12, 1);
+    gluQuadricNormals(quad, GLU_SMOOTH);
+    gluQuadricTexture(quad, GL_TRUE);
+    gluCylinder(quad, radius, radius, length, 16, 1);
     gluDeleteQuadric(quad);
     
     glPopMatrix();
@@ -682,9 +647,16 @@ void drawCylinder(Vec3 start, Vec3 end, float radius, Color color) {
 
 void drawSphere(Vec3 pos, float radius, Color color) {
     glColor3f(color.r, color.g, color.b);
+    
+    // Enhanced material
+    GLfloat mat_specular[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+    GLfloat mat_shininess[] = { 60.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+    
     glPushMatrix();
     glTranslatef(pos.x, pos.y, pos.z);
-    glutSolidSphere(radius, 16, 16);
+    glutSolidSphere(radius, 20, 20);
     glPopMatrix();
 }
 
@@ -700,53 +672,73 @@ void drawBox(Vec3 pos, float w, float h, float d, Color color) {
 void drawSensor(const Sensor& sensor) {
     Color col = sensor.getColor();
     
-    // Blinking effect if active
-    float pulse = sensor.active ? (0.7f + 0.3f * sinf(city.simulationTime * 3.0f)) : 0.3f;
-    drawSphere(sensor.position, 0.6f, Color(col.r * pulse, col.g * pulse, col.b * pulse));
+    // Enhanced pulsing effect
+    float pulse = 0.75f + 0.35f * sinf(city.simulationTime * 3.0f);
     
-    // Sensor base
-    drawBox(Vec3(sensor.position.x - 0.3f, sensor.position.y - 0.8f, sensor.position.z - 0.3f),
-            0.6f, 0.5f, 0.6f, Color(0.4f, 0.4f, 0.4f));
-    
-    // Label
-    if (showSensorLabels) {
-        glDisable(GL_LIGHTING);
-        glColor3f(1, 1, 1);
-        glRasterPos3f(sensor.position.x, sensor.position.y + 1.2f, sensor.position.z);
-        for (char c : sensor.name) {
-            glutBitmapCharacter(GLUT_BITMAP_8_BY_13, c);
-        }
-        glEnable(GL_LIGHTING);
+    // Outer glow for active sensors
+    if (sensor.active) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glColor4f(col.r, col.g, col.b, 0.3f * pulse);
+        
+        float glowSize = 2.5f;
+        glPushMatrix();
+        glTranslatef(sensor.position.x, sensor.position.y, sensor.position.z);
+        glutSolidSphere(glowSize, 16, 16);
+        glPopMatrix();
+        glDisable(GL_BLEND);
     }
-}
-
-void drawValve(const Valve& valve) {
-    Color col = valve.getColor();
     
-    // Valve body - cube
-    drawBox(Vec3(valve.position.x - 0.8f, valve.position.y - 0.8f, valve.position.z - 0.8f),
-            1.6f, 1.6f, 1.6f, col);
+    // Enhanced material for sensor body
+    GLfloat mat_specular[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+    GLfloat mat_shininess[] = { 80.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
     
-    // Valve wheel
+    // Sensor body - larger and more prominent
+    float sensorSize = 2.2f;
+    glColor3f(col.r * pulse, col.g * pulse, col.b * pulse);
+    glPushMatrix();
+    glTranslatef(sensor.position.x, sensor.position.y, sensor.position.z);
+    glutSolidCube(sensorSize);
+    glPopMatrix();
+    
+    // Valve wheel on top - more prominent
     glDisable(GL_LIGHTING);
     glColor3f(col.r * 0.7f, col.g * 0.7f, col.b * 0.7f);
     glPushMatrix();
-    glTranslatef(valve.position.x, valve.position.y + 1.2f, valve.position.z);
+    glTranslatef(sensor.position.x, sensor.position.y + 1.8f, sensor.position.z);
     glRotatef(90, 1, 0, 0);
-    glutSolidTorus(0.2, 0.5, 8, 16);
+    glutSolidTorus(0.4, 0.9, 10, 20);
     glPopMatrix();
     glEnable(GL_LIGHTING);
     
-    // Label
+    // ID Label with enhanced visibility
     if (showSensorLabels) {
         glDisable(GL_LIGHTING);
-        glColor3f(1, 1, 0);
-        glRasterPos3f(valve.position.x, valve.position.y + 2.0f, valve.position.z);
-        std::stringstream ss;
-        ss << valve.name << " [" << (int)valve.openPercentage << "%]";
-        for (char c : ss.str()) {
-            glutBitmapCharacter(GLUT_BITMAP_8_BY_13, c);
+        
+        // Background color based on type - brighter
+        if (sensor.type == WATER_SENSOR) {
+            glColor3f(0.3f, 0.85f, 1.0f);  // Bright cyan for water
+        } else {
+            glColor3f(1.0f, 0.7f, 0.2f);  // Bright orange for sewage
         }
+        
+        glRasterPos3f(sensor.position.x, sensor.position.y + 3.5f, sensor.position.z);
+        std::stringstream ss;
+        ss << sensor.name << " [" << sensor.getTypeString() << "]";
+        for (char c : ss.str()) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c);
+        }
+        
+        // Detailed info below - brighter
+        glRasterPos3f(sensor.position.x, sensor.position.y + 2.5f, sensor.position.z);
+        ss.str("");
+        ss << "V:" << (int)sensor.valveState << "% P:" << (int)sensor.pressure << "kPa L:" << (int)sensor.waterLevel << "%";
+        for (char c : ss.str()) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
+        }
+        
         glEnable(GL_LIGHTING);
     }
 }
@@ -755,114 +747,170 @@ void drawPipe(const Pipe& pipe) {
     Color color = pipe.getColor();
     float radius = pipe.diameter / 2.0f;
     
-    // SEWAGE PIPES: Make them THICKER and BRIGHTER for visibility
+    // VISUAL DISTINCTION - Different rendering styles
     if (pipe.type >= SEWAGE_LATERAL) {
-        radius *= 2.5f;  // Much thicker
-        // SUPER BRIGHT ORANGE/BROWN
-        float flowIntensity = std::min(1.0f, pipe.embeddedFlow / 30.0f);
-        color = Color(0.95f, 0.65f + flowIntensity * 0.25f, 0.15f);
-    }
-    
-    drawCylinder(pipe.start, pipe.end, radius, color);
-    
-    // Junction caps
-    drawSphere(pipe.start, radius * 1.3f, color);
-    drawSphere(pipe.end, radius * 1.3f, color);
-    
-    // LEAK VISUALIZATION - ONLY if embedded flag is set
-    if (pipe.embeddedLeakFlag && showLeaks) {
-        Vec3 mid = (pipe.start + pipe.end) * 0.5f;
+        // SEWAGE: Brown color with enhanced contrast
+        Color sewerColor(0.65f, 0.38f, 0.12f);
+        drawCylinder(pipe.start, pipe.end, radius, sewerColor);
+        drawSphere(pipe.start, radius * 1.4f, sewerColor);
+        drawSphere(pipe.end, radius * 1.4f, sewerColor);
         
-        // Large red pulsing sphere
-        float pulse = 0.8f + 0.4f * sinf(city.simulationTime * 5.0f);
-        drawSphere(mid, 2.0f * pulse, Color(1, 0, 0));
+        // Add BRIGHT ORANGE stripes for maximum visual distinction
+        Vec3 dir = (pipe.end - pipe.start).normalized();
+        float len = pipe.length;
+        int numStripes = std::max(3, (int)(len / 3.0f));
         
-        // Warning cone
         glDisable(GL_LIGHTING);
-        glColor3f(1, 0.2f, 0);
-        glPushMatrix();
-        glTranslatef(mid.x, mid.y + 4, mid.z);
-        glRotatef(-90, 1, 0, 0);
-        glutSolidCone(1.5, 3.0, 8, 2);
-        glPopMatrix();
-        
-        // Leak spray particles
-        glPointSize(6.0f);
-        glBegin(GL_POINTS);
-        for (int i = 0; i < 40; i++) {
-            float angle = i * M_PI * 2.0f / 40.0f + city.simulationTime * 2.0f;
-            float dist = 2.5f + 1.5f * sinf(city.simulationTime * 3.0f + i);
-            Vec3 particlePos = mid + Vec3(
-                cos(angle) * dist, 
-                sinf(angle * 3) * dist * 0.7f + 1.5f, 
-                sin(angle) * dist
-            );
-            glColor3f(0.4f, 0.7f, 1.0f);
-            glVertex3f(particlePos.x, particlePos.y, particlePos.z);
+        for (int i = 0; i < numStripes; i++) {
+            float t = (float)i / numStripes;
+            Vec3 stripePos = pipe.start + (pipe.end - pipe.start) * t;
+            glColor3f(1.0f, 0.6f, 0.1f); // Bright orange stripe
+            glPushMatrix();
+            glTranslatef(stripePos.x, stripePos.y, stripePos.z);
+            glutSolidSphere(radius * 1.3f, 12, 12);
+            glPopMatrix();
         }
-        glEnd();
         glEnable(GL_LIGHTING);
         
-        // Leak label
+    } else {
+        // WATER: Enhanced cyan/blue with shimmer
+        Color waterColor(0.25f, 0.65f, 0.95f);
+        drawCylinder(pipe.start, pipe.end, radius, waterColor);
+        
+        // Add subtle glow effect
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glColor4f(0.4f, 0.8f, 1.0f, 0.3f);
+        drawCylinder(pipe.start, pipe.end, radius * 1.1f, Color(0.4f, 0.8f, 1.0f));
+        glDisable(GL_BLEND);
+        
+        drawSphere(pipe.start, radius * 1.3f, waterColor);
+        drawSphere(pipe.end, radius * 1.3f, waterColor);
+    }
+    
+    // LEAK visualization with enhanced effects
+    if (pipe.hasLeak && showLeaks) {
+        Vec3 mid = (pipe.start + pipe.end) * 0.5f;
+        
+        float pulse = 0.8f + 0.4f * sinf(city.simulationTime * 5.0f);
+        
+        // Outer glow
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glColor4f(1.0f, 0.0f, 0.0f, 0.4f);
+        drawSphere(mid, 3.5f * pulse, Color(1, 0, 0));
+        glDisable(GL_BLEND);
+        
+        // Inner bright core
+        drawSphere(mid, 2.0f * pulse, Color(1, 0, 0));
+        
         glDisable(GL_LIGHTING);
+        // Warning cone with enhanced color
+        glColor3f(1, 0.3f, 0);
+        glPushMatrix();
+        glTranslatef(mid.x, mid.y + 5, mid.z);
+        glRotatef(-90, 1, 0, 0);
+        glutSolidCone(2.5, 5.0, 12, 2);
+        glPopMatrix();
+        
+        // Enhanced particle spray
+        glPointSize(10.0f);
+        glBegin(GL_POINTS);
+        for (int i = 0; i < 60; i++) {
+            float angle = i * M_PI * 2.0f / 60.0f + city.simulationTime * 2.0f;
+            float dist = 3.5f + 2.0f * sinf(city.simulationTime * 3.0f + i);
+            Vec3 p = mid + Vec3(cos(angle) * dist, sinf(angle * 3) * dist + 2, sin(angle) * dist);
+            
+            // Alternating blue/white particles
+            if (i % 2 == 0) {
+                glColor3f(0.5f, 0.8f, 1.0f);
+            } else {
+                glColor3f(1.0f, 1.0f, 1.0f);
+            }
+            glVertex3f(p.x, p.y, p.z);
+        }
+        glEnd();
+        
+        // Enhanced label with background
         glColor3f(1, 0, 0);
-        glRasterPos3f(mid.x, mid.y + 6, mid.z);
+        glRasterPos3f(mid.x, mid.y + 8, mid.z);
         std::stringstream ss;
-        ss << "LEAK: " << std::fixed << std::setprecision(1) << pipe.embeddedLeakRate << " L/s";
+        ss << "⚠ LEAK: " << pipe.id << " (" << std::fixed << std::setprecision(1) << pipe.leakRate << " L/s)";
         for (char c : ss.str()) {
             glutBitmapCharacter(GLUT_BITMAP_9_BY_15, c);
         }
         glEnable(GL_LIGHTING);
     }
     
-    // Flow particles
-    if (showFlowParticles && pipe.embeddedFlow > 0.1f) {
-        Vec3 dir = (pipe.end - pipe.start).normalized();
-        float flowSpeed = pipe.embeddedFlow * 0.01f;
-        
+    // Enhanced pipe ID label
+    if (showSensorLabels) {
+        Vec3 mid = (pipe.start + pipe.end) * 0.5f;
         glDisable(GL_LIGHTING);
-        glPointSize(4.0f);
         
         if (pipe.type >= SEWAGE_LATERAL) {
-            glColor3f(0.9f, 0.7f, 0.3f);
+            glColor3f(1.0f, 0.7f, 0.3f);  // Bright orange for sewage
         } else {
-            glColor3f(0.3f, 0.8f, 1.0f);
+            glColor3f(0.4f, 0.9f, 1.0f);  // Bright cyan for water
         }
         
-        glBegin(GL_POINTS);
-        for (int i = 0; i < 5; i++) {
-            float t = fmodf(city.simulationTime * flowSpeed + i * 0.2f, 1.0f);
-            Vec3 particlePos = pipe.start + (pipe.end - pipe.start) * t;
-            glVertex3f(particlePos.x, particlePos.y, particlePos.z);
+        glRasterPos3f(mid.x, mid.y + 2.0f, mid.z);
+        for (char c : std:: to_string(pipe.id)) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
         }
-        glEnd();
         glEnable(GL_LIGHTING);
     }
 }
 
 void drawBuilding(const Building& bldg) {
-    Color color = bldg.getBuildingColor();
-    drawBox(bldg.position, BUILDING_FOOTPRINT, bldg.height, BUILDING_FOOTPRINT, color);
+    Color baseColor(0.55f, 0.55f, 0.6f);
+    Color roofColor(0.4f, 0.4f, 0.45f);
+    
+    // Enable transparency if toggled
+    if (transparentBuildings) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor4f(baseColor.r, baseColor.g, baseColor.b, 0.25f);  // 25% opacity
+    } else {
+        glColor3f(baseColor.r, baseColor.g, baseColor.b);
+    }
+    
+    // Main building body
+    glPushMatrix();
+    glTranslatef(bldg.position.x + BUILDING_FOOTPRINT/2, bldg.position.y + bldg.height/2, bldg.position.z + BUILDING_FOOTPRINT/2);
+    glScalef(BUILDING_FOOTPRINT, bldg.height, BUILDING_FOOTPRINT);
+    glutSolidCube(1.0f);
+    glPopMatrix();
     
     // Rooftop
-    Color roofColor(0.4f, 0.4f, 0.45f);
-    drawBox(Vec3(bldg.position.x, bldg.position.y + bldg.height, bldg.position.z),
-            BUILDING_FOOTPRINT, 0.5f, BUILDING_FOOTPRINT, roofColor);
+    if (transparentBuildings) {
+        glColor4f(roofColor.r, roofColor.g, roofColor.b, 0.25f);
+    } else {
+        glColor3f(roofColor.r, roofColor.g, roofColor.b);
+    }
     
-    // Water riser (blue)
+    glPushMatrix();
+    glTranslatef(bldg.position.x + BUILDING_FOOTPRINT/2, bldg.position.y + bldg.height + 0.25f, bldg.position.z + BUILDING_FOOTPRINT/2);
+    glScalef(BUILDING_FOOTPRINT, 0.5f, BUILDING_FOOTPRINT);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    
+    if (transparentBuildings) {
+        glDisable(GL_BLEND);
+    }
+    
+    // Water riser (blue) - always opaque
     Vec3 riserPos = bldg.position + Vec3(2, 0, 2);
     drawCylinder(riserPos, riserPos + Vec3(0, bldg.height, 0), 0.12f, Color(0.4f, 0.6f, 0.9f));
     
-    // Sewage drop (brown)
+    // Sewage drop (ULTRA BRIGHT ORANGE, thicker) - always opaque
     Vec3 dropPos = bldg.position + Vec3(BUILDING_FOOTPRINT - 2, bldg.height, BUILDING_FOOTPRINT - 2);
-    drawCylinder(dropPos, dropPos + Vec3(0, -bldg.height, 0), 0.15f, Color(0.85f, 0.6f, 0.2f));
+    drawCylinder(dropPos, dropPos + Vec3(0, -bldg.height - 1.5f, 0), 0.25f, Color(1.0f, 0.5f, 0.0f));
 }
 
 void drawWaterReservoir(Vec3 pos, float waterLevel) {
     float tankRadius = 15.0f;
     float tankHeight = 25.0f;
     
-    // Tank structure
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.3f, 0.5f, 0.7f, 0.3f);
@@ -875,7 +923,6 @@ void drawWaterReservoir(Vec3 pos, float waterLevel) {
     glPopMatrix();
     glDisable(GL_BLEND);
     
-    // Water surface
     float waterHeight = tankHeight * (waterLevel / 100.0f);
     glColor3f(0.2f, 0.4f, 0.8f);
     glPushMatrix();
@@ -886,7 +933,6 @@ void drawWaterReservoir(Vec3 pos, float waterLevel) {
     gluDeleteQuadric(disk);
     glPopMatrix();
     
-    // Pump house
     glColor3f(0.6f, 0.6f, 0.65f);
     glPushMatrix();
     glTranslatef(pos.x, pos.y - tankHeight - 5, pos.z);
@@ -895,6 +941,7 @@ void drawWaterReservoir(Vec3 pos, float waterLevel) {
 }
 
 void drawSewageTreatmentPlant(Vec3 pos) {
+    // Primary clarifier
     glColor3f(0.4f, 0.3f, 0.2f);
     glPushMatrix();
     glTranslatef(pos.x - 20, pos.y + 2, pos.z);
@@ -903,6 +950,7 @@ void drawSewageTreatmentPlant(Vec3 pos) {
     gluDeleteQuadric(quad1);
     glPopMatrix();
     
+    // Aeration basin
     glColor3f(0.35f, 0.4f, 0.3f);
     glPushMatrix();
     glTranslatef(pos.x + 10, pos.y + 2, pos.z - 10);
@@ -910,6 +958,7 @@ void drawSewageTreatmentPlant(Vec3 pos) {
     glutSolidCube(1.0f);
     glPopMatrix();
     
+    // Secondary clarifier
     glColor3f(0.45f, 0.35f, 0.25f);
     glPushMatrix();
     glTranslatef(pos.x + 20, pos.y + 2, pos.z + 15);
@@ -945,28 +994,22 @@ void drawText(float x, float y, const std::string& text, Color color = Color(0.9
 void drawHUD() {
     std::stringstream ss;
     
-    ss << "SCADA-GRADE WATER & SEWAGE DIGITAL TWIN";
+    ss << "ROS2-INTEGRATED SCADA WATER & SEWAGE DIGITAL TWIN";
     drawText(10, windowHeight - 25, ss.str());
     ss.str("");
     
-    // Data source status
-    if (city.embeddedDataConnected) {
-        drawText(10, windowHeight - 50, "DATA SOURCE: [CONNECTED]", Color(0.2f, 0.9f, 0.2f));
-    } else {
-        drawText(10, windowHeight - 50, "DATA SOURCE: [DISCONNECTED - NO EMBEDDED DATA]", Color(0.9f, 0.2f, 0.2f));
-    }
-    
     ss << "Buildings: " << city.buildings.size() << " | Clusters: " << city.clusters.size() 
-       << " | Pipes: " << city.pipes.size() << " | Sensors: " << city.sensors.size() 
-       << " | Valves: " << city.valves.size();
-    drawText(10, windowHeight - 75, ss.str());
+       << " | Pipes: " << city.pipes.size() << " | Sensors: " << city.sensors.size();
+    drawText(10, windowHeight - 50, ss.str());
     ss.str("");
     
-    // Count active leaks from embedded data
+    drawText(10, windowHeight - 75, "ROS2 CONTROL ACTIVE - Sensor values updated via ROS2 topics", Color(0.2f, 0.9f, 0.2f));
+    
+    // Count active leaks
     int leakCount = 0;
     std::string leakIDs = "";
     for (const auto& pipe : city.pipes) {
-        if (pipe.embeddedLeakFlag) {
+        if (pipe.hasLeak) {
             leakCount++;
             if (!leakIDs.empty()) leakIDs += ", ";
             leakIDs += std::to_string(pipe.id);
@@ -977,93 +1020,109 @@ void drawHUD() {
         ss << "ACTIVE LEAKS: " << leakCount << " [Pipe IDs: " << leakIDs << "]";
         drawText(10, windowHeight - 100, ss.str(), Color(1, 0, 0));
         ss.str("");
+    } else {
+        drawText(10, windowHeight - 100, "NO LEAKS DETECTED (Default state)", Color(0.2f, 0.9f, 0.2f));
     }
     
     // Reservoir status
-    if (city.reservoirLevelSensorID >= 0) {
-        const Sensor& levelSensor = city.sensors[city.reservoirLevelSensorID];
-        const Sensor& pressureSensor = city.sensors[city.reservoirPressureSensorID];
-        const Valve& mainValve = city.valves[city.reservoirValveID];
-        
-        ss << "RESERVOIR: Level=" << std::fixed << std::setprecision(1) << levelSensor.value 
-           << "% | Pressure=" << std::setprecision(0) << pressureSensor.value << " kPa | Main Valve=" 
-           << std::setprecision(0) << mainValve.openPercentage << "%";
+    if (city.reservoirWaterSensorID >= 0) {
+        const Sensor& sensor = city.sensors[city.reservoirWaterSensorID];
+        ss << "RESERVOIR WATER SENSOR [ID:" << sensor.id << "] Valve=" << std::fixed << std::setprecision(0) 
+           << sensor.valveState << "% | Pressure=" << sensor.pressure << " kPa | Level=" << sensor.waterLevel << "%";
         drawText(10, windowHeight - 125, ss.str());
         ss.str("");
     }
     
-    // Cluster info
+    // Cluster info (show both water and sewage sensors)
     if (highlightedCluster >= 0 && highlightedCluster < (int)city.clusters.size()) {
         const Cluster& c = city.clusters[highlightedCluster];
-        const Sensor& pressSensor = city.sensors[c.clusterPressureSensorID];
-        const Sensor& flowSensor = city.sensors[c.clusterFlowSensorID];
-        const Valve& valve = city.valves[c.clusterInletValveID];
+        const Sensor& waterSensor = city.sensors[c.waterSensorID];
+        const Sensor& sewerSensor = city.sensors[c.sewageSensorID];
         
-        ss << "CLUSTER #" << c.id << ": Pressure=" << std::setprecision(0) << pressSensor.value 
-           << " kPa | Flow=" << std::setprecision(1) << flowSensor.value 
-           << " L/s | Valve=" << std::setprecision(0) << valve.openPercentage << "%";
-        drawText(10, windowHeight - 150, ss.str(), Color(1, 1, 0));
+        ss << "CLUSTER #" << c.id << " WATER [ID:" << waterSensor.id << "] V:" << std::setprecision(0) 
+           << waterSensor.valveState << "% P:" << waterSensor.pressure << " kPa";
+        drawText(10, windowHeight - 150, ss.str(), Color(0.5f, 0.8f, 1.0f));
+        ss.str("");
+        
+        ss << "CLUSTER #" << c.id << " SEWER [ID:" << sewerSensor.id << "] V:" << std::setprecision(0) 
+           << sewerSensor.valveState << "% L:" << sewerSensor.waterLevel << "%";
+        drawText(10, windowHeight - 175, ss.str(), Color(1.0f, 0.6f, 0.0f));
         ss.str("");
     }
     
     // STP status
-    if (city.stpInletLevelSensorID >= 0) {
-        const Sensor& levelSensor = city.sensors[city.stpInletLevelSensorID];
-        const Sensor& flowSensor = city.sensors[city.stpFlowSensorID];
-        
-        ss << "STP: Inlet Level=" << std::setprecision(1) << levelSensor.value 
-           << "% | Flow=" << flowSensor.value << " L/s";
-        drawText(10, windowHeight - 175, ss.str());
+    if (city.stpSewerSensorID >= 0) {
+        const Sensor& sensor = city.sensors[city.stpSewerSensorID];
+        ss << "STP SEWER SENSOR [ID:" << sensor.id << "] Level=" << std::setprecision(1) << sensor.waterLevel << "%";
+        drawText(10, windowHeight - 200, ss.str());
         ss.str("");
     }
     
-    // Controls
-    drawText(10, 200, "CONTROLS:");
-    drawText(10, 180, "B: Buildings | W: Water | S: Sewage | V: Valves | N: Sensors | L: Leaks");
-    drawText(10, 160, "F: Flow Particles | T: Sensor Labels | H: Highlight Cluster | R: Reset View");
-    drawText(10, 140, "E: Load Embedded Pressure | K: Load Embedded Leaks | C: Load Valve Control");
-    drawText(10, 120, "+/-: Buildings | Q: Quit | Mouse: Rotate/Zoom");
-    drawText(10, 100, "");
-    drawText(10, 80, "FILE FORMAT (embedded_pressure.csv): sensorID,value");
-    drawText(10, 60, "FILE FORMAT (embedded_leaks.csv): pipeID,hasLeak,leakRate,timestamp");
-    drawText(10, 40, "FILE FORMAT (valve_control.csv): valveID,openPercentage");
+    // DEFAULT VALUES reminder
+    drawText(10, 240, "DEFAULT SENSOR VALUES:", Color(0.9f, 0.9f, 0.2f));
+    drawText(10, 280, "CONTROLS:");
+    drawText(10, 260, "B: Buildings | W: Water (CYAN/BLUE) | S: Sewage (BROWN w/STRIPES)");
+    drawText(10, 240, "N: Sensors | L: Leaks | T: Labels | X: Transparent Buildings | G: Ground");
+    drawText(10, 220, "H: Highlight | R: Reset | +/-: Buildings | Q: Quit");
+    drawText(10, 200, "Mouse: FULL 360° ROTATION (drag down to go below ground!)");
+    drawText(10, 180, "");
+    
+    if (transparentBuildings) {
+        drawText(10, 160, ">>> BUILDINGS 75% TRANSPARENT <<<", Color(0.2f, 1.0f, 0.2f));
+    }
+    
+    drawText(10, 140, "PIPE IDs:");
+    drawText(10, 120, "  Water:  pipe_w0, pipe_w1, pipe_w2, ... (CYAN smooth)", Color(0.3f, 0.7f, 1.0f));
+    drawText(10, 100, "  Sewage: pipe_s0, pipe_s1, pipe_s2, ... (BROWN striped)", Color(0.8f, 0.5f, 0.2f));
+    drawText(10, 80, "");
+    drawText(10, 60, "VISUAL DIFFERENCES:");
+    drawText(10, 40, "  WATER = Smooth cyan cylinders above ground");
+    drawText(10, 20, "  SEWAGE = Brown pipes with orange stripes UNDERGROUND (-2m to -4m)");
 }
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     
-    float camX = camDistance * cos(camElevation * M_PI / 180.0f) * sin(camAngle * M_PI / 180.0f);
-    float camY = camDistance * sin(camElevation * M_PI / 180.0f);
-    float camZ = camDistance * cos(camElevation * M_PI / 180.0f) * cos(camAngle * M_PI / 180.0f);
+    // Dynamic camera distance based on city size
+    float autoCamDistance = std::max(200.0f, city.cityExtent * 2.5f);
+    float actualDistance = camDistance == 200.0f ? autoCamDistance : camDistance;
+    
+    float camX = actualDistance * cos(camElevation * M_PI / 180.0f) * sin(camAngle * M_PI / 180.0f);
+    float camY = actualDistance * sin(camElevation * M_PI / 180.0f);
+    float camZ = actualDistance * cos(camElevation * M_PI / 180.0f) * cos(camAngle * M_PI / 180.0f);
     
     gluLookAt(camX, camY, camZ, 0, 10, 0, 0, 1, 0);
     
-    // Ground
+    // Ground - MAKE IT TRANSPARENT so we can see underground sewage
     glDisable(GL_LIGHTING);
-    glColor3f(0.15f, 0.15f, 0.15f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.12f, 0.12f, 0.12f, 0.4f);  // Semi-transparent ground
+    float groundSize = city.cityExtent * 2.0f;
     glBegin(GL_QUADS);
-    glVertex3f(-300, 0, -300);
-    glVertex3f(300, 0, -300);
-    glVertex3f(300, 0, 300);
-    glVertex3f(-300, 0, 300);
+    glVertex3f(-groundSize, 0, -groundSize);
+    glVertex3f(groundSize, 0, -groundSize);
+    glVertex3f(groundSize, 0, groundSize);
+    glVertex3f(-groundSize, 0, groundSize);
     glEnd();
+    glDisable(GL_BLEND);
     
     // Grid
     glColor3f(0.25f, 0.25f, 0.25f);
     glLineWidth(1.0f);
     glBegin(GL_LINES);
-    for (int i = -300; i <= 300; i += 20) {
-        glVertex3f(i, 0.1f, -300);
-        glVertex3f(i, 0.1f, 300);
-        glVertex3f(-300, 0.1f, i);
-        glVertex3f(300, 0.1f, i);
+    for (float i = -groundSize; i <= groundSize; i += 20) {
+        glVertex3f(i, 0.1f, -groundSize);
+        glVertex3f(i, 0.1f, groundSize);
+        glVertex3f(-groundSize, 0.1f, i);
+        glVertex3f(groundSize, 0.1f, i);
     }
     glEnd();
     glEnable(GL_LIGHTING);
     
     // Facilities
-    float resLevel = city.reservoirLevelSensorID >= 0 ? city.sensors[city.reservoirLevelSensorID].value : 75.0f;
+    float resLevel = city.reservoirWaterSensorID >= 0 ? city.sensors[city.reservoirWaterSensorID].waterLevel : 70.0f;
     drawWaterReservoir(city.reservoirPos, resLevel);
     drawSewageTreatmentPlant(city.stpPos);
     
@@ -1107,13 +1166,6 @@ void display() {
         }
     }
     
-    // Valves
-    if (showValves) {
-        for (const auto& valve : city.valves) {
-            drawValve(valve);
-        }
-    }
-    
     drawHUD();
     
     glutSwapBuffers();
@@ -1125,7 +1177,7 @@ void reshape(int w, int h) {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(50.0, (double)w / h, 1.0, 1000.0);
+    gluPerspective(50.0, (double)w / h, 1.0, 5000.0);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -1145,20 +1197,22 @@ void keyboard(unsigned char key, int x, int y) {
         case 's': case 'S':
             showSewageNetwork = !showSewageNetwork;
             break;
-        case 'v': case 'V':
-            showValves = !showValves;
-            break;
         case 'n': case 'N':
             showSensors = !showSensors;
             break;
         case 'l': case 'L':
             showLeaks = !showLeaks;
             break;
-        case 'f': case 'F':
-            showFlowParticles = !showFlowParticles;
-            break;
         case 't': case 'T':
             showSensorLabels = !showSensorLabels;
+            break;
+        case 'g': case 'G':
+            showGround = !showGround;
+            std::cout << "Ground visibility: " << (showGround ? "ON (transparent)" : "OFF") << "\n";
+            break;
+        case 'x': case 'X':
+            transparentBuildings = !transparentBuildings;
+            std::cout << "Buildings transparency: " << (transparentBuildings ? "ON (25% opacity)" : "OFF (solid)") << "\n";
             break;
         case 'h': case 'H':
             highlightedCluster++;
@@ -1166,14 +1220,8 @@ void keyboard(unsigned char key, int x, int y) {
                 highlightedCluster = -1;
             }
             break;
-        case 'e': case 'E':
-            city.loadEmbeddedPressureData("embedded_pressure.csv");
-            break;
         case 'k': case 'K':
-            city.loadEmbeddedLeakData("embedded_leaks.csv");
-            break;
-        case 'c': case 'C':
-            city.loadValveControlData("valve_control.csv");
+            city.loadLeakData("leaks.csv");
             break;
         case 'r': case 'R':
             camAngle = 45.0f;
@@ -1181,7 +1229,7 @@ void keyboard(unsigned char key, int x, int y) {
             camDistance = 200.0f;
             break;
         case '+': case '=':
-            currentBuildingCount = std::min(1000, currentBuildingCount + 10);
+            currentBuildingCount = std::min(100000, currentBuildingCount + 10);
             city.generateCity(currentBuildingCount);
             highlightedCluster = -1;
             break;
@@ -1190,6 +1238,17 @@ void keyboard(unsigned char key, int x, int y) {
             city.generateCity(currentBuildingCount);
             highlightedCluster = -1;
             break;
+        case '1': case '2': case '3': case '4': case '5': 
+        case '6': case '7': case '8': case '9': {
+            // Test: Update sensor 0-8 valve states
+            int sensorID = key - '1';
+            if (sensorID < (int)city.sensors.size()) {
+                float newValve = (city.sensors[sensorID].valveState > 50) ? 20.0f : 100.0f;
+                city.updateFromROS2(sensorID, newValve, DEFAULT_PRESSURE, DEFAULT_WATER_LEVEL);
+                std::cout << "TEST: Toggled Sensor " << sensorID << " valve to " << newValve << "%\n";
+            }
+            break;
+        }
         case 'q': case 'Q': case 27:
             exit(0);
             break;
@@ -1203,16 +1262,20 @@ void mouse(int button, int state, int x, int y) {
         lastMouseX = x;
         lastMouseY = y;
     } else if (button == 3) {
-        camDistance = std::max(50.0f, camDistance - 10.0f);
+        camDistance = std::max(50.0f, camDistance - 20.0f);
     } else if (button == 4) {
-        camDistance = std::min(500.0f, camDistance + 10.0f);
+        camDistance = std::min(2000.0f, camDistance + 20.0f);
     }
 }
 
 void motion(int x, int y) {
     if (mouseLeftDown) {
         camAngle += (x - lastMouseX) * 0.5f;
-        camElevation = std::max(5.0f, std::min(85.0f, camElevation - (y - lastMouseY) * 0.5f));
+        // ALLOW FULL 360 DEGREE VERTICAL ROTATION - no limits!
+        camElevation -= (y - lastMouseY) * 0.5f;
+        // Wrap around for full rotation
+        if (camElevation > 180.0f) camElevation -= 360.0f;
+        if (camElevation < -180.0f) camElevation += 360.0f;
         lastMouseX = x;
         lastMouseY = y;
     }
@@ -1220,104 +1283,194 @@ void motion(int x, int y) {
 
 void printInstructions() {
     std::cout << "\n╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   SCADA-GRADE WATER & SEWAGE DIGITAL TWIN                    ║\n";
-    std::cout << "║   Embedded-System Driven Infrastructure Simulator            ║\n";
+    std::cout << "║   ROS2-INTEGRATED SCADA WATER & SEWAGE DIGITAL TWIN          ║\n";
+    std::cout << "║   Production-Grade Infrastructure Simulator                  ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n\n";
-    std::cout << "STRICTLY EMBEDDED-DRIVEN:\n";
-    std::cout << "  • NO internal simulation logic\n";
-    std::cout << "  • ALL data from external files\n";
-    std::cout << "  • Leaks appear ONLY when flagged by embedded system\n";
-    std::cout << "  • Valve control from Python/external process\n";
-    std::cout << "  • Behaves like real SCADA system\n\n";
-    std::cout << "SENSOR & VALVE TOPOLOGY:\n";
-    std::cout << "  • Per Building (POINT1_SUB): inlet valve, pressure/flow sensors\n";
-    std::cout << "  • Per Cluster (POINT1_MAIN): cluster valve, pressure/flow sensors\n";
-    std::cout << "  • Reservoir: main valve, pressure/level sensors\n";
-    std::cout << "  • STP: inlet level, flow sensors\n\n";
-    std::cout << "EMBEDDED DATA FILES:\n";
-    std::cout << "  embedded_pressure.csv - sensorID,value\n";
-    std::cout << "  embedded_leaks.csv - pipeID,hasLeak,leakRate,timestamp\n";
-    std::cout << "  valve_control.csv - valveID,openPercentage\n\n";
+    
+    std::cout << "ROS2 INTEGRATION:\n";
+    std::cout << "  • All sensors controlled via ROS2 topics\n";
+    std::cout << "  • Unique sensor IDs for all control points\n";
+    std::cout << "  • Real-time valve/pressure/level updates\n\n";
+    
+    std::cout << "SENSOR ARCHITECTURE:\n";
+    std::cout << "  • Each sensor = Valve + Pressure Sensor + Level Sensor\n";
+    std::cout << "  • WATER SIDE:\n";
+    std::cout << "      - Reservoir: 1 water sensor\n";
+    std::cout << "      - Per Cluster: 1 water sensor\n";
+    std::cout << "      - Per Building: 1 water sensor\n";
+    std::cout << "  • SEWAGE SIDE:\n";
+    std::cout << "      - Per Building: 1 sewage sensor\n";
+    std::cout << "      - Per Cluster: 1 sewage sensor\n";
+    std::cout << "      - STP: 1 sewage sensor\n\n";
+    
+    std::cout << "DEFAULT VALUES:\n";
+    std::cout << "  • Valve: 100% (ON)\n";
+    std::cout << "  • Pressure: 15 kPa\n";
+    std::cout << "  • Water Level: 70%\n";
+    std::cout << "  • NO LEAKS (leak logic external)\n\n";
+    
+    std::cout << "UNIQUE IDs:\n";
+    std::cout << "  • All pipes have unique IDs (0 to N)\n";
+    std::cout << "  • All sensors have unique IDs (0 to M)\n";
+    std::cout << "  • Leak file references pipe IDs\n\n";
+    
+    std::cout << "SEWAGE VISIBILITY:\n";
+    std::cout << "  • Sewage pipes: 3x thicker than water\n";
+    std::cout << "  • Bright orange color (1.0, 0.55, 0.0)\n";
+    std::cout << "  • Visible sewage drops in buildings\n\n";
+    
+    std::cout << "DYNAMIC SCALING:\n";
+    std::cout << "  • Reservoir/STP auto-position based on city size\n";
+    std::cout << "  • Camera auto-adjusts for 10-100000 buildings\n";
+    std::cout << "  • NO overlap with buildings\n\n";
+    
+    std::cout << "LEAK DATA FILE (leaks.csv):\n";
+    std::cout << "  Format: pipeID,hasLeak,leakRate\n";
+    std::cout << "  Example:\n";
+    std::cout << "    13,1,15.723\n";
+    std::cout << "    35,1,20.1\n\n";
+    
+    std::cout << "ROS2 TOPICS (Python interface):\n";
+    std::cout << "  Publish: /water_scada/sensor_update\n";
+    std::cout << "    Message: {sensor_id, valve, pressure, level}\n";
+    std::cout << "  Subscribe: /water_scada/sensor_state\n";
+    std::cout << "    Message: {sensor_id, valve, pressure, level}\n\n";
+    
     std::cout << "CONTROLS:\n";
     std::cout << "  B - Toggle buildings\n";
     std::cout << "  W - Toggle water network\n";
-    std::cout << "  S - Toggle sewage network (BRIGHT ORANGE/BROWN)\n";
-    std::cout << "  V - Toggle valves\n";
+    std::cout << "  S - Toggle sewage network (BRIGHT ORANGE UNDERGROUND)\n";
     std::cout << "  N - Toggle sensors\n";
-    std::cout << "  L - Toggle leak visualization\n";
-    std::cout << "  F - Toggle flow particles\n";
-    std::cout << "  T - Toggle sensor/valve labels\n";
-    std::cout << "  H - Cycle through cluster highlights\n";
-    std::cout << "  E - Load embedded pressure data\n";
-    std::cout << "  K - Load embedded leak data\n";
-    std::cout << "  C - Load valve control data\n";
-    std::cout << "  R - Reset camera view\n";
-    std::cout << "  +/- - Increase/decrease building count\n";
+    std::cout << "  L - Toggle leaks\n";
+    std::cout << "  T - Toggle sensor labels\n";
+    std::cout << "  X - Toggle building transparency (SEE THROUGH!)\n";
+    std::cout << "  G - Toggle ground visibility\n";
+    std::cout << "  H - Highlight cluster\n";
+    std::cout << "  K - Load leak data file\n";
+    std::cout << "  1-9 - Test toggle sensors 0-8 valves\n";
+    std::cout << "  +/- - Add/remove buildings (10 to 100000)\n";
+    std::cout << "  R - Reset camera\n";
+    std::cout << "  Mouse Drag - Rotate camera\n";
+    std::cout << "  Mouse Wheel - Zoom\n";
     std::cout << "  Q - Quit\n";
     std::cout << "══════════════════════════════════════════════════════════════\n\n";
+    
+    std::cout << "VISUALIZATION TIPS:\n";
+    std::cout << "  1. Press 'X' to make buildings 75% transparent\n";
+    std::cout << "  2. Press 'G' to hide ground plane\n";
+    std::cout << "  3. Rotate camera to look from above-down angle\n";
+    std::cout << "  4. Sewage pipes are 4x thicker and bright orange\n\n";
+    
+    std::cout << "SENSOR NAMING:\n";
+    std::cout << "  Water sensors:  sensor_f0, sensor_f1, sensor_f2, ...\n";
+    std::cout << "  Sewage sensors: sensor_s0, sensor_s1, sensor_s2, ...\n\n";
 }
 
-
-    int main(int argc, char** argv) {
+int main(int argc, char** argv) {
     srand(time(nullptr));
-
+    
     printInstructions();
-
+    
     std::cout << "Generating city with " << currentBuildingCount << " buildings...\n";
     city.generateCity(currentBuildingCount);
-
-    std::cout << "\nAttempting to load embedded data files...\n";
-    city.loadEmbeddedPressureData("embedded_pressure.csv");
-    city.loadEmbeddedLeakData("embedded_leaks.csv");
-    city.loadValveControlData("valve_control.csv");
-
-    // =========================
-    // GLUT / OPENGL INITIALIZE
-    // =========================
+    
+    std::cout << "\nAll sensors initialized with DEFAULT values:\n";
+    std::cout << "  Valve: 100% (ON) | Pressure: 15 kPa | Level: 70%\n";
+    std::cout << "  NO LEAKS (default state)\n\n";
+    
+    std::cout << "Attempting to load leak data...\n";
+    city.loadLeakData("leaks.csv");
+    
+    std::cout << "\n=== SENSOR IDs ===\n";
+    std::cout << "WATER SIDE:\n";
+    std::cout << "  Reservoir water sensor: " << city.reservoirWaterSensorID << "\n";
+    for (int i = 0; i < std::min(3, (int)city.clusters.size()); i++) {
+        std::cout << "  Cluster " << i << " water sensor: " << city.clusters[i].waterSensorID << "\n";
+    }
+    if (city.clusters.size() > 3) std::cout << "  ... (+" << (city.clusters.size() - 3) << " more clusters)\n";
+    if (!city.buildings.empty()) {
+        std::cout << "  Building 0 water sensor: " << city.buildings[0].waterSensorID << "\n";
+    }
+    
+    std::cout << "\nSEWAGE SIDE:\n";
+    if (!city.buildings.empty()) {
+        std::cout << "  Building 0 sewage sensor: " << city.buildings[0].sewageSensorID << "\n";
+    }
+    for (int i = 0; i < std::min(3, (int)city.clusters.size()); i++) {
+        std::cout << "  Cluster " << i << " sewage sensor: " << city.clusters[i].sewageSensorID << "\n";
+    }
+    if (city.clusters.size() > 3) std::cout << "  ... (+" << (city.clusters.size() - 3) << " more clusters)\n";
+    std::cout << "  STP sewage sensor: " << city.stpSewerSensorID << "\n";
+    
+    std::cout << "\nTotal sensors: " << city.sensors.size() << "\n";
+    std::cout << "  Water sensors: " << (1 + city.clusters.size() + city.buildings.size()) << "\n";
+    std::cout << "  Sewage sensors: " << (city.buildings.size() + city.clusters.size() + 1) << "\n\n";
+    
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(windowWidth, windowHeight);
     glutInitWindowPosition(50, 50);
-    glutCreateWindow("SCADA-Grade Water & Sewage Digital Twin");
-
-    // =========================
-    // OPENGL STATE
-    // =========================
+    glutCreateWindow("ROS2 SCADA Water & Sewage Digital Twin");
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);  // Add second light
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-    // Lighting (industrial / neutral)
-    GLfloat light_pos[] = { 200.0f, 300.0f, 200.0f, 1.0f };
-    GLfloat light_amb[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-    GLfloat light_dif[] = { 0.9f, 0.9f, 0.9f, 1.0f };
-
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light_amb);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_dif);
-
-    glClearColor(0.08f, 0.09f, 0.1f, 1.0f); // Dark SCADA background
+    
+    // CRITICAL: Enable blending for transparency
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // Main light - brighter and more dramatic
+    GLfloat lightPos[] = {200.0f, 400.0f, 200.0f, 1.0f};
+    GLfloat lightAmb[] = {0.4f, 0.4f, 0.4f, 1.0f};
+    GLfloat lightDif[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    GLfloat lightSpec[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDif);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpec);
+    
+    // Second fill light from below (for underground visibility)
+    GLfloat lightPos2[] = {-100.0f, -200.0f, 100.0f, 1.0f};
+    GLfloat lightAmb2[] = {0.3f, 0.3f, 0.35f, 1.0f};
+    GLfloat lightDif2[] = {0.6f, 0.6f, 0.7f, 1.0f};
+    
+    glLightfv(GL_LIGHT1, GL_POSITION, lightPos2);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmb2);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDif2);
+    
+    glClearColor(0.05f, 0.06f, 0.08f, 1.0f);  // Darker background for better contrast
     glShadeModel(GL_SMOOTH);
     glEnable(GL_NORMALIZE);
-
-    // =========================
-    // CALLBACKS
-    // =========================
+    glEnable(GL_RESCALE_NORMAL);
+    
+    // Enhanced depth and alpha testing
+    glDepthMask(GL_TRUE);
+    glAlphaFunc(GL_GREATER, 0.1f);
+    glEnable(GL_ALPHA_TEST);
+    
+    // Anti-aliasing hints
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    
+    glEnable(GL_LINE_SMOOTH);
+    glEnable(GL_POLYGON_SMOOTH);
+    
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutIdleFunc(idle);
     glutKeyboardFunc(keyboard);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
-
-    // =========================
-    // START LOOP
-    // =========================
-    std::cout << "SCADA Digital Twin running...\n";
-    std::cout << "Waiting for embedded data updates.\n\n";
-
+    
+    std::cout << "ROS2 SCADA Digital Twin running...\n";
+    std::cout << "Ready for ROS2 sensor updates and external leak data.\n\n";
+    
     glutMainLoop();
     return 0;
 }

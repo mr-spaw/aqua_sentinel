@@ -4,6 +4,7 @@ setup.py
 ../../build/rl_controller/rl_controller.egg-info/PKG-INFO
 ../../build/rl_controller/rl_controller.egg-info/SOURCES.txt
 ../../build/rl_controller/rl_controller.egg-info/dependency_links.txt
+../../build/rl_controller/rl_controller.egg-info/entry_points.txt
 ../../build/rl_controller/rl_controller.egg-info/requires.txt
 ../../build/rl_controller/rl_controller.egg-info/top_level.txt
 ../../build/rl_controller/rl_controller.egg-info/zip-safe
