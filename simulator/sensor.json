@@ -1,0 +1,903 @@
+{
+  "timestamp": 1767996330,
+  "sim_time": 0.960,
+  "sensor_count": 112,
+  "sensors": [
+    {
+      "sensor_id": 0,
+      "pipe_id": 0,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 1,
+      "pipe_id": 1,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 2,
+      "pipe_id": 2,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 3,
+      "pipe_id": 3,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 4,
+      "pipe_id": 4,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 5,
+      "pipe_id": 5,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 6,
+      "pipe_id": 31,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 7,
+      "pipe_id": 32,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 8,
+      "pipe_id": 33,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 9,
+      "pipe_id": 34,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 10,
+      "pipe_id": 35,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 11,
+      "pipe_id": 36,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 12,
+      "pipe_id": 37,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 13,
+      "pipe_id": 38,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 14,
+      "pipe_id": 39,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 15,
+      "pipe_id": 40,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 16,
+      "pipe_id": 41,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 17,
+      "pipe_id": 42,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 18,
+      "pipe_id": 43,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 19,
+      "pipe_id": 44,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 20,
+      "pipe_id": 45,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 21,
+      "pipe_id": 46,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 22,
+      "pipe_id": 47,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 23,
+      "pipe_id": 48,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 24,
+      "pipe_id": 49,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 25,
+      "pipe_id": 50,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 26,
+      "pipe_id": 51,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 27,
+      "pipe_id": 52,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 28,
+      "pipe_id": 53,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 29,
+      "pipe_id": 54,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 30,
+      "pipe_id": 55,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 31,
+      "pipe_id": 56,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 32,
+      "pipe_id": 57,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 33,
+      "pipe_id": 58,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 34,
+      "pipe_id": 59,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 35,
+      "pipe_id": 60,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 36,
+      "pipe_id": 61,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 37,
+      "pipe_id": 62,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 38,
+      "pipe_id": 63,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 39,
+      "pipe_id": 64,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 40,
+      "pipe_id": 65,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 41,
+      "pipe_id": 66,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 42,
+      "pipe_id": 67,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 43,
+      "pipe_id": 68,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 44,
+      "pipe_id": 69,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 45,
+      "pipe_id": 70,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 46,
+      "pipe_id": 71,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 47,
+      "pipe_id": 72,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 48,
+      "pipe_id": 73,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 49,
+      "pipe_id": 74,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 50,
+      "pipe_id": 75,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 51,
+      "pipe_id": 76,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 52,
+      "pipe_id": 77,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 53,
+      "pipe_id": 78,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 54,
+      "pipe_id": 79,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 55,
+      "pipe_id": 80,
+      "type": 1,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 56,
+      "pipe_id": 81,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 57,
+      "pipe_id": 82,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 58,
+      "pipe_id": 83,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 59,
+      "pipe_id": 84,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 60,
+      "pipe_id": 85,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 61,
+      "pipe_id": 86,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 62,
+      "pipe_id": 87,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 63,
+      "pipe_id": 88,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 64,
+      "pipe_id": 89,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 65,
+      "pipe_id": 90,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 66,
+      "pipe_id": 92,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 67,
+      "pipe_id": 93,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 68,
+      "pipe_id": 94,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 69,
+      "pipe_id": 95,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 70,
+      "pipe_id": 96,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 71,
+      "pipe_id": 97,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 72,
+      "pipe_id": 98,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 73,
+      "pipe_id": 99,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 74,
+      "pipe_id": 100,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 75,
+      "pipe_id": 101,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 76,
+      "pipe_id": 103,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 77,
+      "pipe_id": 104,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 78,
+      "pipe_id": 105,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 79,
+      "pipe_id": 106,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 80,
+      "pipe_id": 107,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 81,
+      "pipe_id": 108,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 82,
+      "pipe_id": 109,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 83,
+      "pipe_id": 110,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 84,
+      "pipe_id": 111,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 85,
+      "pipe_id": 112,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 86,
+      "pipe_id": 114,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 87,
+      "pipe_id": 115,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 88,
+      "pipe_id": 116,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 89,
+      "pipe_id": 117,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 90,
+      "pipe_id": 118,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 91,
+      "pipe_id": 119,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 92,
+      "pipe_id": 120,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 93,
+      "pipe_id": 121,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 94,
+      "pipe_id": 122,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 95,
+      "pipe_id": 123,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 96,
+      "pipe_id": 125,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 97,
+      "pipe_id": 126,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 98,
+      "pipe_id": 127,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 99,
+      "pipe_id": 128,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 100,
+      "pipe_id": 129,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 101,
+      "pipe_id": 130,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 102,
+      "pipe_id": 131,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 103,
+      "pipe_id": 132,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 104,
+      "pipe_id": 133,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 105,
+      "pipe_id": 134,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 106,
+      "pipe_id": 91,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 107,
+      "pipe_id": 102,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 108,
+      "pipe_id": 113,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 109,
+      "pipe_id": 124,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 110,
+      "pipe_id": 135,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    },
+    {
+      "sensor_id": 111,
+      "pipe_id": -1,
+      "type": 0,
+      "pressure_bar": 0.150,
+      "level_pct": 70.0,
+      "valve": 1
+    }
+  ]
+}

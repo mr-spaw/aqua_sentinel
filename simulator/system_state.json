@@ -1,0 +1,25 @@
+{
+  "header": {
+    "timestamp": 1767996330,
+    "sim_time_sec": 0.960,
+    "sim_dt_sec": 0.016,
+    "step_count": 59
+  },
+  "global_state": {
+    "reservoir_level_m": 21.00,
+    "reservoir_volume_m3": 700.00,
+    "total_fresh_demand_m3s": 0.8100,
+    "total_sewage_flow_m3s": 0.2800,
+    "total_leak_flow_m3s": 0.0000,
+    "active_leak_count": 0,
+    "leaking_pipe_ids": [],
+    "avg_fresh_pressure_kpa": 15.0,
+    "min_fresh_pressure_kpa": 15.0,
+    "max_fresh_pressure_kpa": 15.0,
+    "avg_sewage_level_pct": 70.0,
+    "max_sewage_level_pct": 70.0,
+    "demand_satisfaction": 1.000,
+    "hydraulic_efficiency": 1.000,
+    "non_revenue_water_ratio": 0.000
+  }
+}

@@ -1,20 +1,5 @@
-/*
- * ROS2-INTEGRATED SCADA WATER & SEWAGE DIGITAL TWIN
- * ==================================================
- * 
- * - ROS2 controlled sensors (valve + pressure + level)
- * - Default: Valve ON, Pressure 15 kPa, Level 70%
- * - NO leaks by default (leak logic external)
- * - Highly visible sewage pipes
- * - Dynamic facility positioning
- * - Unique IDs for all sensors and pipes
- * 
- * COMPILE:
- * g++ -o water_ros2 water_ros2_scada.cpp -lGL -lGLU -lglut -lm -O2 -std=c++11
- * 
- * RUN:
- * ./water_ros2
- */
+
+//g++ -o sim sim.cpp -lGL -lGLU -lglut -lm -O2 -std=c++11\
 
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -30,6 +15,9 @@
 #include <iomanip>
 #include <string>
 #include <algorithm>
+#include <cstdio>   
+#include <sys/stat.h>
+
 
 // ============================================================================
 // ENGINEERING CONSTANTS
@@ -38,6 +26,7 @@
 const int BUILDINGS_PER_CLUSTER = 10;
 const float CITY_GRID_SPACING = 20.0f;
 const float CLUSTER_SPACING = 80.0f;  // Increased spacing
+int jsonExportCounter = 0;  // Add this global variable at the top
 
 const int FLOOR_OPTIONS[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 15};
 const int NUM_FLOOR_OPTIONS = 11;
@@ -251,6 +240,11 @@ struct CityNetwork {
     void loadLeakData(const char* filename);
     void updateFromROS2(int sensorID, float valve, float pressure, float level);
     void updateSimulation(float dt);
+    void generateInitSensorJSON(const char* filename);
+    void exportSensorJSON(const char* filename);
+    void exportLeakJSON(const char* filename);
+    void exportSystemStateJSON(const char* filename);
+    void importSensorJSON(const char* filename);
 };
 
 // ============================================================================
@@ -273,6 +267,337 @@ void CityNetwork::updateDynamicPositions() {
     // Position STP far from city (opposite side)
     stpPos = Vec3(cityExtent + 50, 0, cityExtent + 50);
 }
+
+void CityNetwork::generateInitSensorJSON(const char* filename) {
+    // ================= DELETE OLD FILE =================
+    if (std::remove(filename) == 0) {
+        std::cout << "Old init file deleted: " << filename << "\n";
+    }
+
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "ERROR: Cannot create " << filename << "\n";
+        return;
+    }
+
+    // ================= HEADER =================
+    file << "{\n";
+    file << "  \"generated_by\": \"water_ros2_scada_sim\",\n";
+    file << "  \"schema\": \"init_sensor_v1\",\n";
+    file << "  \"units\": {\n";
+    file << "    \"pressure\": \"bar\",\n";
+    file << "    \"level\": \"percent\"\n";
+    file << "  },\n";
+    file << "  \"timestamp\": " << time(nullptr) << ",\n";
+    file << "  \"sensor_count\": " << sensors.size() << ",\n";
+    file << "  \"sensors\": [\n";
+
+    // ================= SENSOR LIST =================
+    for (size_t i = 0; i < sensors.size(); ++i) {
+        const Sensor& s = sensors[i];
+        bool isFresh = (s.type == WATER_SENSOR);
+
+        file << "    {\n";
+        file << "      \"sensor_id\": " << s.id << ",\n";
+        file << "      \"pipe_id\": " << s.connectedPipeID << ",\n";
+
+        // pipe_type: 0 = fresh, 1 = sewage (matches ESP enum)
+        file << "      \"pipe_type\": " << (isFresh ? 0 : 1) << ",\n";
+
+        // Nominal baseline
+        file << "      \"pressure_bar\": " << (isFresh ? 1.03f : 1.01f) << ",\n";
+        file << "      \"level_pct\": " << (isFresh ? 90.0f : 70.0f) << ",\n";
+
+
+        file << "      \"valve\": 1\n";
+
+        file << "    }";
+        if (i < sensors.size() - 1) file << ",";
+        file << "\n";
+    }
+
+    // ================= FOOTER =================
+    file << "  ]\n";
+    file << "}\n";
+    file.close();
+
+    std::cout << "Init sensor snapshot regenerated: " << filename << "\n";
+}
+
+void CityNetwork::exportSensorJSON(const char* filename) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "ERROR: Cannot write " << filename << "\n";
+        return;
+    }
+
+    file << "{\n";
+    file << "  \"timestamp\": " << time(nullptr) << ",\n";
+    file << "  \"sim_time\": " << std::fixed << std::setprecision(3) << simulationTime << ",\n";
+    file << "  \"sensor_count\": " << sensors.size() << ",\n";
+    file << "  \"sensors\": [\n";
+
+    for (size_t i = 0; i < sensors.size(); ++i) {
+        const Sensor& s = sensors[i];
+        bool isFresh = (s.type == WATER_SENSOR);
+
+        file << "    {\n";
+        file << "      \"sensor_id\": " << s.id << ",\n";
+        file << "      \"pipe_id\": " << s.connectedPipeID << ",\n";
+        file << "      \"type\": " << (isFresh ? 1 : 0) << ",\n";
+        file << "      \"pressure_bar\": " << std::setprecision(3) << (s.pressure / 100.0f) << ",\n";
+        file << "      \"level_pct\": " << std::setprecision(1) << s.waterLevel << ",\n";
+        file << "      \"valve\": " << (s.valveState > 50.0f ? 1 : 0) << "\n";
+        file << "    }";
+        if (i < sensors.size() - 1) file << ",";
+        file << "\n";
+    }
+
+    file << "  ]\n";
+    file << "}\n";
+    file.close();
+}
+
+void CityNetwork::importSensorJSON(const char* filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return; // No file = use defaults
+    }
+
+    std::string line, content;
+    while (std::getline(file, line)) {
+        content += line;
+    }
+    file.close();
+
+    // Simple JSON parser (manual for no dependencies)
+    size_t pos = 0;
+    while ((pos = content.find("\"sensor_id\":", pos)) != std::string::npos) {
+        pos += 12;
+        int sid = std::stoi(content.substr(pos, content.find(",", pos) - pos));
+
+        // Find pressure
+        size_t p_pos = content.find("\"pressure_bar\":", pos);
+        if (p_pos != std::string::npos) {
+            p_pos += 15;
+            float pressure_bar = std::stof(content.substr(p_pos, content.find(",", p_pos) - p_pos));
+            
+            // Find level
+            size_t l_pos = content.find("\"level_pct\":", p_pos);
+            float level = 70.0f;
+            if (l_pos != std::string::npos) {
+                l_pos += 12;
+                level = std::stof(content.substr(l_pos, content.find(",", l_pos) - l_pos));
+            }
+
+            // Find valve
+            size_t v_pos = content.find("\"valve\":", l_pos);
+            float valve = 100.0f;
+            if (v_pos != std::string::npos) {
+                v_pos += 8;
+                int valve_int = std::stoi(content.substr(v_pos, content.find("}", v_pos) - v_pos));
+                valve = valve_int ? 100.0f : 0.0f;
+            }
+
+            // Update sensor
+            if (sid >= 0 && sid < (int)sensors.size()) {
+                sensors[sid].pressure = pressure_bar * 100.0f; // bar to kPa
+                sensors[sid].waterLevel = level;
+                sensors[sid].valveState = valve;
+            }
+        }
+    }
+}
+
+// ============================================================================
+// 3. LEAK.JSON - Leak detection data (WRITE by simulator)
+// ============================================================================
+void CityNetwork::exportLeakJSON(const char* filename) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "ERROR: Cannot write " << filename << "\n";
+        return;
+    }
+
+    file << "{\n";
+    file << "  \"timestamp\": " << time(nullptr) << ",\n";
+    file << "  \"sim_time\": " << std::fixed << std::setprecision(3) << simulationTime << ",\n";
+    file << "  \"total_leaks\": " << 0 << ",\n"; // Will count below
+    file << "  \"leaks\": [\n";
+
+    int leakCount = 0;
+    bool first = true;
+    
+    for (const auto& pipe : pipes) {
+        if (pipe.hasLeak) {
+            if (!first) file << ",\n";
+            first = false;
+            leakCount++;
+
+            // Find controlling sensor
+            int sensor_id = -1;
+            int valve_state = 1;
+            for (const auto& s : sensors) {
+                if (s.connectedPipeID == pipe.id) {
+                    sensor_id = s.id;
+                    valve_state = (s.valveState > 50.0f) ? 1 : 0;
+                    break;
+                }
+            }
+
+            file << "    {\n";
+            file << "      \"pipe_id\": " << pipe.id << ",\n";
+            file << "      \"sensor_id\": " << sensor_id << ",\n";
+            file << "      \"leak\": 1,\n";
+            file << "      \"leak_rate_lps\": " << std::setprecision(2) << pipe.leakRate << ",\n";
+            file << "      \"valve\": " << valve_state << "\n";
+            file << "    }";
+        }
+    }
+
+    file << "\n  ]\n";
+    file << "}\n";
+    file.close();
+
+    // Update total_leaks count (rewrite file)
+    if (leakCount > 0) {
+        std::ifstream in(filename);
+        std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        in.close();
+
+        size_t pos = content.find("\"total_leaks\": 0");
+        if (pos != std::string::npos) {
+            content.replace(pos + 16, 1, std::to_string(leakCount));
+            std::ofstream out(filename);
+            out << content;
+            out.close();
+        }
+    }
+}
+
+// ============================================================================
+// 4. SYSTEM_STATE.JSON - Full physics state for ROS2/RL (WRITE)
+// ============================================================================
+void CityNetwork::exportSystemStateJSON(const char* filename) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "ERROR: Cannot write " << filename << "\n";
+        return;
+    }
+
+    file << "{\n";
+    file << "  \"header\": {\n";
+    file << "    \"timestamp\": " << time(nullptr) << ",\n";
+    file << "    \"sim_time_sec\": " << std::fixed << std::setprecision(3) << simulationTime << ",\n";
+    file << "    \"sim_dt_sec\": 0.016,\n";
+    file << "    \"step_count\": " << (int)(simulationTime / 0.016f) << "\n";
+    file << "  },\n";
+
+    // ================= GLOBAL STATE =================
+    file << "  \"global_state\": {\n";
+
+    file << "    \"reservoir_level_m\": "
+         << std::setprecision(2)
+         << (sensors[reservoirWaterSensorID].waterLevel / 100.0f * 30.0f) << ",\n";
+
+    file << "    \"reservoir_volume_m3\": "
+         << (sensors[reservoirWaterSensorID].waterLevel * 10.0f) << ",\n";
+
+    // -------- Flow & Leak Aggregation --------
+    float total_fresh_flow = 0.0f;
+    float total_sewage_flow = 0.0f;
+    float total_leak_flow  = 0.0f;
+    int   numLeaks         = 0;
+    std::vector<int> leakingPipeIDs;
+
+    for (const auto& pipe : pipes) {
+        if (pipe.type < SEWAGE_LATERAL) {
+            total_fresh_flow += pipe.flowRate;
+        } else {
+            total_sewage_flow += pipe.flowRate;
+        }
+
+        if (pipe.hasLeak) {
+            total_leak_flow += pipe.leakRate;
+            numLeaks++;
+            leakingPipeIDs.push_back(pipe.id);
+        }
+    }
+
+    file << "    \"total_fresh_demand_m3s\": "
+         << std::setprecision(4) << (total_fresh_flow / 1000.0f) << ",\n";
+
+    file << "    \"total_sewage_flow_m3s\": "
+         << (total_sewage_flow / 1000.0f) << ",\n";
+
+    file << "    \"total_leak_flow_m3s\": "
+         << (total_leak_flow / 1000.0f) << ",\n";
+
+    file << "    \"active_leak_count\": " << numLeaks << ",\n";
+
+    // -------- WHICH PIPE IS LEAKING --------
+    file << "    \"leaking_pipe_ids\": [";
+    for (size_t i = 0; i < leakingPipeIDs.size(); ++i) {
+        file << leakingPipeIDs[i];
+        if (i < leakingPipeIDs.size() - 1) file << ", ";
+    }
+    file << "],\n";
+
+    // ================= PRESSURE STATS =================
+    float min_p = 9999.0f, max_p = 0.0f, sum_p = 0.0f;
+    int p_count = 0;
+
+    for (const auto& s : sensors) {
+        if (s.type == WATER_SENSOR) {
+            min_p = std::min(min_p, s.pressure);
+            max_p = std::max(max_p, s.pressure);
+            sum_p += s.pressure;
+            p_count++;
+        }
+    }
+
+    file << "    \"avg_fresh_pressure_kpa\": "
+         << std::setprecision(1) << (p_count ? sum_p / p_count : 0.0f) << ",\n";
+    file << "    \"min_fresh_pressure_kpa\": " << min_p << ",\n";
+    file << "    \"max_fresh_pressure_kpa\": " << max_p << ",\n";
+
+    // ================= SEWAGE STATS =================
+    float max_sewage_level = 0.0f, sum_sewage = 0.0f;
+    int s_count = 0;
+
+    for (const auto& s : sensors) {
+        if (s.type == SEWAGE_SENSOR) {
+            max_sewage_level = std::max(max_sewage_level, s.waterLevel);
+            sum_sewage += s.waterLevel;
+            s_count++;
+        }
+    }
+
+    file << "    \"avg_sewage_level_pct\": "
+         << (s_count ? sum_sewage / s_count : 0.0f) << ",\n";
+    file << "    \"max_sewage_level_pct\": " << max_sewage_level << ",\n";
+
+    // ================= PERFORMANCE METRICS =================
+    float demand_satisfaction =
+        (total_fresh_flow > 0.0f)
+            ? (total_fresh_flow - total_leak_flow) / total_fresh_flow
+            : 1.0f;
+
+    file << "    \"demand_satisfaction\": "
+         << std::setprecision(3) << demand_satisfaction << ",\n";
+
+    file << "    \"hydraulic_efficiency\": "
+         << (1.0f - total_leak_flow / (total_fresh_flow + 0.1f)) << ",\n";
+
+    file << "    \"non_revenue_water_ratio\": "
+         << (total_leak_flow / (total_fresh_flow + 0.1f)) << "\n";
+
+    file << "  }\n";
+    file << "}\n";
+    file.close();
+}
+
+
 
 void CityNetwork::generateCity(int numBuildings) {
     buildings.clear();
@@ -639,7 +964,7 @@ void drawCylinder(Vec3 start, Vec3 end, float radius, Color color) {
     GLUquadric* quad = gluNewQuadric();
     gluQuadricNormals(quad, GLU_SMOOTH);
     gluQuadricTexture(quad, GL_TRUE);
-    gluCylinder(quad, radius, radius, length, 16, 1);
+    gluCylinder(quad, radius, radius, length, 64, 8);
     gluDeleteQuadric(quad);
     
     glPopMatrix();
@@ -656,7 +981,7 @@ void drawSphere(Vec3 pos, float radius, Color color) {
     
     glPushMatrix();
     glTranslatef(pos.x, pos.y, pos.z);
-    glutSolidSphere(radius, 20, 20);
+    glutSolidSphere(radius, 48, 48);
     glPopMatrix();
 }
 
@@ -1183,6 +1508,27 @@ void reshape(int w, int h) {
 
 void idle() {
     city.updateSimulation(0.016f);
+    
+    // Export JSON files every 60 frames (~1 second at 60fps)
+    jsonExportCounter++;
+    if (jsonExportCounter >= 60) {
+        city.exportSensorJSON("sensor.json");         // Real-time sensor state
+        city.exportLeakJSON("leak.json");             // Leak detection
+        city.exportSystemStateJSON("system_state.json"); // Full physics
+        
+        jsonExportCounter = 0;
+    }
+    
+    // Also try to read sensor.json if it was modified externally
+    static time_t lastModTime = 0;
+    struct stat fileStat;
+    if (stat("sensor.json", &fileStat) == 0) {
+        if (fileStat.st_mtime > lastModTime) {
+            city.importSensorJSON("sensor.json");
+            lastModTime = fileStat.st_mtime;
+        }
+    }
+    
     glutPostRedisplay();
 }
 
@@ -1373,6 +1719,7 @@ int main(int argc, char** argv) {
     
     std::cout << "Generating city with " << currentBuildingCount << " buildings...\n";
     city.generateCity(currentBuildingCount);
+    city.generateInitSensorJSON("init_sensor.json");
     
     std::cout << "\nAll sensors initialized with DEFAULT values:\n";
     std::cout << "  Valve: 100% (ON) | Pressure: 15 kPa | Level: 70%\n";
