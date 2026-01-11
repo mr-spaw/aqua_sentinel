@@ -1,0 +1,2 @@
+Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge -- -j8 -l8
+Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge -- -j8 -l8

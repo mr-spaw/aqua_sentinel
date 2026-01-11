@@ -1,0 +1,4 @@
+[01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:[m[K In function ‘[01m[Kvoid on_message(mosquitto*, void*, const mosquitto_message*)[m[K’:
+[01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:450:21:[m[K [01;35m[Kwarning: [m[Kunused variable ‘[01m[Ksensor_id[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable-Wunused-variable]8;;[m[K]
+  450 |                 int [01;35m[Ksensor_id[m[K = std::stoi(sensor_part);
+      |                     [01;35m[K^~~~~~~~~[m[K

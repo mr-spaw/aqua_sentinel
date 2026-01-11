@@ -1,0 +1,27 @@
+mqtt:
+  broker: "localhost"
+  port: 1883
+  keepalive: 60
+  qos: 1
+
+sensors:
+  total: 300
+  per_esp: 75
+  
+topics:
+  esp1:
+    config: "pipes/config/init1"
+    sensors: "pipes/sensors1/all"
+    control: "pipes/control/esp1/valve"
+  esp2:
+    config: "pipes/config/init2"
+    sensors: "pipes/sensors2/all"
+    control: "pipes/control/esp2/valve"
+  esp3:
+    config: "pipes/config/init3"
+    sensors: "pipes/sensors3/all"
+    control: "pipes/control/esp3/valve"
+  esp4:
+    config: "pipes/config/init4"
+    sensors: "pipes/sensors4/all"
+    control: "pipes/control/esp4/valve"

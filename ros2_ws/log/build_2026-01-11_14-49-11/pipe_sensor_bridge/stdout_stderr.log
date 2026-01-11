@@ -1,0 +1,12 @@
+[ 50%] Built target init_config_publisher
+[ 75%] [32mBuilding CXX object CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o[0m
+[01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:400:5:[m[K [01;31m[Kerror: [m[KISO C++ forbids declaration of ‘[01m[KvalveControlCallback[m[K’ with no type [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+  400 |     [01;31m[KvalveControlCallback[m[K(const std_msgs::msg::String::SharedPtr msg) {
+      |     [01;31m[K^~~~~~~~~~~~~~~~~~~~[m[K
+[01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:[m[K In member function ‘[01m[Kint ROSMQTTBridge::valveControlCallback(std_msgs::msg::String_<std::allocator<void> >::SharedPtr)[m[K’:
+[01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:408:13:[m[K [01;31m[Kerror: [m[Kreturn-statement with no value, in function returning ‘[01m[Kint[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+  408 |             [01;31m[Kreturn[m[K;
+      |             [01;31m[K^~~~~~[m[K
+gmake[2]: *** [CMakeFiles/mqtt_subscriber_bridge.dir/build.make:76: CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:165: CMakeFiles/mqtt_subscriber_bridge.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2

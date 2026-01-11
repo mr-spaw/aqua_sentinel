@@ -1,0 +1,51 @@
+-- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)
+-- Found rclcpp: 16.0.16 (/opt/ros/humble/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 3.1.7 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+-- Found rosidl_adapter: 3.1.7 (/opt/ros/humble/share/rosidl_adapter/cmake)
+-- Found rosidl_generator_cpp: 3.1.7 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 6.2.9 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Found sensor_msgs: 4.9.0 (/opt/ros/humble/share/sensor_msgs/cmake)
+-- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)
+-- Added test 'copyright' to check source files copyright and LICENSE
+-- Added test 'cppcheck' to perform static code analysis on C / C++ code
+-- Configured cppcheck include dirs: 
+-- Configured cppcheck exclude dirs and/or files: 
+-- Added test 'cpplint' to check C / C++ code against the Google style
+-- Configured cpplint exclude dirs and/or files: 
+-- Added test 'flake8' to check Python code syntax and style conventions
+-- Added test 'lint_cmake' to check CMake code style
+-- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+-- Added test 'uncrustify' to check C / C++ code style
+-- Configured uncrustify additional arguments: 
+-- Added test 'xmllint' to check XML markup files
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge
+[ 50%] Built target init_config_publisher
+[ 75%] [32mBuilding CXX object CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o[0m
+[100%] [32m[1mLinking CXX executable mqtt_subscriber_bridge[0m
+[100%] Built target mqtt_subscriber_bridge
+-- Install configuration: ""
+-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/init_config_publisher
+-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/mqtt_subscriber_bridge
+-- Set runtime path of "/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/mqtt_subscriber_bridge" to ""
+-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/launch
+-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/launch/pipe_bridge.launch.py
+-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/config
+-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/config/mqtt_params.yaml
+-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/test_valve_control.sh
+-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/monitor_sensors.sh
+-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/maintenance.sh
+-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/test_valve_control.sh
+-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/monitor_sensors.sh
+-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/maintenance.sh
+[31mCMake Error at cmake_install.cmake:110 (file):
+  file INSTALL cannot find
+  "/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/README.md": No
+  such file or directory.
+
+[0m

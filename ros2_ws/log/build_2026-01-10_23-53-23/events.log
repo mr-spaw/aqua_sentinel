@@ -1,0 +1,145 @@
+[0.000000] (-) TimerEvent: {}
+[0.000470] (-) JobUnselected: {'identifier': 'aqua_msgs'}
+[0.000531] (-) JobUnselected: {'identifier': 'mqtt_leak_bridge'}
+[0.000543] (-) JobUnselected: {'identifier': 'rl_controller'}
+[0.000554] (-) JobUnselected: {'identifier': 'sim_bridge'}
+[0.000565] (pipe_sensor_bridge) JobQueued: {'identifier': 'pipe_sensor_bridge', 'dependencies': OrderedDict()}
+[0.000578] (pipe_sensor_bridge) JobStarted: {'identifier': 'pipe_sensor_bridge'}
+[0.009107] (pipe_sensor_bridge) JobProgress: {'identifier': 'pipe_sensor_bridge', 'progress': 'cmake'}
+[0.009929] (pipe_sensor_bridge) JobProgress: {'identifier': 'pipe_sensor_bridge', 'progress': 'build'}
+[0.010410] (pipe_sensor_bridge) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge', '--', '-j8', '-l8'], 'cwd': '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge', 'env': OrderedDict([('GJS_DEBUG_TOPICS', 'JS ERROR;JS LOG'), ('LESSOPEN', '| /usr/bin/lesspipe %s'), ('LANGUAGE', 'en_IN:en'), ('USER', 'arka'), ('XDG_SESSION_TYPE', 'wayland'), ('STM32CubeMX_PATH', '/home/arka/STM32CubeMX'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/home/arka/ros_ws/install/ldlidar_component/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/arka'), ('CONDA_SHLVL', '0'), ('OLDPWD', '/home/arka/aqua_sentinel/ros2_ws'), ('DESKTOP_SESSION', 'ubuntu'), ('GIO_LAUNCHED_DESKTOP_FILE', '/usr/share/applications/terminator.desktop'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('MANAGERPID', '2044'), ('SYSTEMD_EXEC_PID', '1425440'), ('IM_CONFIG_CHECK_ENV', '1'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('_CE_M', ''), ('TERMINATOR_DBUS_NAME', 'net.tenshu.Terminator25ef4b219e3b005583550f2b0f9f990c3'), ('_CONDA_ROOT', '/home/arka/miniforge3'), ('GIO_LAUNCHED_DESKTOP_FILE_PID', '1427086'), ('IM_CONFIG_PHASE', '1'), ('WAYLAND_DISPLAY', 'wayland-0'), ('COLCON_PREFIX_PATH', '/home/arka/aqua_sentinel/ros2_ws/install:/home/arka/ros_ws/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'arka'), ('JOURNAL_STREAM', '8:8087729'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'arka'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('_CE_CONDA', ''), ('ROS_LOCALHOST_ONLY', '0'), ('IDF_PATH', '/home/arka/esp/esp-idf'), ('PATH', '/home/arka/miniconda3/envs/lerobot/bin:/home/arka/miniforge3/condabin:/opt/ros/humble/bin:/home/arka/.local/bin:/home/arka/.cargo/bin:/home/arka/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin'), ('SESSION_MANAGER', 'local/Arka:@/tmp/.ICE-unix/1425417,unix/Arka:/tmp/.ICE-unix/1425417'), ('INVOCATION_ID', '2ebf953decf4410e99b8777bf516c453'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_SETUP_DISPLAY', ':1'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('MAMBA_ROOT_PREFIX', '/home/arka/miniforge3'), ('DISPLAY', ':0'), ('TERMINATOR_DBUS_PATH', '/net/tenshu/Terminator2'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('IBUS_DISABLE_SNOOPER', '1'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/.mutter-Xwaylandauth.HB8EI3'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble'), ('CONDA_PYTHON_EXE', '/home/arka/miniforge3/bin/python'), ('SHELL', '/bin/bash'), ('TERMINATOR_UUID', 'urn:uuid:37204c85-c761-40b2-936a-5a0110b49033'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GJS_DEBUG_OUTPUT', 'stderr'), ('_CONDA_EXE', '/home/arka/miniforge3/bin/conda'), ('MAMBA_EXE', '/home/arka/miniforge3/bin/mamba'), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge'), ('LC_ALL', 'en_US.UTF-8'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('CONDA_EXE', '/home/arka/miniforge3/bin/conda'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/home/arka/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('CMAKE_PREFIX_PATH', '/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble')]), 'shell': False}
+[0.092100] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)\n'}
+[0.099866] (-) TimerEvent: {}
+[0.183618] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found rclcpp: 16.0.16 (/opt/ros/humble/share/rclcpp/cmake)\n'}
+[0.199962] (-) TimerEvent: {}
+[0.223772] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found rosidl_generator_c: 3.1.7 (/opt/ros/humble/share/rosidl_generator_c/cmake)\n'}
+[0.226408] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found rosidl_adapter: 3.1.7 (/opt/ros/humble/share/rosidl_adapter/cmake)\n'}
+[0.234059] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found rosidl_generator_cpp: 3.1.7 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)\n'}
+[0.242944] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[0.253684] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[0.281088] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)\n'}
+[0.282849] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found rmw_fastrtps_cpp: 6.2.9 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)\n'}
+[0.300033] (-) TimerEvent: {}
+[0.363812] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Using RMW implementation 'rmw_fastrtps_cpp' as default\n"}
+[0.400234] (-) TimerEvent: {}
+[0.403474] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found sensor_msgs: 4.9.0 (/opt/ros/humble/share/sensor_msgs/cmake)\n'}
+[0.428414] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)\n'}
+[0.478829] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Added test 'copyright' to check source files copyright and LICENSE\n"}
+[0.479885] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Added test 'cppcheck' to perform static code analysis on C / C++ code\n"}
+[0.479959] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Configured cppcheck include dirs: \n'}
+[0.480000] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Configured cppcheck exclude dirs and/or files: \n'}
+[0.480679] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Added test 'cpplint' to check C / C++ code against the Google style\n"}
+[0.480865] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Configured cpplint exclude dirs and/or files: \n'}
+[0.480914] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Added test 'flake8' to check Python code syntax and style conventions\n"}
+[0.481090] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Added test 'lint_cmake' to check CMake code style\n"}
+[0.481528] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257\n"}
+[0.482320] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Added test 'uncrustify' to check C / C++ code style\n"}
+[0.482393] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Configured uncrustify additional arguments: \n'}
+[0.482457] (pipe_sensor_bridge) StdoutLine: {'line': b"-- Added test 'xmllint' to check XML markup files\n"}
+[0.484310] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Configuring done\n'}
+[0.500338] (-) TimerEvent: {}
+[0.502701] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Generating done\n'}
+[0.513907] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Build files have been written to: /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge\n'}
+[0.562228] (pipe_sensor_bridge) StdoutLine: {'line': b'[ 50%] Built target init_config_publisher\n'}
+[0.563204] (pipe_sensor_bridge) StdoutLine: {'line': b'[ 75%] \x1b[32mBuilding CXX object CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o\x1b[0m\n'}
+[0.600578] (-) TimerEvent: {}
+[0.700942] (-) TimerEvent: {}
+[0.801237] (-) TimerEvent: {}
+[0.901539] (-) TimerEvent: {}
+[1.001918] (-) TimerEvent: {}
+[1.102267] (-) TimerEvent: {}
+[1.202627] (-) TimerEvent: {}
+[1.302952] (-) TimerEvent: {}
+[1.403369] (-) TimerEvent: {}
+[1.503702] (-) TimerEvent: {}
+[1.604025] (-) TimerEvent: {}
+[1.704311] (-) TimerEvent: {}
+[1.804707] (-) TimerEvent: {}
+[1.905004] (-) TimerEvent: {}
+[2.005362] (-) TimerEvent: {}
+[2.105727] (-) TimerEvent: {}
+[2.206097] (-) TimerEvent: {}
+[2.306398] (-) TimerEvent: {}
+[2.406765] (-) TimerEvent: {}
+[2.507035] (-) TimerEvent: {}
+[2.607331] (-) TimerEvent: {}
+[2.707696] (-) TimerEvent: {}
+[2.807995] (-) TimerEvent: {}
+[2.908391] (-) TimerEvent: {}
+[3.008764] (-) TimerEvent: {}
+[3.109118] (-) TimerEvent: {}
+[3.209467] (-) TimerEvent: {}
+[3.309817] (-) TimerEvent: {}
+[3.410106] (-) TimerEvent: {}
+[3.510470] (-) TimerEvent: {}
+[3.610807] (-) TimerEvent: {}
+[3.711065] (-) TimerEvent: {}
+[3.811424] (-) TimerEvent: {}
+[3.911717] (-) TimerEvent: {}
+[4.011999] (-) TimerEvent: {}
+[4.112257] (-) TimerEvent: {}
+[4.212528] (-) TimerEvent: {}
+[4.312832] (-) TimerEvent: {}
+[4.413110] (-) TimerEvent: {}
+[4.513374] (-) TimerEvent: {}
+[4.613668] (-) TimerEvent: {}
+[4.713920] (-) TimerEvent: {}
+[4.814182] (-) TimerEvent: {}
+[4.914455] (-) TimerEvent: {}
+[5.014875] (-) TimerEvent: {}
+[5.115206] (-) TimerEvent: {}
+[5.215570] (-) TimerEvent: {}
+[5.315829] (-) TimerEvent: {}
+[5.416186] (-) TimerEvent: {}
+[5.516538] (-) TimerEvent: {}
+[5.616797] (-) TimerEvent: {}
+[5.717172] (-) TimerEvent: {}
+[5.817562] (-) TimerEvent: {}
+[5.917946] (-) TimerEvent: {}
+[6.018309] (-) TimerEvent: {}
+[6.118603] (-) TimerEvent: {}
+[6.218916] (-) TimerEvent: {}
+[6.319237] (-) TimerEvent: {}
+[6.419552] (-) TimerEvent: {}
+[6.519805] (-) TimerEvent: {}
+[6.620102] (-) TimerEvent: {}
+[6.720528] (-) TimerEvent: {}
+[6.820812] (-) TimerEvent: {}
+[6.921155] (-) TimerEvent: {}
+[7.021449] (-) TimerEvent: {}
+[7.121824] (-) TimerEvent: {}
+[7.222230] (-) TimerEvent: {}
+[7.322600] (-) TimerEvent: {}
+[7.423225] (-) TimerEvent: {}
+[7.450568] (pipe_sensor_bridge) StdoutLine: {'line': b'[100%] \x1b[32m\x1b[1mLinking CXX executable mqtt_subscriber_bridge\x1b[0m\n'}
+[7.523357] (-) TimerEvent: {}
+[7.623643] (-) TimerEvent: {}
+[7.724007] (-) TimerEvent: {}
+[7.817865] (pipe_sensor_bridge) StdoutLine: {'line': b'[100%] Built target mqtt_subscriber_bridge\n'}
+[7.821605] (pipe_sensor_bridge) CommandEnded: {'returncode': 0}
+[7.822241] (pipe_sensor_bridge) JobProgress: {'identifier': 'pipe_sensor_bridge', 'progress': 'install'}
+[7.824072] (-) TimerEvent: {}
+[7.824565] (pipe_sensor_bridge) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge'], 'cwd': '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge', 'env': OrderedDict([('GJS_DEBUG_TOPICS', 'JS ERROR;JS LOG'), ('LESSOPEN', '| /usr/bin/lesspipe %s'), ('LANGUAGE', 'en_IN:en'), ('USER', 'arka'), ('XDG_SESSION_TYPE', 'wayland'), ('STM32CubeMX_PATH', '/home/arka/STM32CubeMX'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/home/arka/ros_ws/install/ldlidar_component/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/arka'), ('CONDA_SHLVL', '0'), ('OLDPWD', '/home/arka/aqua_sentinel/ros2_ws'), ('DESKTOP_SESSION', 'ubuntu'), ('GIO_LAUNCHED_DESKTOP_FILE', '/usr/share/applications/terminator.desktop'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('MANAGERPID', '2044'), ('SYSTEMD_EXEC_PID', '1425440'), ('IM_CONFIG_CHECK_ENV', '1'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('_CE_M', ''), ('TERMINATOR_DBUS_NAME', 'net.tenshu.Terminator25ef4b219e3b005583550f2b0f9f990c3'), ('_CONDA_ROOT', '/home/arka/miniforge3'), ('GIO_LAUNCHED_DESKTOP_FILE_PID', '1427086'), ('IM_CONFIG_PHASE', '1'), ('WAYLAND_DISPLAY', 'wayland-0'), ('COLCON_PREFIX_PATH', '/home/arka/aqua_sentinel/ros2_ws/install:/home/arka/ros_ws/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'arka'), ('JOURNAL_STREAM', '8:8087729'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'arka'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('_CE_CONDA', ''), ('ROS_LOCALHOST_ONLY', '0'), ('IDF_PATH', '/home/arka/esp/esp-idf'), ('PATH', '/home/arka/miniconda3/envs/lerobot/bin:/home/arka/miniforge3/condabin:/opt/ros/humble/bin:/home/arka/.local/bin:/home/arka/.cargo/bin:/home/arka/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin'), ('SESSION_MANAGER', 'local/Arka:@/tmp/.ICE-unix/1425417,unix/Arka:/tmp/.ICE-unix/1425417'), ('INVOCATION_ID', '2ebf953decf4410e99b8777bf516c453'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_SETUP_DISPLAY', ':1'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('MAMBA_ROOT_PREFIX', '/home/arka/miniforge3'), ('DISPLAY', ':0'), ('TERMINATOR_DBUS_PATH', '/net/tenshu/Terminator2'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('IBUS_DISABLE_SNOOPER', '1'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/.mutter-Xwaylandauth.HB8EI3'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble'), ('CONDA_PYTHON_EXE', '/home/arka/miniforge3/bin/python'), ('SHELL', '/bin/bash'), ('TERMINATOR_UUID', 'urn:uuid:37204c85-c761-40b2-936a-5a0110b49033'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GJS_DEBUG_OUTPUT', 'stderr'), ('_CONDA_EXE', '/home/arka/miniforge3/bin/conda'), ('MAMBA_EXE', '/home/arka/miniforge3/bin/mamba'), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge'), ('LC_ALL', 'en_US.UTF-8'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('CONDA_EXE', '/home/arka/miniforge3/bin/conda'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/home/arka/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('CMAKE_PREFIX_PATH', '/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge:/home/arka/ros_ws/install/ldlidar:/home/arka/ros_ws/install/ldlidar_node:/home/arka/ros_ws/install/ldlidar_component:/opt/ros/humble')]), 'shell': False}
+[7.826771] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Install configuration: ""\n'}
+[7.827691] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/init_config_publisher\n'}
+[7.828048] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/mqtt_subscriber_bridge\n'}
+[7.834386] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Set runtime path of "/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/mqtt_subscriber_bridge" to ""\n'}
+[7.834472] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/launch\n'}
+[7.834515] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/launch/pipe_bridge.launch.py\n'}
+[7.834575] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/config\n'}
+[7.834638] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/config/mqtt_params.yaml\n'}
+[7.834683] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/test_valve_control.sh\n'}
+[7.834913] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/monitor_sensors.sh\n'}
+[7.835050] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/maintenance.sh\n'}
+[7.835254] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/test_valve_control.sh\n'}
+[7.835491] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/monitor_sensors.sh\n'}
+[7.835530] (pipe_sensor_bridge) StdoutLine: {'line': b'-- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/maintenance.sh\n'}
+[7.835605] (pipe_sensor_bridge) StderrLine: {'line': b'\x1b[31mCMake Error at cmake_install.cmake:110 (file):\n'}
+[7.835807] (pipe_sensor_bridge) StderrLine: {'line': b'  file INSTALL cannot find\n'}
+[7.835845] (pipe_sensor_bridge) StderrLine: {'line': b'  "/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/README.md": No\n'}
+[7.835879] (pipe_sensor_bridge) StderrLine: {'line': b'  such file or directory.\n'}
+[7.835913] (pipe_sensor_bridge) StderrLine: {'line': b'\n'}
+[7.835950] (pipe_sensor_bridge) StderrLine: {'line': b'\x1b[0m\n'}
+[7.836310] (pipe_sensor_bridge) CommandEnded: {'returncode': 1}
+[7.848461] (pipe_sensor_bridge) JobEnded: {'identifier': 'pipe_sensor_bridge', 'rc': 1}
+[7.859316] (-) EventReactorShutdown: {}

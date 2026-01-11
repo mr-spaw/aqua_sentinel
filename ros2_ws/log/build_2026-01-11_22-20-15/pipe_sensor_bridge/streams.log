@@ -1,0 +1,40 @@
+[0.008s] Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge -- -j8 -l8
+[0.031s] [ 25%] [32mBuilding CXX object CMakeFiles/init_config_publisher.dir/src/init_config_publisher.cpp.o[0m
+[0.031s] [ 50%] [32mBuilding CXX object CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o[0m
+[3.803s] [ 75%] [32m[1mLinking CXX executable init_config_publisher[0m
+[3.946s] [ 75%] Built target init_config_publisher
+[7.964s] [100%] [32m[1mLinking CXX executable mqtt_subscriber_bridge[0m
+[8.302s] [100%] Built target mqtt_subscriber_bridge
+[8.306s] Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge -- -j8 -l8
+[8.309s] Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge
+[8.311s] -- Install configuration: ""
+[8.313s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/init_config_publisher
+[8.317s] -- Set runtime path of "/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/init_config_publisher" to ""
+[8.317s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/mqtt_subscriber_bridge
+[8.325s] -- Set runtime path of "/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/mqtt_subscriber_bridge" to ""
+[8.325s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/launch
+[8.325s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/launch/pipe_bridge.launch.py
+[8.325s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/config
+[8.325s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/config/mqtt_params.yaml
+[8.325s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/test_valve_control.sh
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/monitor_sensors.sh
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/lib/pipe_sensor_bridge/maintenance.sh
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/test_valve_control.sh
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/monitor_sensors.sh
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/scripts/maintenance.sh
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/ament_index/resource_index/package_run_dependencies/pipe_sensor_bridge
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/ament_index/resource_index/parent_prefix_path/pipe_sensor_bridge
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/environment/ament_prefix_path.sh
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/environment/ament_prefix_path.dsv
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/environment/path.sh
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/environment/path.dsv
+[8.326s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/local_setup.bash
+[8.327s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/local_setup.sh
+[8.327s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/local_setup.zsh
+[8.327s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/local_setup.dsv
+[8.327s] -- Installing: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/package.dsv
+[8.327s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/ament_index/resource_index/packages/pipe_sensor_bridge
+[8.328s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/cmake/pipe_sensor_bridgeConfig.cmake
+[8.328s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/cmake/pipe_sensor_bridgeConfig-version.cmake
+[8.328s] -- Up-to-date: /home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge/share/pipe_sensor_bridge/package.xml
+[8.328s] Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge

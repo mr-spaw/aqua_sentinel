@@ -1,0 +1,7 @@
+[01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:[m[K In function ‘[01m[Kvoid initialize_esp_log_files()[m[K’:
+[01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:124:30:[m[K [01;31m[Kerror: [m[K‘[01m[Kstd::map<int, std::basic_ofstream<char> >::mapped_type[m[K’ {aka ‘[01m[Kclass std::basic_ofstream<char>[m[K’} has no member named ‘[01m[Kget[m[K’
+  124 |             esp_log_files[i].[01;31m[Kget[m[K(last_char);
+      |                              [01;31m[K^~~[m[K
+gmake[2]: *** [CMakeFiles/mqtt_subscriber_bridge.dir/build.make:76: CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:165: CMakeFiles/mqtt_subscriber_bridge.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2

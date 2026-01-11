@@ -1,9 +1,0 @@
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/uninstall.dir
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/sim_bridge_uninstall.dir
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/test.dir
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/edit_cache.dir
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/rebuild_cache.dir
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/list_install_components.dir
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/install.dir
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/install/local.dir
-/home/arka/aqua_sentinel/ros2_ws/build/sim_bridge/CMakeFiles/install/strip.dir

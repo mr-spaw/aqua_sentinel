@@ -3,18 +3,22 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <vector>
 
 //------ESP WLAN CONFIGURATION------
 const char* WIFI_SSID = "iPhone"; 
 const char* WIFI_PASSWORD = "123456789";
 const char* MQTT_SERVER = "172.20.10.5";  //Linux System wlan ip  
 const int MQTT_PORT = 1883;
-const char* MQTT_TOPIC = "pipes/sensors1"; //Topic for ESP1   ESP_CHANGE
-const char* MQTT_CLIENT_ID = "ESP32_PipeSystem1"; //ESP_CHANGE
 
+//const char* MQTT_TOPIC = "pipes/sensors1"; // ESP_CHANGE
+//const char* MQTT_CLIENT_ID = "ESP32_PipeSystem1";  //ESP_CHANGE
 
 //const char* MQTT_TOPIC = "pipes/sensors2"; 
-//const char* MQTT_CLIENT_ID = "ESP32_PipeSystem2"; 
+//const char* MQTT_CLIENT_ID = "ESP32_PipeSystem2";  
+
+const char* MQTT_TOPIC = "pipes/sensors3"; 
+const char* MQTT_CLIENT_ID = "ESP32_PipeSystem3";  
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -28,7 +32,7 @@ PubSubClient mqttClient(espClient);
 #define PIPE_ROUGHNESS     0.000015f // m 
 
 /* ================= CONFIG ================= */
-#define TOTAL_PIPES        500       //RAM limitation
+#define TOTAL_PIPES        500       //RAM limitation for ESP 32 S3
 #define UPDATE_INTERVAL    2000     
 #define PHYSICS_DT         0.1f     
 
@@ -39,7 +43,7 @@ PubSubClient mqttClient(espClient);
   #define PHYSICS_SUBSTEPS 10       // Full fidelity for small counts
 #endif
 
-#define FIRST_FAIL_MIN_MS  60000    // 1 min
+#define FIRST_FAIL_MIN_MS  60000    
 #define NEXT_FAIL_MIN_MS   60000    
 #define NEXT_FAIL_MAX_MS   120000   
 #define MQTT_BATCH_SIZE    100     
@@ -88,6 +92,15 @@ struct Sensor {
   float headLoss;      // m
 };
 
+struct InitialSensorState {
+  float initialPressure;
+  float initialLevel;
+  int initialValve;
+  bool stored;
+};
+
+
+InitialSensorState initialStates[TOTAL_PIPES];
 Sensor sensors[TOTAL_PIPES];
 unsigned long lastUpdate = 0;
 unsigned long nextDegradeTime = 0;
@@ -129,6 +142,13 @@ void reconnectMQTT();
 // Calculate Reynolds Number (determines laminar vs turbulent flow)
 float calculateReynolds(float velocity, float diameter, float viscosity) {
   return (WATER_DENSITY * velocity * diameter) / viscosity;
+}
+
+// Initialize in setup or somewhere
+void initializeInitialStates() {
+  for (int i = 0; i < TOTAL_PIPES; i++) {
+    initialStates[i].stored = false;
+  }
 }
 
 // Calculate friction factor using Colebrook-White equation 
@@ -356,8 +376,6 @@ void updatePhysics(float dt) {
     
 
     targetFlow = max(0.0f, targetFlow - leakFlow);
-    
-
     targetFlow = applyBlockage(targetFlow, s.blockageCoeff);
 }
     
@@ -561,19 +579,357 @@ void verifySensorUniqueness() {
   Serial.println("========================================");
 }
 
-/* ================= MQTT FUNCTIONS ================= */
+void resetSensorsToInitialConfig(const std::vector<int>& sensor_ids) {
+  Serial.println("===========================================");
+  Serial.println(" RESETTING TO INITIAL CONFIGURED STATE");
+  Serial.println("===========================================");
+  
+  int resetCount = 0;
+  
+  for (int target_sensor_id : sensor_ids) {
+    // Find the sensor in our array
+    bool found = false;
+    
+    for (int i = 0; i < activeSensorCount; i++) {
+      if (sensors[i].sensorId == target_sensor_id) {
+        found = true;
+        
+        // Check if we have initial state stored
+        if (initialStates[i].stored) {
+          Sensor &s = sensors[i];
+          
+          Serial.print("Resetting sensor ");
+          Serial.print(target_sensor_id);
+          Serial.print(" to initial config state: ");
+          Serial.print("P=");
+          Serial.print(initialStates[i].initialPressure);
+          Serial.print("bar, L=");
+          Serial.print(initialStates[i].initialLevel);
+          Serial.print("%, V=");
+          Serial.println(initialStates[i].initialValve);
+          
+          // Reset to INITIAL CONFIG values
+          s.pressure = initialStates[i].initialPressure;
+          s._pressurePa = s.pressure * 100000.0f;
+          s.supplyPressure = s._pressurePa;  // Also reset supply pressure
+          
+          s.level = initialStates[i].initialLevel;
+          s.valveOpen = (initialStates[i].initialValve == 1);
+          
+          // Reset degradation
+          s.degrading = false;
+          s.leakCoeff = 0.0f;
+          s.blockageCoeff = 0.0f;
+          
+          // Reset physics
+          s.flowRate = s.demandFlow;
+          s.velocity = s.flowRate / s.crossSection;
+          s.reynoldsNumber = 0.0f;
+          s.frictionFactor = 0.0f;
+          s.headLoss = 0.0f;
+          
+          resetCount++;
+          Serial.println(" Reset to initial config complete");
+        } else {
+          Serial.print("No initial config stored for sensor ");
+          Serial.println(target_sensor_id);
+        }
+        
+        break;
+      }
+    }
+    
+    if (!found) {
+      Serial.print(" Sensor ");
+      Serial.print(target_sensor_id);
+      Serial.println(" not found in active sensors");
+    }
+  }
+  
+  Serial.println("===========================================");
+  Serial.print("Reset ");
+  Serial.print(resetCount);
+  Serial.print(" out of ");
+  Serial.print(sensor_ids.size());
+  Serial.println(" sensors to initial config");
+}
+
+
 void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message received on topic: ");
   Serial.println(topic);
 
-  // Only handle init config
-  if (strcmp(topic, "pipes/config/init1") != 0) { //ESP_CHANGE
-    return;
+  /*if (strcmp(topic, "pipes/control/valve1") == 0) { //ESP_CHANGE
+    DynamicJsonDocument doc(512);
+    DeserializationError error = deserializeJson(doc, payload, length);
+    
+    if (error) {
+      Serial.print("Valve control JSON parsing failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    
+    int target_sensor_id = doc["sensor_id"];
+    int valve_state = doc["valve"];
+    
+    // Find the sensor in our array
+    bool found = false;
+    for (int i = 0; i < activeSensorCount; i++) {
+      if (sensors[i].sensorId == target_sensor_id) {
+        sensors[i].valveOpen = (valve_state == 1);
+        found = true;
+        
+        Serial.print("Valve control: Sensor ");
+        Serial.print(target_sensor_id);
+        Serial.print(" -> ");
+        Serial.println(sensors[i].valveOpen ? "OPEN" : "CLOSED");
+        break;
+      }
+    }
+    
+    if (!found) {
+      Serial.print(" Valve control: Sensor ");
+      Serial.print(target_sensor_id);
+      Serial.println(" not found on this ESP");
+    }
+    
+    return;  // Exit after handling valve control
+  }*/
+
+  /*if (strcmp(topic, "pipes/control/valve2") == 0) {
+    DynamicJsonDocument doc(512);
+    DeserializationError error = deserializeJson(doc, payload, length);
+    
+    if (error) {
+      Serial.print("Valve control JSON parsing failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    
+    int target_sensor_id = doc["sensor_id"];
+    int valve_state = doc["valve"];
+    
+    // Find the sensor in our array
+    bool found = false;
+    for (int i = 0; i < activeSensorCount; i++) {
+      if (sensors[i].sensorId == target_sensor_id) {
+        sensors[i].valveOpen = (valve_state == 1);
+        found = true;
+        
+        Serial.print("Valve control: Sensor ");
+        Serial.print(target_sensor_id);
+        Serial.print(" -> ");
+        Serial.println(sensors[i].valveOpen ? "OPEN" : "CLOSED");
+        break;
+      }
+    }
+    
+    if (!found) {
+      Serial.print(" Valve control: Sensor ");
+      Serial.print(target_sensor_id);
+      Serial.println(" not found on this ESP");
+    }
+    
+    return;  // Exit after handling valve control
+  }*/
+
+  if (strcmp(topic, "pipes/control/valve3") == 0) {
+    DynamicJsonDocument doc(512);
+    DeserializationError error = deserializeJson(doc, payload, length);
+    
+    if (error) {
+      Serial.print("Valve control JSON parsing failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    
+    int target_sensor_id = doc["sensor_id"];
+    int valve_state = doc["valve"];
+    
+    // Find the sensor in our array
+    bool found = false;
+    for (int i = 0; i < activeSensorCount; i++) {
+      if (sensors[i].sensorId == target_sensor_id) {
+        sensors[i].valveOpen = (valve_state == 1);
+        found = true;
+        
+        Serial.print(" Valve control: Sensor ");
+        Serial.print(target_sensor_id);
+        Serial.print(" -> ");
+        Serial.println(sensors[i].valveOpen ? "OPEN" : "CLOSED");
+        break;
+      }
+    }
+    
+    if (!found) {
+      Serial.print(" Valve control: Sensor ");
+      Serial.print(target_sensor_id);
+      Serial.println(" not found on this ESP");
+    }
+    
+    return;  // Exit after handling valve control
   }
+
+  // 2. MAINTENANCE HANDLER (your existing code for ESP1)
+  /*if (strcmp(topic, "pipes/maintenance/esp1") == 0) {  //ESP_CHANGE
+    DynamicJsonDocument doc(512);
+    DeserializationError error = deserializeJson(doc, payload, length);
+    
+    if (error) {
+      Serial.print("Maintenance JSON parsing failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    
+    // Check for sensor-specific reset to initial config
+    if (doc.containsKey("reset_to_initial")) {
+      JsonArray sensorArray = doc["reset_to_initial"];
+      std::vector<int> sensor_ids;
+      
+      for (JsonVariant v : sensorArray) {
+        sensor_ids.push_back(v.as<int>());
+      }
+      
+      resetSensorsToInitialConfig(sensor_ids);
+      return;
+    }
+    
+    // Check for single sensor reset
+    if (doc.containsKey("reset_sensor_to_initial")) {
+      int sensor_id = doc["reset_sensor_to_initial"];
+      std::vector<int> sensor_ids = {sensor_id};
+      resetSensorsToInitialConfig(sensor_ids);
+      return;
+    }
+    
+    // Check for reset all to initial
+    if (doc.containsKey("reset_all_to_initial") && doc["reset_all_to_initial"] == true) {
+      Serial.println("===========================================");
+      Serial.println(" RESETTING ALL SENSORS TO INITIAL CONFIG");
+      Serial.println("===========================================");
+      
+      std::vector<int> all_sensor_ids;
+      for (int i = 0; i < activeSensorCount; i++) {
+        all_sensor_ids.push_back(sensors[i].sensorId);
+      }
+      
+      resetSensorsToInitialConfig(all_sensor_ids);
+      return;
+    }
+    
+    return;  
+  }*/
+
+  /*if (strcmp(topic, "pipes/maintenance/esp2") == 0) {
+    DynamicJsonDocument doc(512);
+    DeserializationError error = deserializeJson(doc, payload, length);
+    
+    if (error) {
+      Serial.print("Maintenance JSON parsing failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    
+    // Check for sensor-specific reset to initial config
+    if (doc.containsKey("reset_to_initial")) {
+      JsonArray sensorArray = doc["reset_to_initial"];
+      std::vector<int> sensor_ids;
+      
+      for (JsonVariant v : sensorArray) {
+        sensor_ids.push_back(v.as<int>());
+      }
+      
+      resetSensorsToInitialConfig(sensor_ids);
+      return;
+    }
+    
+    // Check for single sensor reset
+    if (doc.containsKey("reset_sensor_to_initial")) {
+      int sensor_id = doc["reset_sensor_to_initial"];
+      std::vector<int> sensor_ids = {sensor_id};
+      resetSensorsToInitialConfig(sensor_ids);
+      return;
+    }
+    
+    // Check for reset all to initial
+    if (doc.containsKey("reset_all_to_initial") && doc["reset_all_to_initial"] == true) {
+      Serial.println("===========================================");
+      Serial.println(" RESETTING ALL SENSORS TO INITIAL CONFIG");
+      Serial.println("===========================================");
+      
+      std::vector<int> all_sensor_ids;
+      for (int i = 0; i < activeSensorCount; i++) {
+        all_sensor_ids.push_back(sensors[i].sensorId);
+      }
+      
+      resetSensorsToInitialConfig(all_sensor_ids);
+      return;
+    }
+    
+    return;  
+  }*/
+
+  if (strcmp(topic, "pipes/maintenance/esp3") == 0) {
+    DynamicJsonDocument doc(512);
+    DeserializationError error = deserializeJson(doc, payload, length);
+    
+    if (error) {
+      Serial.print("Maintenance JSON parsing failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    
+    // Check for sensor-specific reset to initial config
+    if (doc.containsKey("reset_to_initial")) {
+      JsonArray sensorArray = doc["reset_to_initial"];
+      std::vector<int> sensor_ids;
+      
+      for (JsonVariant v : sensorArray) {
+        sensor_ids.push_back(v.as<int>());
+      }
+      
+      resetSensorsToInitialConfig(sensor_ids);
+      return;
+    }
+    
+    // Check for single sensor reset
+    if (doc.containsKey("reset_sensor_to_initial")) {
+      int sensor_id = doc["reset_sensor_to_initial"];
+      std::vector<int> sensor_ids = {sensor_id};
+      resetSensorsToInitialConfig(sensor_ids);
+      return;
+    }
+    
+    // Check for reset all to initial
+    if (doc.containsKey("reset_all_to_initial") && doc["reset_all_to_initial"] == true) {
+      Serial.println("===========================================");
+      Serial.println(" RESETTING ALL SENSORS TO INITIAL CONFIG");
+      Serial.println("===========================================");
+      
+      std::vector<int> all_sensor_ids;
+      for (int i = 0; i < activeSensorCount; i++) {
+        all_sensor_ids.push_back(sensors[i].sensorId);
+      }
+      
+      resetSensorsToInitialConfig(all_sensor_ids);
+      return;
+    }
+    
+    return;  
+  }
+
+  // 3. CONFIG HANDLER (your existing code for ESP1)
+  /*if (strcmp(topic, "pipes/config/init1") != 0) { //ESP_CHANGE
+    return;
+  }*/
 
   /*if (strcmp(topic, "pipes/config/init2") != 0) { 
     return;
   }*/
+
+  if (strcmp(topic, "pipes/config/init3") != 0) { 
+    return;
+  }
 
   Serial.println("===========================================");
   Serial.println("CONFIGURATION MESSAGE RECEIVED");
@@ -582,12 +938,11 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   Serial.print(length);
   Serial.println(" bytes");
 
-  // Large JSON document
   DynamicJsonDocument doc(65536);
   DeserializationError error = deserializeJson(doc, payload, length);
 
   if (error) {
-    Serial.print("JSON parsing failed: ");
+    Serial.print("Config JSON parsing failed: ");
     Serial.println(error.c_str());
     return;
   }
@@ -606,76 +961,106 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     return;
   }
 
-  int configuredCount = 0;
+  int receivedSensorCount = sensorsArray.size();
+  Serial.print("Received ");
+  Serial.print(receivedSensorCount);
+  Serial.println(" sensors from Linux");
+  
+  // Limit to what ESP can handle
+  int sensorsToConfigure = min(receivedSensorCount, TOTAL_PIPES);
+  
+  Serial.print("Configuring ");
+  Serial.print(sensorsToConfigure);
+  Serial.println(" sensors (limited by ESP capacity)");
 
+  int localIndex = 0;
+  int minSensorId = 9999;
+  int maxSensorId = -1;
 
   for (JsonObject sensorObj : sensorsArray) {
-
-    int sensorId = sensorObj["sensor_id"] | -1;
-    if (sensorId < 0 || sensorId >= TOTAL_PIPES) continue;
-
-    Sensor &s = sensors[sensorId];
-
-    int pipeId = sensorObj["pipe_id"] | sensorId;
+    if (localIndex >= TOTAL_PIPES) {
+      Serial.print("Warning: ESP capacity reached at ");
+      Serial.print(TOTAL_PIPES);
+      Serial.println(" sensors");
+      break;
+    }
+    
+    int originalSensorId = sensorObj["sensor_id"] | -1;
+    int pipeId = sensorObj["pipe_id"] | originalSensorId;
     const char* typeStr = sensorObj["type"] | "fresh";
     float pressureBar = sensorObj["pressure_bar"] | 0.0f;
     float levelPct = sensorObj["level_pct"] | 0.0f;
     int valve = sensorObj["valve"] | 1;
-
-
-    s.sensorId = sensorId;
-    s.pipeId   = pipeId;
-    s.type     = (strcmp(typeStr, "fresh") == 0) ? FRESH_WATER : SEWAGE;
-
+    
+    // Track min/max IDs
+    if (originalSensorId < minSensorId) minSensorId = originalSensorId;
+    if (originalSensorId > maxSensorId) maxSensorId = originalSensorId;
+    
+    Sensor &s = sensors[localIndex];
+    
+    // Store ORIGINAL ID for MQTT publishing
+    s.sensorId = originalSensorId;
+    s.pipeId = pipeId;
+    s.type = (strcmp(typeStr, "fresh") == 0) ? FRESH_WATER : SEWAGE;
     s.valveOpen = (valve == 1);
-
-    s.pressure     = pressureBar;
-    s._pressurePa  = pressureBar * 100000.0f;
-
+    s.pressure = pressureBar;
+    s._pressurePa = pressureBar * 100000.0f;
     s.supplyPressure = s._pressurePa;
-
     s.level = clampf(levelPct, 0.0f, 100.0f);
+    
+    // Set physics parameters
     if (s.type == FRESH_WATER) {
-      s.diameter     = 0.10f;      
-      s.length       = 100.0f;     
-      s.roughness    = 0.000015f;  
-      s.elevation    = 0.0f;
-      s.temperature  = 15.0f;
-      s.demandFlow   = 0.005f;   
+      s.diameter = 0.10f;      
+      s.length = 100.0f;     
+      s.roughness = 0.000015f;  
+      s.elevation = 0.0f;
+      s.temperature = 15.0f;
+      s.demandFlow = 0.005f;   
     } else {
-      s.diameter     = 0.25f; 
-      s.length       = 120.0f;
-      s.roughness    = 0.00006f;   
-      s.elevation    = -2.0f;
-      s.temperature  = 20.0f;
-      s.demandFlow   = 0.007f;     
+      s.diameter = 0.25f; 
+      s.length = 120.0f;
+      s.roughness = 0.00006f;   
+      s.elevation = -2.0f;
+      s.temperature = 20.0f;
+      s.demandFlow = 0.007f;     
     }
-
+    
     s.crossSection = PI * s.diameter * s.diameter / 4.0f;
-    s.flowRate     = s.demandFlow;
-    s.velocity     = 0.0f;
-
-    s.leakCoeff     = 0.0f;
+    s.flowRate = s.demandFlow;
+    s.velocity = 0.0f;
+    s.leakCoeff = 0.0f;
     s.blockageCoeff = 0.0f;
-    s.degrading     = false;
+    s.degrading = false;
+    
+    // STORE INITIAL VALUES FOR MAINTENANCE
+    initialStates[localIndex].initialPressure = pressureBar;
+    initialStates[localIndex].initialLevel = levelPct;
+    initialStates[localIndex].initialValve = valve;
+    initialStates[localIndex].stored = true;
 
-    configuredCount++;
+    localIndex++;
   }
-
-  activeSensorCount = configuredCount;
-
-  Serial.print("Active sensors locked to: ");
-  Serial.println(activeSensorCount);
-  Serial.print("✓ Total sensors configured: ");
-  Serial.println(configuredCount);
+  
+  activeSensorCount = localIndex;
+  
+  Serial.println("===========================================");
+  Serial.print("✓ Configured ");
+  Serial.print(activeSensorCount);
+  Serial.println(" sensors");
+  
+  if (activeSensorCount > 0) {
+    Serial.print("Sensor ID range: ");
+    Serial.print(minSensorId);
+    Serial.print(" to ");
+    Serial.println(maxSensorId);
+  }
+  
   Serial.println("===========================================");
 
   configReceived = true;
   initializedFromConfig = true;
   nextDegradeTime = millis() + FIRST_FAIL_MIN_MS;
   remainingToDegrade = activeSensorCount;
-
-
 }
 
 
@@ -713,10 +1098,24 @@ void reconnectMQTT() {
       mqttConnectTime = millis();
       
       // Subscribe to config topic
-      mqttClient.subscribe("pipes/config/init1"); //ESP_CHANGE
+      //mqttClient.subscribe("pipes/config/init1");  //ESP_CHANGE
       //mqttClient.subscribe("pipes/config/init2");
-      Serial.println("Subscribed to pipes/config/init");
-      Serial.println("Waiting for configuration message (50 seconds timeout)...");
+      mqttClient.subscribe("pipes/config/init3");
+      
+      // Subscribe to maintenance topic
+      //mqttClient.subscribe("pipes/maintenance/esp1"); //ESP_CHANGE
+      //mqttClient.subscribe("pipes/maintenance/esp2");
+      mqttClient.subscribe("pipes/maintenance/esp3");
+      
+      // ADD THIS: Subscribe to valve control topic
+      //mqttClient.subscribe("pipes/control/valve1"); //ESP_CHANGE
+      //mqttClient.subscribe("pipes/control/valve2");
+      mqttClient.subscribe("pipes/control/valve3");
+      
+      Serial.println("✅ Subscribed to topics:");
+      Serial.println("  - pipes/config/init1");
+      Serial.println("  - pipes/maintenance/esp1");
+      Serial.println("  - pipes/control/valve");
       
     } else {
       Serial.print("failed, rc=");
@@ -819,7 +1218,7 @@ void publishAllSensors() {
       bool published = mqttClient.publish(topicBuffer, mqttBuffer);
       
       if (!published) {
-        Serial.print("⚠ Publish failed for chunk ");
+        Serial.print("Publish failed for chunk ");
         Serial.println(chunk);
       }
     } else {
@@ -877,8 +1276,9 @@ void publishSystemSummary() {
   doc["total_flow_sewage_Ls"] = round(totalFlowSewage * 100.0) / 100.0;
   
   serializeJson(doc, mqttBuffer, sizeof(mqttBuffer));
-  mqttClient.publish("pipes/system/summary1", mqttBuffer); //ESP_CHANGE
-  //mqttClient.publish("pipes/system/summary2", mqttBuffer); 
+  //mqttClient.publish("pipes/system/summary1", mqttBuffer); //ESP_CHANGE
+  //mqttClient.publish("pipes/system/summary2", mqttBuffer);
+  mqttClient.publish("pipes/system/summary3", mqttBuffer);
 }
 
 
@@ -886,17 +1286,17 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   randomSeed(esp_random());
-  
-  Serial.println("===========================================");
-  Serial.print("   INITIALIZING ");
-  Serial.print(activeSensorCount);
-  Serial.println(" SENSORS");
-  Serial.println("===========================================");
-  
 
+  for (int i = 0; i < TOTAL_PIPES; i++) {
+    initialStates[i].stored = false;
+  }
+  
+  Serial.println("===========================================");
+  Serial.println("   ESP2 - PIPE SENSOR SIMULATOR");
+  Serial.println("===========================================");
+  
   setupWiFi();
   
-
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
   mqttClient.setCallback(onMqttMessage); 
   mqttClient.setBufferSize(MQTT_BUFFER_SIZE); 
@@ -906,11 +1306,10 @@ void setup() {
   
   Serial.println("===========================================");
   Serial.println("WAITING FOR CONFIGURATION FROM LINUX...");
-  Serial.println("Topic: pipes/config/init");
+  Serial.println("Topic: pipes/config/init2");
   Serial.println("Timeout: 5 minutes");
   Serial.println("===========================================");
   
-
   unsigned long waitStart = millis();
   while (!configReceived && (millis() - waitStart < CONFIG_WAIT_TIME)) {
     mqttClient.loop();
@@ -926,20 +1325,28 @@ void setup() {
   
   if (configReceived) {
     Serial.println("===========================================");
-    Serial.println("✓ CONFIGURATION RECEIVED FROM LINUX!");
+    Serial.println("DYNAMIC CONFIG RECEIVED!");
+    Serial.print("Active sensors: ");
+    Serial.println(activeSensorCount);
     Serial.println("===========================================");
   } else {
     Serial.println("===========================================");
-    Serial.println("TIMEOUT! Using default configuration");
+    Serial.println("TIMEOUT! Using DEFAULT configuration");
     Serial.println("===========================================");
   
     initSystem();
+
+    activeSensorCount = 50;  
+    initializedFromConfig = true;
+    nextDegradeTime = millis() + FIRST_FAIL_MIN_MS;
+    remainingToDegrade = activeSensorCount;
   }
+  
   verifySensorUniqueness();
   
   Serial.print("System ready - publishing ");
-  Serial.print(TOTAL_PIPES);
-  Serial.println(" sensors as JSON to MQTT every second");
+  Serial.print(activeSensorCount);
+  Serial.println(" sensors as JSON to MQTT every 2 seconds");
 }
 
 void loop() {

@@ -1,0 +1,6 @@
+[31mCMake Error at cmake_install.cmake:110 (file):
+  file INSTALL cannot find
+  "/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/README.md": No
+  such file or directory.
+
+[0m

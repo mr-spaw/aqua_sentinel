@@ -1,0 +1,2 @@
+Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge': /usr/bin/cmake /home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge -DCMAKE_INSTALL_PREFIX=/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge
+Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge' returned '1': /usr/bin/cmake /home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge -DCMAKE_INSTALL_PREFIX=/home/arka/aqua_sentinel/ros2_ws/install/pipe_sensor_bridge

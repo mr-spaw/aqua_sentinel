@@ -1,0 +1,722 @@
+[0.010s] Invoking command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge -- -j8 -l8
+[0.087s] [ 25%] [32mBuilding CXX object CMakeFiles/init_config_publisher.dir/src/init_config_publisher.cpp.o[0m
+[0.094s] [ 50%] [32mBuilding CXX object CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o[0m
+[2.203s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:[m[K In function ‘[01m[Kvoid close_all_log_files()[m[K’:
+[2.203s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:25:[m[K [01;31m[Kerror: [m[Kno match for ‘[01m[Koperator<<[m[K’ (operand types are ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} and ‘[01m[Kconst char [3][m[K’)
+[2.203s]   274 |             [32m[Kfile_stream[m[K [01;31m[K<<[m[K [34m[K"\n]"[m[K;
+[2.203s]       |             [32m[K~~~~~~~~~~~[m[K [01;31m[K^~[m[K [34m[K~~~~~[m[K
+[2.203s]       |             [32m[K|[m[K              [34m[K|[m[K
+[2.203s]       |             [32m[K|[m[K              [34m[Kconst char [3][m[K
+[2.203s]       |             [32m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type {aka const std::basic_ofstream<char>}[m[K
+[2.203s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.203s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.203s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.203s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.203s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.203s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.203s] [01m[K/usr/include/c++/11/ostream:166:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’ (near match)
+[2.204s]   166 |       [01;36m[Koperator[m[K<<(long __n)
+[2.204s]       |       [01;36m[K^~~~~~~~[m[K
+[2.204s] [01m[K/usr/include/c++/11/ostream:166:7:[m[K [01;36m[Knote: [m[K  conversion of argument 1 would be ill-formed:
+[2.204s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Klong int[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.204s]   274 |             file_stream << [01;31m[K"\n]"[m[K;
+[2.204s]       |                            [01;31m[K^~~~~[m[K
+[2.204s]       |                            [01;31m[K|[m[K
+[2.204s]       |                            [01;31m[Kconst char*[m[K
+[2.204s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.204s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.204s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.204s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.204s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.204s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.204s] [01m[K/usr/include/c++/11/ostream:170:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’ (near match)
+[2.205s]   170 |       [01;36m[Koperator[m[K<<(unsigned long __n)
+[2.205s]       |       [01;36m[K^~~~~~~~[m[K
+[2.205s] [01m[K/usr/include/c++/11/ostream:170:7:[m[K [01;36m[Knote: [m[K  conversion of argument 1 would be ill-formed:
+[2.206s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Klong unsigned int[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.206s]   274 |             file_stream << [01;31m[K"\n]"[m[K;
+[2.206s]       |                            [01;31m[K^~~~~[m[K
+[2.206s]       |                            [01;31m[K|[m[K
+[2.206s]       |                            [01;31m[Kconst char*[m[K
+[2.206s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.206s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.206s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.206s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.206s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.206s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.207s] [01m[K/usr/include/c++/11/ostream:174:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(bool) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’ (near match)
+[2.207s]   174 |       [01;36m[Koperator[m[K<<(bool __n)
+[2.207s]       |       [01;36m[K^~~~~~~~[m[K
+[2.207s] [01m[K/usr/include/c++/11/ostream:174:7:[m[K [01;36m[Knote: [m[K  passing ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type*[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>*[m[K’} as ‘[01m[Kthis[m[K’ argument discards qualifiers
+[2.207s] In file included from [01m[K/usr/include/c++/11/ostream:829[m[K,
+[2.207s]                  from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.207s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.207s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.207s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.207s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.207s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.207s] [01m[K/usr/include/c++/11/bits/ostream.tcc:91:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_Ch, _Tr>& std::basic_ostream<_CharT, _Traits>::operator<<(short int) [with _CharT = char; _Traits = std::char_traits<char>][m[K’ (near match)
+[2.207s]    91 |     [01;36m[Kbasic_ostream<_CharT, _Traits>[m[K::
+[2.207s]       |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.207s] [01m[K/usr/include/c++/11/bits/ostream.tcc:91:5:[m[K [01;36m[Knote: [m[K  conversion of argument 1 would be ill-formed:
+[2.207s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Kshort int[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.207s]   274 |             file_stream << [01;31m[K"\n]"[m[K;
+[2.208s]       |                            [01;31m[K^~~~~[m[K
+[2.208s]       |                            [01;31m[K|[m[K
+[2.208s]       |                            [01;31m[Kconst char*[m[K
+[2.208s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.208s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.208s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.208s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.208s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.208s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.209s] [01m[K/usr/include/c++/11/ostream:181:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(short unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’ (near match)
+[2.209s]   181 |       [01;36m[Koperator[m[K<<(unsigned short __n)
+[2.209s]       |       [01;36m[K^~~~~~~~[m[K
+[2.209s] [01m[K/usr/include/c++/11/ostream:181:7:[m[K [01;36m[Knote: [m[K  conversion of argument 1 would be ill-formed:
+[2.209s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Kshort unsigned int[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.209s]   274 |             file_stream << [01;31m[K"\n]"[m[K;
+[2.209s]       |                            [01;31m[K^~~~~[m[K
+[2.209s]       |                            [01;31m[K|[m[K
+[2.209s]       |                            [01;31m[Kconst char*[m[K
+[2.209s] In file included from [01m[K/usr/include/c++/11/ostream:829[m[K,
+[2.209s]                  from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.209s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.209s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.209s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.209s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.209s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.209s] [01m[K/usr/include/c++/11/bits/ostream.tcc:105:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_Ch, _Tr>& std::basic_ostream<_CharT, _Traits>::operator<<(int) [with _CharT = char; _Traits = std::char_traits<char>][m[K’ (near match)
+[2.209s]   105 |     [01;36m[Kbasic_ostream<_CharT, _Traits>[m[K::
+[2.209s]       |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.210s] [01m[K/usr/include/c++/11/bits/ostream.tcc:105:5:[m[K [01;36m[Knote: [m[K  conversion of argument 1 would be ill-formed:
+[2.210s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Kint[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.210s]   274 |             file_stream << [01;31m[K"\n]"[m[K;
+[2.210s]       |                            [01;31m[K^~~~~[m[K
+[2.210s]       |                            [01;31m[K|[m[K
+[2.210s]       |                            [01;31m[Kconst char*[m[K
+[2.210s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.210s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.210s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.210s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.210s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.210s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.210s] [01m[K/usr/include/c++/11/ostream:192:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’ (near match)
+[2.210s]   192 |       [01;36m[Koperator[m[K<<(unsigned int __n)
+[2.210s]       |       [01;36m[K^~~~~~~~[m[K
+[2.210s] [01m[K/usr/include/c++/11/ostream:192:7:[m[K [01;36m[Knote: [m[K  conversion of argument 1 would be ill-formed:
+[2.211s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Kunsigned int[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.211s]   274 |             file_stream << [01;31m[K"\n]"[m[K;
+[2.211s]       |                            [01;31m[K^~~~~[m[K
+[2.211s]       |                            [01;31m[K|[m[K
+[2.211s]       |                            [01;31m[Kconst char*[m[K
+[2.211s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.211s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.211s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.211s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.211s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.211s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.211s] [01m[K/usr/include/c++/11/ostream:201:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’ (near match)
+[2.211s]   201 |       [01;36m[Koperator[m[K<<(long long __n)
+[2.211s]       |       [01;36m[K^~~~~~~~[m[K
+[2.211s] [01m[K/usr/include/c++/11/ostream:201:7:[m[K [01;36m[Knote: [m[K  conversion of argument 1 would be ill-formed:
+[2.211s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Klong long int[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.211s]   274 |             file_stream << [01;31m[K"\n]"[m[K;
+[2.211s]       |                            [01;31m[K^~~~~[m[K
+[2.211s]       |                            [01;31m[K|[m[K
+[2.211s]       |                            [01;31m[Kconst char*[m[K
+[2.211s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.211s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.212s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.212s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.212s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.212s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.212s] [01m[K/usr/include/c++/11/ostream:205:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long long unsigned int) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’ (near match)
+[2.212s]   205 |       [01;36m[Koperator[m[K<<(unsigned long long __n)
+[2.212s]       |       [01;36m[K^~~~~~~~[m[K
+[2.212s] [01m[K/usr/include/c++/11/ostream:205:7:[m[K [01;36m[Knote: [m[K  conversion of argument 1 would be ill-formed:
+[2.212s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst char*[m[K’ to ‘[01m[Klong long unsigned int[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.212s]   274 |             file_stream << [01;31m[K"\n]"[m[K;
+[2.212s]       |                            [01;31m[K^~~~~[m[K
+[2.212s]       |                            [01;31m[K|[m[K
+[2.212s]       |                            [01;31m[Kconst char*[m[K
+[2.212s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.213s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.213s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.213s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.213s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.213s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.213s] [01m[K/usr/include/c++/11/ostream:245:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(const void*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’ (near match)
+[2.213s]   245 |       [01;36m[Koperator[m[K<<(const void* __p)
+[2.213s]       |       [01;36m[K^~~~~~~~[m[K
+[2.213s] [01m[K/usr/include/c++/11/ostream:245:7:[m[K [01;36m[Knote: [m[K  passing ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type*[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>*[m[K’} as ‘[01m[Kthis[m[K’ argument discards qualifiers
+[2.213s] [01m[K/usr/include/c++/11/ostream:108:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ostream_type& (*)(std::basic_ostream<_CharT, _Traits>::__ostream_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’
+[2.213s]   108 |       [01;36m[Koperator[m[K<<(__ostream_type& (*__pf)(__ostream_type&))
+[2.213s]       |       [01;36m[K^~~~~~~~[m[K
+[2.213s] [01m[K/usr/include/c++/11/ostream:108:36:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kconst char [3][m[K’ to ‘[01m[Kstd::basic_ostream<char>::__ostream_type& (*)(std::basic_ostream<char>::__ostream_type&)[m[K’ {aka ‘[01m[Kstd::basic_ostream<char>& (*)(std::basic_ostream<char>&)[m[K’}
+[2.213s]   108 |       operator<<([01;36m[K__ostream_type& (*__pf)(__ostream_type&)[m[K)
+[2.213s]       |                  [01;36m[K~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.213s] [01m[K/usr/include/c++/11/ostream:117:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__ios_type& (*)(std::basic_ostream<_CharT, _Traits>::__ios_type&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>; std::basic_ostream<_CharT, _Traits>::__ios_type = std::basic_ios<char>][m[K’
+[2.213s]   117 |       [01;36m[Koperator[m[K<<(__ios_type& (*__pf)(__ios_type&))
+[2.214s]       |       [01;36m[K^~~~~~~~[m[K
+[2.214s] [01m[K/usr/include/c++/11/ostream:117:32:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kconst char [3][m[K’ to ‘[01m[Kstd::basic_ostream<char>::__ios_type& (*)(std::basic_ostream<char>::__ios_type&)[m[K’ {aka ‘[01m[Kstd::basic_ios<char>& (*)(std::basic_ios<char>&)[m[K’}
+[2.214s]   117 |       operator<<([01;36m[K__ios_type& (*__pf)(__ios_type&)[m[K)
+[2.214s]       |                  [01;36m[K~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~[m[K
+[2.214s] [01m[K/usr/include/c++/11/ostream:127:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::ios_base& (*)(std::ios_base&)) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’
+[2.214s]   127 |       [01;36m[Koperator[m[K<<(ios_base& (*__pf) (ios_base&))
+[2.214s]       |       [01;36m[K^~~~~~~~[m[K
+[2.214s] [01m[K/usr/include/c++/11/ostream:127:30:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kconst char [3][m[K’ to ‘[01m[Kstd::ios_base& (*)(std::ios_base&)[m[K’
+[2.214s]   127 |       operator<<([01;36m[Kios_base& (*__pf) (ios_base&)[m[K)
+[2.214s]       |                  [01;36m[K~~~~~~~~~~~~^~~~~~~~~~~~~~~~~[m[K
+[2.214s] [01m[K/usr/include/c++/11/ostream:220:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’
+[2.214s]   220 |       [01;36m[Koperator[m[K<<(double __f)
+[2.214s]       |       [01;36m[K^~~~~~~~[m[K
+[2.214s] [01m[K/usr/include/c++/11/ostream:220:25:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kconst char [3][m[K’ to ‘[01m[Kdouble[m[K’
+[2.214s]   220 |       operator<<([01;36m[Kdouble __f[m[K)
+[2.215s]       |                  [01;36m[K~~~~~~~^~~[m[K
+[2.215s] [01m[K/usr/include/c++/11/ostream:224:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(float) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’
+[2.215s]   224 |       [01;36m[Koperator[m[K<<(float __f)
+[2.215s]       |       [01;36m[K^~~~~~~~[m[K
+[2.215s] [01m[K/usr/include/c++/11/ostream:224:24:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kconst char [3][m[K’ to ‘[01m[Kfloat[m[K’
+[2.215s]   224 |       operator<<([01;36m[Kfloat __f[m[K)
+[2.215s]       |                  [01;36m[K~~~~~~^~~[m[K
+[2.215s] [01m[K/usr/include/c++/11/ostream:232:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(long double) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>][m[K’
+[2.215s]   232 |       [01;36m[Koperator[m[K<<(long double __f)
+[2.215s]       |       [01;36m[K^~~~~~~~[m[K
+[2.215s] [01m[K/usr/include/c++/11/ostream:232:30:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kconst char [3][m[K’ to ‘[01m[Klong double[m[K’
+[2.215s]   232 |       operator<<([01;36m[Klong double __f[m[K)
+[2.215s]       |                  [01;36m[K~~~~~~~~~~~~^~~[m[K
+[2.215s] [01m[K/usr/include/c++/11/ostream:250:7:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_CharT, _Traits>::__ostream_type& std::basic_ostream<_CharT, _Traits>::operator<<(std::nullptr_t) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__ostream_type = std::basic_ostream<char>; std::nullptr_t = std::nullptr_t][m[K’
+[2.215s]   250 |       [01;36m[Koperator[m[K<<(nullptr_t)
+[2.215s]       |       [01;36m[K^~~~~~~~[m[K
+[2.215s] [01m[K/usr/include/c++/11/ostream:250:18:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kconst char [3][m[K’ to ‘[01m[Kstd::nullptr_t[m[K’
+[2.215s]   250 |       operator<<([01;36m[Knullptr_t[m[K)
+[2.215s]       |                  [01;36m[K^~~~~~~~~[m[K
+[2.216s] In file included from [01m[K/usr/include/c++/11/ostream:829[m[K,
+[2.216s]                  from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.216s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.216s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.216s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.216s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.216s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.216s] [01m[K/usr/include/c++/11/bits/ostream.tcc:119:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Kstd::basic_ostream<_Ch, _Tr>& std::basic_ostream<_CharT, _Traits>::operator<<(std::basic_ostream<_CharT, _Traits>::__streambuf_type*) [with _CharT = char; _Traits = std::char_traits<char>; std::basic_ostream<_CharT, _Traits>::__streambuf_type = std::basic_streambuf<char>][m[K’
+[2.216s]   119 |     [01;36m[Kbasic_ostream<_CharT, _Traits>[m[K::
+[2.216s]       |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.216s] [01m[K/usr/include/c++/11/bits/ostream.tcc:120:34:[m[K [01;36m[Knote: [m[K  no known conversion for argument 1 from ‘[01m[Kconst char [3][m[K’ to ‘[01m[Kstd::basic_ostream<char>::__streambuf_type*[m[K’ {aka ‘[01m[Kstd::basic_streambuf<char>*[m[K’}
+[2.216s]   120 |     operator<<([01;36m[K__streambuf_type* __sbin[m[K)
+[2.216s]       |                [01;36m[K~~~~~~~~~~~~~~~~~~^~~~~~[m[K
+[2.216s] In file included from [01m[K/usr/include/c++/11/memory:77[m[K,
+[2.216s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:153[m[K,
+[2.216s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.217s] [01m[K/usr/include/c++/11/bits/shared_ptr.h:70:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Ch, class _Tr, class _Tp, __gnu_cxx::_Lock_policy _Lp> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, const std::__shared_ptr<_Tp, _Lp>&)[m[K’
+[2.217s]    70 |     [01;36m[Koperator[m[K<<(std::basic_ostream<_Ch, _Tr>& __os,
+[2.217s]       |     [01;36m[K^~~~~~~~[m[K
+[2.217s] [01m[K/usr/include/c++/11/bits/shared_ptr.h:70:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.217s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.217s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.217s]       |                            [01;36m[K^~~~~[m[K
+[2.217s] In file included from [01m[K/usr/include/c++/11/bits/basic_string.h:48[m[K,
+[2.217s]                  from [01m[K/usr/include/c++/11/string:55[m[K,
+[2.217s]                  from [01m[K/usr/include/c++/11/stdexcept:39[m[K,
+[2.217s]                  from [01m[K/usr/include/c++/11/system_error:41[m[K,
+[2.217s]                  from [01m[K/usr/include/c++/11/mutex:42[m[K,
+[2.217s]                  from [01m[K/usr/include/c++/11/future:38[m[K,
+[2.217s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:18[m[K,
+[2.217s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.217s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.217s] [01m[K/usr/include/c++/11/string_view:667:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::basic_string_view<_CharT, _Traits>)[m[K’
+[2.217s]   667 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os,
+[2.217s]       |     [01;36m[K^~~~~~~~[m[K
+[2.217s] [01m[K/usr/include/c++/11/string_view:667:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.218s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.218s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.218s]       |                            [01;36m[K^~~~~[m[K
+[2.218s] In file included from [01m[K/usr/include/c++/11/string:55[m[K,
+[2.218s]                  from [01m[K/usr/include/c++/11/stdexcept:39[m[K,
+[2.218s]                  from [01m[K/usr/include/c++/11/system_error:41[m[K,
+[2.218s]                  from [01m[K/usr/include/c++/11/mutex:42[m[K,
+[2.218s]                  from [01m[K/usr/include/c++/11/future:38[m[K,
+[2.218s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:18[m[K,
+[2.218s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.218s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.218s] [01m[K/usr/include/c++/11/bits/basic_string.h:6531:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits, class _Alloc> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, const std::__cxx11::basic_string<_CharT, _Traits, _Allocator>&)[m[K’
+[2.218s]  6531 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os,
+[2.218s]       |     [01;36m[K^~~~~~~~[m[K
+[2.218s] [01m[K/usr/include/c++/11/bits/basic_string.h:6531:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.218s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.219s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.219s]       |                            [01;36m[K^~~~~[m[K
+[2.219s] In file included from [01m[K/usr/include/c++/11/mutex:42[m[K,
+[2.219s]                  from [01m[K/usr/include/c++/11/future:38[m[K,
+[2.219s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:18[m[K,
+[2.219s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.219s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.219s] [01m[K/usr/include/c++/11/system_error:279:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, const std::error_code&)[m[K’
+[2.219s]   279 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, const error_code& __e)
+[2.219s]       |     [01;36m[K^~~~~~~~[m[K
+[2.219s] [01m[K/usr/include/c++/11/system_error:279:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.219s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.219s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.219s]       |                            [01;36m[K^~~~~[m[K
+[2.219s] In file included from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:22[m[K,
+[2.219s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.219s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.219s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.219s] [01m[K/usr/include/c++/11/thread:92:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::thread::id)[m[K’
+[2.219s]    92 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __out, thread::id __id)
+[2.220s]       |     [01;36m[K^~~~~~~~[m[K
+[2.220s] [01m[K/usr/include/c++/11/thread:92:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.220s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.220s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.220s]       |                            [01;36m[K^~~~~[m[K
+[2.220s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.220s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.220s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.220s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.220s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.220s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.220s] [01m[K/usr/include/c++/11/ostream:513:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, _CharT)[m[K’
+[2.220s]   513 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __out, _CharT __c)
+[2.220s]       |     [01;36m[K^~~~~~~~[m[K
+[2.220s] [01m[K/usr/include/c++/11/ostream:513:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.220s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.221s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.221s]       |                            [01;36m[K^~~~~[m[K
+[2.221s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.221s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.221s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.221s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.221s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.221s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.221s] [01m[K/usr/include/c++/11/ostream:518:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, char)[m[K’
+[2.221s]   518 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __out, char __c)
+[2.221s]       |     [01;36m[K^~~~~~~~[m[K
+[2.221s] [01m[K/usr/include/c++/11/ostream:518:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.221s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.221s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.221s]       |                            [01;36m[K^~~~~[m[K
+[2.221s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.221s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.221s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.221s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.221s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.221s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.221s] [01m[K/usr/include/c++/11/ostream:524:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, char)[m[K’
+[2.221s]   524 |     [01;36m[Koperator[m[K<<(basic_ostream<char, _Traits>& __out, char __c)
+[2.221s]       |     [01;36m[K^~~~~~~~[m[K
+[2.222s] [01m[K/usr/include/c++/11/ostream:524:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.222s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<char, _Traits>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.222s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.222s]       |                            [01;36m[K^~~~~[m[K
+[2.222s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.222s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.222s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.222s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.222s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.222s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.222s] [01m[K/usr/include/c++/11/ostream:530:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, signed char)[m[K’
+[2.222s]   530 |     [01;36m[Koperator[m[K<<(basic_ostream<char, _Traits>& __out, signed char __c)
+[2.222s]       |     [01;36m[K^~~~~~~~[m[K
+[2.222s] [01m[K/usr/include/c++/11/ostream:530:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.222s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<char, _Traits>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.222s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.222s]       |                            [01;36m[K^~~~~[m[K
+[2.222s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.222s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.223s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.223s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.223s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.223s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.223s] [01m[K/usr/include/c++/11/ostream:535:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, unsigned char)[m[K’
+[2.223s]   535 |     [01;36m[Koperator[m[K<<(basic_ostream<char, _Traits>& __out, unsigned char __c)
+[2.223s]       |     [01;36m[K^~~~~~~~[m[K
+[2.223s] [01m[K/usr/include/c++/11/ostream:535:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.223s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<char, _Traits>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.223s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.223s]       |                            [01;36m[K^~~~~[m[K
+[2.223s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.223s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.223s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.223s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.223s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.223s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.223s] [01m[K/usr/include/c++/11/ostream:594:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, const _CharT*)[m[K’
+[2.223s]   594 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __out, const _CharT* __s)
+[2.223s]       |     [01;36m[K^~~~~~~~[m[K
+[2.224s] [01m[K/usr/include/c++/11/ostream:594:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.224s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.224s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.224s]       |                            [01;36m[K^~~~~[m[K
+[2.224s] In file included from [01m[K/usr/include/c++/11/ostream:829[m[K,
+[2.224s]                  from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.224s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.224s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.224s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.224s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.224s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.224s] [01m[K/usr/include/c++/11/bits/ostream.tcc:321:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, const char*)[m[K’
+[2.224s]   321 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __out, const char* __s)
+[2.224s]       |     [01;36m[K^~~~~~~~[m[K
+[2.224s] [01m[K/usr/include/c++/11/bits/ostream.tcc:321:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.224s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.224s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.224s]       |                            [01;36m[K^~~~~[m[K
+[2.224s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.224s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.224s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.224s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.224s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.224s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.225s] [01m[K/usr/include/c++/11/ostream:611:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const char*)[m[K’
+[2.225s]   611 |     [01;36m[Koperator[m[K<<(basic_ostream<char, _Traits>& __out, const char* __s)
+[2.225s]       |     [01;36m[K^~~~~~~~[m[K
+[2.225s] [01m[K/usr/include/c++/11/ostream:611:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.225s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<char, _Traits>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.225s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.225s]       |                            [01;36m[K^~~~~[m[K
+[2.225s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.225s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.225s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.225s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.225s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.225s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.225s] [01m[K/usr/include/c++/11/ostream:624:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const signed char*)[m[K’
+[2.225s]   624 |     [01;36m[Koperator[m[K<<(basic_ostream<char, _Traits>& __out, const signed char* __s)
+[2.225s]       |     [01;36m[K^~~~~~~~[m[K
+[2.226s] [01m[K/usr/include/c++/11/ostream:624:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.226s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<char, _Traits>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.226s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.226s]       |                            [01;36m[K^~~~~[m[K
+[2.226s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.226s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.226s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.226s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.226s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.226s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.226s] [01m[K/usr/include/c++/11/ostream:629:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Traits> std::basic_ostream<char, _Traits>& std::operator<<(std::basic_ostream<char, _Traits>&, const unsigned char*)[m[K’
+[2.226s]   629 |     [01;36m[Koperator[m[K<<(basic_ostream<char, _Traits>& __out, const unsigned char* __s)
+[2.226s]       |     [01;36m[K^~~~~~~~[m[K
+[2.226s] [01m[K/usr/include/c++/11/ostream:629:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.226s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<char, _Traits>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.226s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.226s]       |                            [01;36m[K^~~~~[m[K
+[2.226s] In file included from [01m[K/usr/include/c++/11/iostream:39[m[K,
+[2.226s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:22[m[K,
+[2.226s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.226s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.226s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.226s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.227s] [01m[K/usr/include/c++/11/ostream:750:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Ostream, class _Tp> _Ostream&& std::operator<<(_Ostream&&, const _Tp&)[m[K’
+[2.227s]   750 |     [01;36m[Koperator[m[K<<(_Ostream&& __os, const _Tp& __x)
+[2.227s]       |     [01;36m[K^~~~~~~~[m[K
+[2.227s] [01m[K/usr/include/c++/11/ostream:750:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.227s] /usr/include/c++/11/ostream: In substitution of ‘[01m[Ktemplate<class _Ostream, class _Tp> _Ostream&& std::operator<<(_Ostream&&, const _Tp&) [with _Ostream = const std::basic_ofstream<char>&; _Tp = char [3]][m[K’:
+[2.227s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K   required from here
+[2.227s] [01m[K/usr/include/c++/11/ostream:750:5:[m[K [01;31m[Kerror: [m[Kno type named ‘[01m[Ktype[m[K’ in ‘[01m[Kstruct std::enable_if<false, void>[m[K’
+[2.227s] In file included from [01m[K/opt/ros/humble/include/rosidl_runtime_cpp/rosidl_runtime_cpp/traits.hpp:19[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/detail/duration__traits.hpp:15[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/duration.hpp:9[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/duration.hpp:20[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/qos.hpp:20[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/node_interfaces/node_graph_interface.hpp:32[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/client.hpp:42[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/callback_group.hpp:24[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:20[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.227s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.228s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.228s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.228s] [01m[K/usr/include/c++/11/iomanip:79:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::_Resetiosflags)[m[K’
+[2.228s]    79 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, _Resetiosflags __f)
+[2.228s]       |     [01;36m[K^~~~~~~~[m[K
+[2.228s] [01m[K/usr/include/c++/11/iomanip:79:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.228s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.228s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.228s]       |                            [01;36m[K^~~~~[m[K
+[2.228s] In file included from [01m[K/opt/ros/humble/include/rosidl_runtime_cpp/rosidl_runtime_cpp/traits.hpp:19[m[K,
+[2.228s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/detail/duration__traits.hpp:15[m[K,
+[2.228s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/duration.hpp:9[m[K,
+[2.228s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/duration.hpp:20[m[K,
+[2.228s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/qos.hpp:20[m[K,
+[2.228s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/node_interfaces/node_graph_interface.hpp:32[m[K,
+[2.228s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/client.hpp:42[m[K,
+[2.228s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/callback_group.hpp:24[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:20[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.229s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.229s] [01m[K/usr/include/c++/11/iomanip:109:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::_Setiosflags)[m[K’
+[2.229s]   109 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, _Setiosflags __f)
+[2.229s]       |     [01;36m[K^~~~~~~~[m[K
+[2.229s] [01m[K/usr/include/c++/11/iomanip:109:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.229s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.229s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.229s]       |                            [01;36m[K^~~~~[m[K
+[2.229s] In file included from [01m[K/opt/ros/humble/include/rosidl_runtime_cpp/rosidl_runtime_cpp/traits.hpp:19[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/detail/duration__traits.hpp:15[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/duration.hpp:9[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/duration.hpp:20[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/qos.hpp:20[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/node_interfaces/node_graph_interface.hpp:32[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/client.hpp:42[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/callback_group.hpp:24[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:20[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.229s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.230s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.230s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.230s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.230s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.230s] [01m[K/usr/include/c++/11/iomanip:143:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::_Setbase)[m[K’
+[2.230s]   143 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, _Setbase __f)
+[2.230s]       |     [01;36m[K^~~~~~~~[m[K
+[2.230s] [01m[K/usr/include/c++/11/iomanip:143:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.230s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.230s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.230s]       |                            [01;36m[K^~~~~[m[K
+[2.230s] In file included from [01m[K/opt/ros/humble/include/rosidl_runtime_cpp/rosidl_runtime_cpp/traits.hpp:19[m[K,
+[2.230s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/detail/duration__traits.hpp:15[m[K,
+[2.230s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/duration.hpp:9[m[K,
+[2.230s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/duration.hpp:20[m[K,
+[2.230s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/qos.hpp:20[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/node_interfaces/node_graph_interface.hpp:32[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/client.hpp:42[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/callback_group.hpp:24[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:20[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.231s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.231s] [01m[K/usr/include/c++/11/iomanip:178:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::_Setfill<_CharT>)[m[K’
+[2.231s]   178 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, _Setfill<_CharT> __f)
+[2.231s]       |     [01;36m[K^~~~~~~~[m[K
+[2.231s] [01m[K/usr/include/c++/11/iomanip:178:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.231s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.231s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.231s]       |                            [01;36m[K^~~~~[m[K
+[2.231s] In file included from [01m[K/opt/ros/humble/include/rosidl_runtime_cpp/rosidl_runtime_cpp/traits.hpp:19[m[K,
+[2.231s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/detail/duration__traits.hpp:15[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/duration.hpp:9[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/duration.hpp:20[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/qos.hpp:20[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/node_interfaces/node_graph_interface.hpp:32[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/client.hpp:42[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/callback_group.hpp:24[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:20[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.232s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.232s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.232s] [01m[K/usr/include/c++/11/iomanip:208:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::_Setprecision)[m[K’
+[2.232s]   208 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, _Setprecision __f)
+[2.233s]       |     [01;36m[K^~~~~~~~[m[K
+[2.233s] [01m[K/usr/include/c++/11/iomanip:208:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.233s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.233s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.233s]       |                            [01;36m[K^~~~~[m[K
+[2.233s] In file included from [01m[K/opt/ros/humble/include/rosidl_runtime_cpp/rosidl_runtime_cpp/traits.hpp:19[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/detail/duration__traits.hpp:15[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/duration.hpp:9[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/duration.hpp:20[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/qos.hpp:20[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/node_interfaces/node_graph_interface.hpp:32[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/client.hpp:42[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/callback_group.hpp:24[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:20[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.233s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.233s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.233s] [01m[K/usr/include/c++/11/iomanip:238:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::_Setw)[m[K’
+[2.233s]   238 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, _Setw __f)
+[2.233s]       |     [01;36m[K^~~~~~~~[m[K
+[2.233s] [01m[K/usr/include/c++/11/iomanip:238:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.233s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.234s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.234s]       |                            [01;36m[K^~~~~[m[K
+[2.234s] In file included from [01m[K/opt/ros/humble/include/rosidl_runtime_cpp/rosidl_runtime_cpp/traits.hpp:19[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/detail/duration__traits.hpp:15[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/duration.hpp:9[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/duration.hpp:20[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/qos.hpp:20[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/node_interfaces/node_graph_interface.hpp:32[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/client.hpp:42[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/callback_group.hpp:24[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:20[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.234s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.234s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.234s] [01m[K/usr/include/c++/11/iomanip:311:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits, class _MoneyT> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::_Put_money<_MoneyT>)[m[K’
+[2.234s]   311 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, _Put_money<_MoneyT> __f)
+[2.234s]       |     [01;36m[K^~~~~~~~[m[K
+[2.234s] [01m[K/usr/include/c++/11/iomanip:311:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.234s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.234s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.234s]       |                            [01;36m[K^~~~~[m[K
+[2.234s] In file included from [01m[K/opt/ros/humble/include/rosidl_runtime_cpp/rosidl_runtime_cpp/traits.hpp:19[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/detail/duration__traits.hpp:15[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/builtin_interfaces/builtin_interfaces/msg/duration.hpp:9[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/duration.hpp:20[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/qos.hpp:20[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/node_interfaces/node_graph_interface.hpp:32[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/client.hpp:42[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/callback_group.hpp:24[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:20[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.235s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.235s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:1[m[K:
+[2.235s] [01m[K/usr/include/c++/11/iomanip:363:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _CharT, class _Traits> std::basic_ostream<_Ch, _Tr>& std::operator<<(std::basic_ostream<_Ch, _Tr>&, std::_Put_time<_CharT>)[m[K’
+[2.235s]   363 |     [01;36m[Koperator[m[K<<(basic_ostream<_CharT, _Traits>& __os, _Put_time<_CharT> __f)
+[2.235s]       |     [01;36m[K^~~~~~~~[m[K
+[2.235s] [01m[K/usr/include/c++/11/iomanip:363:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.235s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  types ‘[01m[Kstd::basic_ostream<_Ch, _Tr>[m[K’ and ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} have incompatible cv-qualifiers
+[2.235s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.235s]       |                            [01;36m[K^~~~~[m[K
+[2.235s] In file included from [01m[K/usr/include/nlohmann/json.hpp:47[m[K,
+[2.235s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.235s] [01m[K/usr/include/c++/11/cstddef:126:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _IntegerType> constexpr std::__byte_op_t<_IntegerType> std::operator<<(std::byte, _IntegerType)[m[K’
+[2.236s]   126 |     [01;36m[Koperator[m[K<<(byte __b, _IntegerType __shift) noexcept
+[2.236s]       |     [01;36m[K^~~~~~~~[m[K
+[2.236s] [01m[K/usr/include/c++/11/cstddef:126:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.236s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:13:[m[K [01;36m[Knote: [m[K  cannot convert ‘[01m[Kfile_stream[m[K’ (type ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’}) to type ‘[01m[Kstd::byte[m[K’
+[2.236s]   274 |             [01;36m[Kfile_stream[m[K << "\n]";
+[2.236s]       |             [01;36m[K^~~~~~~~~~~[m[K
+[2.236s] In file included from [01m[K/usr/include/c++/11/valarray:603[m[K,
+[2.236s]                  from [01m[K/usr/include/nlohmann/detail/conversions/from_json.hpp:13[m[K,
+[2.236s]                  from [01m[K/usr/include/nlohmann/adl_serializer.hpp:6[m[K,
+[2.236s]                  from [01m[K/usr/include/nlohmann/json.hpp:60[m[K,
+[2.236s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.236s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Dom1, class _Dom2> std::_Expr<std::__detail::_BinClos<std::__shift_left, std::_Expr, std::_Expr, _Dom1, _Dom2>, typename std::__fun<std::__shift_left, typename _Dom1::value_type>::result_type> std::operator<<(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const std::_Expr<_Dom2, typename _Dom2::value_type>&)[m[K’
+[2.236s]   413 |     [01;36m[K_DEFINE_EXPR_BINARY_OPERATOR[m[K(<<, struct std::__shift_left)
+[2.236s]       |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.236s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.236s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} is not derived from ‘[01m[Kconst std::_Expr<_Dom1, typename _Dom1::value_type>[m[K’
+[2.236s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.236s]       |                            [01;36m[K^~~~~[m[K
+[2.236s] In file included from [01m[K/usr/include/c++/11/valarray:603[m[K,
+[2.236s]                  from [01m[K/usr/include/nlohmann/detail/conversions/from_json.hpp:13[m[K,
+[2.236s]                  from [01m[K/usr/include/nlohmann/adl_serializer.hpp:6[m[K,
+[2.236s]                  from [01m[K/usr/include/nlohmann/json.hpp:60[m[K,
+[2.236s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.236s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Dom> std::_Expr<std::__detail::_BinClos<std::__shift_left, std::_Expr, std::_Constant, _Dom, typename _Dom::value_type>, typename std::__fun<std::__shift_left, typename _Dom1::value_type>::result_type> std::operator<<(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const typename _Dom::value_type&)[m[K’
+[2.236s]   413 |     [01;36m[K_DEFINE_EXPR_BINARY_OPERATOR[m[K(<<, struct std::__shift_left)
+[2.236s]       |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.236s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.237s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} is not derived from ‘[01m[Kconst std::_Expr<_Dom1, typename _Dom1::value_type>[m[K’
+[2.237s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.237s]       |                            [01;36m[K^~~~~[m[K
+[2.237s] In file included from [01m[K/usr/include/c++/11/valarray:603[m[K,
+[2.237s]                  from [01m[K/usr/include/nlohmann/detail/conversions/from_json.hpp:13[m[K,
+[2.237s]                  from [01m[K/usr/include/nlohmann/adl_serializer.hpp:6[m[K,
+[2.237s]                  from [01m[K/usr/include/nlohmann/json.hpp:60[m[K,
+[2.237s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.237s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Dom> std::_Expr<std::__detail::_BinClos<std::__shift_left, std::_Constant, std::_Expr, typename _Dom::value_type, _Dom>, typename std::__fun<std::__shift_left, typename _Dom1::value_type>::result_type> std::operator<<(const typename _Dom::value_type&, const std::_Expr<_Dom1, typename _Dom1::value_type>&)[m[K’
+[2.237s]   413 |     [01;36m[K_DEFINE_EXPR_BINARY_OPERATOR[m[K(<<, struct std::__shift_left)
+[2.237s]       |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.237s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.237s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  mismatched types ‘[01m[Kconst std::_Expr<_Dom1, typename _Dom1::value_type>[m[K’ and ‘[01m[Kconst char [3][m[K’
+[2.237s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.237s]       |                            [01;36m[K^~~~~[m[K
+[2.237s] In file included from [01m[K/usr/include/c++/11/valarray:603[m[K,
+[2.237s]                  from [01m[K/usr/include/nlohmann/detail/conversions/from_json.hpp:13[m[K,
+[2.237s]                  from [01m[K/usr/include/nlohmann/adl_serializer.hpp:6[m[K,
+[2.237s]                  from [01m[K/usr/include/nlohmann/json.hpp:60[m[K,
+[2.237s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.237s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Dom> std::_Expr<std::__detail::_BinClos<std::__shift_left, std::_Expr, std::_ValArray, _Dom, typename _Dom::value_type>, typename std::__fun<std::__shift_left, typename _Dom1::value_type>::result_type> std::operator<<(const std::_Expr<_Dom1, typename _Dom1::value_type>&, const std::valarray<typename _Dom::value_type>&)[m[K’
+[2.237s]   413 |     [01;36m[K_DEFINE_EXPR_BINARY_OPERATOR[m[K(<<, struct std::__shift_left)
+[2.237s]       |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.237s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.237s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} is not derived from ‘[01m[Kconst std::_Expr<_Dom1, typename _Dom1::value_type>[m[K’
+[2.237s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.237s]       |                            [01;36m[K^~~~~[m[K
+[2.237s] In file included from [01m[K/usr/include/c++/11/valarray:603[m[K,
+[2.238s]                  from [01m[K/usr/include/nlohmann/detail/conversions/from_json.hpp:13[m[K,
+[2.238s]                  from [01m[K/usr/include/nlohmann/adl_serializer.hpp:6[m[K,
+[2.238s]                  from [01m[K/usr/include/nlohmann/json.hpp:60[m[K,
+[2.238s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.238s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Dom> std::_Expr<std::__detail::_BinClos<std::__shift_left, std::_ValArray, std::_Expr, typename _Dom::value_type, _Dom>, typename std::__fun<std::__shift_left, typename _Dom1::value_type>::result_type> std::operator<<(const std::valarray<typename _Dom::value_type>&, const std::_Expr<_Dom1, typename _Dom1::value_type>&)[m[K’
+[2.238s]   413 |     [01;36m[K_DEFINE_EXPR_BINARY_OPERATOR[m[K(<<, struct std::__shift_left)
+[2.238s]       |     [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.238s] [01m[K/usr/include/c++/11/bits/valarray_after.h:413:5:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.238s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  mismatched types ‘[01m[Kconst std::_Expr<_Dom1, typename _Dom1::value_type>[m[K’ and ‘[01m[Kconst char [3][m[K’
+[2.238s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.238s]       |                            [01;36m[K^~~~~[m[K
+[2.238s] In file included from [01m[K/usr/include/nlohmann/detail/conversions/from_json.hpp:13[m[K,
+[2.238s]                  from [01m[K/usr/include/nlohmann/adl_serializer.hpp:6[m[K,
+[2.238s]                  from [01m[K/usr/include/nlohmann/json.hpp:60[m[K,
+[2.238s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.238s] [01m[K/usr/include/c++/11/valarray:1194:1:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Tp> std::_Expr<std::__detail::_BinClos<std::__shift_left, std::_ValArray, std::_ValArray, _Tp, _Tp>, typename std::__fun<std::__shift_left, _Tp>::result_type> std::operator<<(const std::valarray<_Tp>&, const std::valarray<_Tp>&)[m[K’
+[2.238s]  1194 | [01;36m[K_DEFINE_BINARY_OPERATOR[m[K(<<, __shift_left)
+[2.238s]       | [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.238s] [01m[K/usr/include/c++/11/valarray:1194:1:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.238s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} is not derived from ‘[01m[Kconst std::valarray<_Tp>[m[K’
+[2.238s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.238s]       |                            [01;36m[K^~~~~[m[K
+[2.238s] In file included from [01m[K/usr/include/nlohmann/detail/conversions/from_json.hpp:13[m[K,
+[2.238s]                  from [01m[K/usr/include/nlohmann/adl_serializer.hpp:6[m[K,
+[2.238s]                  from [01m[K/usr/include/nlohmann/json.hpp:60[m[K,
+[2.238s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.238s] [01m[K/usr/include/c++/11/valarray:1194:1:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Tp> std::_Expr<std::__detail::_BinClos<std::__shift_left, std::_ValArray, std::_Constant, _Tp, _Tp>, typename std::__fun<std::__shift_left, _Tp>::result_type> std::operator<<(const std::valarray<_Tp>&, const typename std::valarray<_Tp>::value_type&)[m[K’
+[2.238s]  1194 | [01;36m[K_DEFINE_BINARY_OPERATOR[m[K(<<, __shift_left)
+[2.239s]       | [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.239s] [01m[K/usr/include/c++/11/valarray:1194:1:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.239s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} is not derived from ‘[01m[Kconst std::valarray<_Tp>[m[K’
+[2.239s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.239s]       |                            [01;36m[K^~~~~[m[K
+[2.239s] In file included from [01m[K/usr/include/nlohmann/detail/conversions/from_json.hpp:13[m[K,
+[2.239s]                  from [01m[K/usr/include/nlohmann/adl_serializer.hpp:6[m[K,
+[2.239s]                  from [01m[K/usr/include/nlohmann/json.hpp:60[m[K,
+[2.239s]                  from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:7[m[K:
+[2.239s] [01m[K/usr/include/c++/11/valarray:1194:1:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class _Tp> std::_Expr<std::__detail::_BinClos<std::__shift_left, std::_Constant, std::_ValArray, _Tp, _Tp>, typename std::__fun<std::__shift_left, _Tp>::result_type> std::operator<<(const typename std::valarray<_Tp>::value_type&, const std::valarray<_Tp>&)[m[K’
+[2.239s]  1194 | [01;36m[K_DEFINE_BINARY_OPERATOR[m[K(<<, __shift_left)
+[2.239s]       | [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.239s] [01m[K/usr/include/c++/11/valarray:1194:1:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[2.239s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:274:28:[m[K [01;36m[Knote: [m[K  mismatched types ‘[01m[Kconst std::valarray<_Tp>[m[K’ and ‘[01m[Kconst char [3][m[K’
+[2.239s]   274 |             file_stream << [01;36m[K"\n]"[m[K;
+[2.239s]       |                            [01;36m[K^~~~~[m[K
+[2.239s] [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:275:30:[m[K [01;31m[Kerror: [m[Kpassing ‘[01m[Kstd::tuple_element<1, const std::pair<const int, std::basic_ofstream<char> > >::type[m[K’ {aka ‘[01m[Kconst std::basic_ofstream<char>[m[K’} as ‘[01m[Kthis[m[K’ argument discards qualifiers [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.239s]   275 |             [01;31m[Kfile_stream.close()[m[K;
+[2.239s]       |             [01;31m[K~~~~~~~~~~~~~~~~~^~[m[K
+[2.239s] In file included from [01m[K/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge/src/mqtt_subscriber.cpp:10[m[K:
+[2.239s] [01m[K/usr/include/c++/11/fstream:998:7:[m[K [01;36m[Knote: [m[K  in call to ‘[01m[Kvoid std::basic_ofstream<_CharT, _Traits>::close() [with _CharT = char; _Traits = std::char_traits<char>][m[K’
+[2.239s]   998 |       [01;36m[Kclose[m[K()
+[2.239s]       |       [01;36m[K^~~~~[m[K
+[4.143s] [ 75%] [32m[1mLinking CXX executable init_config_publisher[0m
+[4.339s] [ 75%] Built target init_config_publisher
+[4.805s] gmake[2]: *** [CMakeFiles/mqtt_subscriber_bridge.dir/build.make:76: CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o] Error 1
+[4.805s] gmake[1]: *** [CMakeFiles/Makefile2:165: CMakeFiles/mqtt_subscriber_bridge.dir/all] Error 2
+[4.805s] gmake: *** [Makefile:146: all] Error 2
+[4.809s] Invoked command in '/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge -- -j8 -l8

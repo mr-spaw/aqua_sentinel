@@ -1,9 +1,0 @@
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/uninstall.dir
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/aqua_msgs_uninstall.dir
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/test.dir
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/edit_cache.dir
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/rebuild_cache.dir
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/list_install_components.dir
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/install.dir
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/install/local.dir
-/home/arka/aqua_sentinel/ros2_ws/build/aqua_msgs/CMakeFiles/install/strip.dir

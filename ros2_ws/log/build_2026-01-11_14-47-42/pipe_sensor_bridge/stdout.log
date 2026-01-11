@@ -1,0 +1,2 @@
+[ 50%] Built target init_config_publisher
+[ 75%] [32mBuilding CXX object CMakeFiles/mqtt_subscriber_bridge.dir/src/mqtt_subscriber.cpp.o[0m
