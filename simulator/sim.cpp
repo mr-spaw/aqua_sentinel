@@ -16,6 +16,9 @@
 #include <algorithm>
 #include <cstdio>   
 #include <sys/stat.h>
+#include <csignal>
+#include <atomic>
+
 
 // ============================================================================
 // ROS2 HUMBLE INTEGRATION
@@ -23,6 +26,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <rclcpp/executors/single_threaded_executor.hpp>
 #include <memory>
 #include <thread>
 #include <mutex>
@@ -30,10 +34,12 @@
 
 // ROS2 globals
 std::shared_ptr<rclcpp::Node> ros2_node = nullptr;
+std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> ros2_executor = nullptr;
 std::shared_ptr<std::thread> ros2_thread = nullptr;
 std::mutex sensor_mutex;
 bool ros2_initialized = false;
 bool ros2_running = false;
+std::atomic<bool> g_shutdown_requested{false};
 
 // ============================================================================
 // ENGINEERING CONSTANTS
@@ -350,9 +356,18 @@ struct Cluster {
 
 //class CityNetwork;  // Forward declaration
 
+// ============================================================================
+// ROS2 SENSOR SUBSCRIBER CLASS - THREAD-SAFE VERSION
+// ============================================================================
+
+// ============================================================================
+// ROS2 SENSOR SUBSCRIBER CLASS - SIMPLIFIED VERSION
+// ============================================================================
+
 class ROS2SensorSubscriber : public rclcpp::Node {
 private:
-    CityNetwork* city_network_;
+    CityNetwork* city_network_;  // Use raw pointer since CityNetwork is a global
+    std::atomic<bool> running_;
     
     // Topic subscriptions
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr esp1_sub_;
@@ -361,50 +376,77 @@ private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr esp4_sub_;
     
     // Statistics
-    int total_updates_;
-    int last_log_count_;
+    std::atomic<int> total_updates_;
     
 public:
     ROS2SensorSubscriber(CityNetwork* city) 
-        : Node("water_sim_subscriber"), city_network_(city),
-          total_updates_(0), last_log_count_(0) {
+    : Node("water_sim_subscriber"), 
+      city_network_(city),
+      running_(true),
+      total_updates_(0) {
+    
+    RCLCPP_INFO(this->get_logger(), "Initializing ROS2 Sensor Subscriber");
+    
+    // Subscribe to all ESP topics with QoS settings
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10));
+    
+    // Add debug logging for each subscription
+    esp1_sub_ = this->create_subscription<std_msgs::msg::String>(
+        "/esp1/sensors", qos,
+        [this](const std_msgs::msg::String::SharedPtr msg) {
+            RCLCPP_INFO(this->get_logger(), "Received message from ESP1, size: %lu bytes", 
+                       msg->data.size());
+            this->processESPData(msg->data, 1);
+        });
         
-        RCLCPP_INFO(this->get_logger(), "Initializing ROS2 Sensor Subscriber");
+    esp2_sub_ = this->create_subscription<std_msgs::msg::String>(
+        "/esp2/sensors", qos,
+        [this](const std_msgs::msg::String::SharedPtr msg) {
+            RCLCPP_INFO(this->get_logger(), "Received message from ESP2, size: %lu bytes", 
+                       msg->data.size());
+            this->processESPData(msg->data, 2);
+        });
         
-        // Subscribe to all ESP topics with QoS settings
-        auto qos = rclcpp::QoS(rclcpp::KeepLast(10));
+    esp3_sub_ = this->create_subscription<std_msgs::msg::String>(
+        "/esp3/sensors", qos,
+        [this](const std_msgs::msg::String::SharedPtr msg) {
+            RCLCPP_INFO(this->get_logger(), "Received message from ESP3, size: %lu bytes", 
+                       msg->data.size());
+            this->processESPData(msg->data, 3);
+        });
         
-        esp1_sub_ = this->create_subscription<std_msgs::msg::String>(
-            "/esp1/sensors", qos,
-            [this](const std_msgs::msg::String::SharedPtr msg) {
-                this->processESPData(msg->data, 1);
-            });
-            
-        esp2_sub_ = this->create_subscription<std_msgs::msg::String>(
-            "/esp2/sensors", qos,
-            [this](const std_msgs::msg::String::SharedPtr msg) {
-                this->processESPData(msg->data, 2);
-            });
-            
-        esp3_sub_ = this->create_subscription<std_msgs::msg::String>(
-            "/esp3/sensors", qos,
-            [this](const std_msgs::msg::String::SharedPtr msg) {
-                this->processESPData(msg->data, 3);
-            });
-            
-        esp4_sub_ = this->create_subscription<std_msgs::msg::String>(
-            "/esp4/sensors", qos,
-            [this](const std_msgs::msg::String::SharedPtr msg) {
-                this->processESPData(msg->data, 4);
-            });
-            
-        RCLCPP_INFO(this->get_logger(), "Subscribed to ESP sensor topics");
-        RCLCPP_INFO(this->get_logger(), "Topics: /esp1/sensors, /esp2/sensors, /esp3/sensors, /esp4/sensors");
+    esp4_sub_ = this->create_subscription<std_msgs::msg::String>(
+        "/esp4/sensors", qos,
+        [this](const std_msgs::msg::String::SharedPtr msg) {
+            RCLCPP_INFO(this->get_logger(), "Received message from ESP4, size: %lu bytes", 
+                       msg->data.size());
+            this->processESPData(msg->data, 4);
+        });
+    
+    RCLCPP_INFO(this->get_logger(), "Subscribed to ESP sensor topics");
+    RCLCPP_INFO(this->get_logger(), "Topics: /esp1/sensors, /esp2/sensors, /esp3/sensors, /esp4/sensors");
+}
+    
+    ~ROS2SensorSubscriber() {
+        shutdown();
     }
     
+    void shutdown() {
+        running_ = false;
+        
+        // Reset subscriptions to prevent further callbacks
+        esp1_sub_.reset();
+        esp2_sub_.reset();
+        esp3_sub_.reset();
+        esp4_sub_.reset();
+        
+        RCLCPP_INFO(this->get_logger(), "ROS2 Sensor Subscriber shutdown");
+    }
+    
+    // Declaration only - definition will come AFTER CityNetwork is fully defined
     void processESPData(const std::string& json_data, int esp_id);
-
 };
+
 
 
 // ============================================================================
@@ -492,24 +534,27 @@ void CityNetwork::initializeROS2() {
             rclcpp::init(argc, argv);
         }
         
-        // Create ROS2 node for the subscriber
+        // Create ROS2 node for the subscriber - pass raw pointer
         ros2_subscriber = std::make_shared<ROS2SensorSubscriber>(this);
+        
+        // Create executor
+        ros2_executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        
+        // Add subscriber node to executor
+        if (ros2_subscriber) {
+            ros2_executor->add_node(ros2_subscriber);
+        }
         
         // Start ROS2 spinner in separate thread
         ros2_thread = std::make_shared<std::thread>([this]() {
             RCLCPP_INFO(rclcpp::get_logger("ros2_spinner"), "Starting ROS2 spinner thread");
-            rclcpp::executors::SingleThreadedExecutor executor;
-            
-            // Add subscriber node
-            if (this->ros2_subscriber) {
-                executor.add_node(this->ros2_subscriber);
-            }
-            
             ros2_running = true;
+            
             while (ros2_running && rclcpp::ok()) {
-                executor.spin_some(std::chrono::milliseconds(10));
+                ros2_executor->spin_some(std::chrono::milliseconds(10));
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
+            
             RCLCPP_INFO(rclcpp::get_logger("ros2_spinner"), "ROS2 spinner thread stopped");
         });
         
@@ -534,32 +579,82 @@ void CityNetwork::shutdownROS2() {
     
     std::cout << "Shutting down ROS2..." << std::endl;
     
+    // First, stop the ROS2 subscriber from processing new messages
+    if (ros2_subscriber) {
+        // Cast to ROS2SensorSubscriber and call shutdown if possible
+        // Or simply set a flag to stop processing
+    }
+    
+    // Stop the executor thread FIRST
     ros2_running = false;
     
+    // Give time for the executor to stop
     if (ros2_thread && ros2_thread->joinable()) {
-        ros2_thread->join();
+        // Try to join with timeout
+        auto start = std::chrono::steady_clock::now();
+        while (std::chrono::steady_clock::now() - start < std::chrono::seconds(2)) {
+            if (ros2_thread->joinable()) {
+                try {
+                    ros2_thread->join();
+                    break;
+                } catch (const std::exception& e) {
+                    std::cerr << "Thread join error: " << e.what() << std::endl;
+                    break;
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
         ros2_thread.reset();
     }
     
-    if (ros2_subscriber) {
-        ros2_subscriber.reset();
+    //  Remove node from executor BEFORE destroying anything
+    if (ros2_executor && ros2_subscriber) {
+        try {
+            ros2_executor->remove_node(ros2_subscriber);
+        } catch (const std::exception& e) {
+            std::cerr << "Error removing node from executor: " << e.what() << std::endl;
+        }
     }
     
-    rclcpp::shutdown();
+    // Reset subscriptions in the subscriber BEFORE destroying it
+    if (ros2_subscriber) {
+        ros2_subscriber.reset();  // Let destructor handle cleanup
+    }
+    
+    // Reset executor
+    ros2_executor.reset();
+    
+    // Shutdown ROS2 context
+    if (rclcpp::ok()) {
+        try {
+            rclcpp::shutdown();
+        } catch (const std::exception& e) {
+            std::cerr << "Error during rclcpp::shutdown(): " << e.what() << std::endl;
+        }
+    }
+    
+    // Give DDS time to clean up
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     ros2_initialized = false;
     std::cout << "ROS2 shutdown complete." << std::endl;
 }
 
 void CityNetwork::updateSensorFromROS2(int sensorID, float valve, float pressure, float level, int esp_id) {
+    // Only lock here, not in Sensor::updateFromROS2()
     std::lock_guard<std::mutex> lock(sensor_mutex);
     
     if (sensorID >= 0 && sensorID < (int)sensors.size()) {
-        sensors[sensorID].updateFromROS2(valve, pressure, level, esp_id);
+        // Modified Sensor::updateFromROS2() - removed internal locking
+        sensors[sensorID].valveState = valve;
+        sensors[sensorID].pressure = pressure;
+        sensors[sensorID].waterLevel = level;
+        sensors[sensorID].last_esp_id = esp_id;
+        sensors[sensorID].last_update_time = time(nullptr);
         
         // Log first few updates for debugging
         static int first_updates_logged = 0;
-        if (first_updates_logged < 10) {
+        if (first_updates_logged < 20) {  // Increased to 20 to see more ESPs
             std::cout << "ROS2 Update: Sensor ID=" << sensorID 
                       << " from ESP" << esp_id 
                       << " - Valve:" << valve << "%"
@@ -569,10 +664,21 @@ void CityNetwork::updateSensorFromROS2(int sensorID, float valve, float pressure
         }
     } else {
         static int invalid_sensor_warnings = 0;
-        if (invalid_sensor_warnings < 10) {
+        if (invalid_sensor_warnings < 20) {  // Increased limit
             std::cerr << "WARNING: Received update for invalid sensor ID: " << sensorID 
-                      << " from ESP" << esp_id << std::endl;
+                      << " from ESP" << esp_id 
+                      << " (valid range: 0-" << (sensors.size() - 1) << ")" << std::endl;
             invalid_sensor_warnings++;
+            
+            // Debug: Print sensor distribution
+            if (invalid_sensor_warnings == 1) {
+                std::cout << "\n=== SENSOR DISTRIBUTION ===" << std::endl;
+                std::cout << "ESP1 handles sensors: 0-110 (water sensors)" << std::endl;
+                std::cout << "ESP2 handles sensors: 111-221 (water sensors)" << std::endl;
+                std::cout << "ESP3 handles sensors: 222-332 (sewage sensors)" << std::endl;
+                std::cout << "ESP4 handles sensors: 333-441 (sewage sensors)" << std::endl;
+                std::cout << "Total sensors in simulation: 0-" << (sensors.size() - 1) << std::endl;
+            }
         }
     }
 }
@@ -1322,58 +1428,110 @@ void CityNetwork::drawReservoirWithParticles() const {
 }
 
 
-void ROS2SensorSubscriber::processESPData(
-    const std::string& json_data, int esp_id)
-{
+// ============================================================================
+// ROS2SensorSubscriber::processESPData IMPLEMENTATION
+// (Must be AFTER CityNetwork is fully defined)
+// ============================================================================
+
+void ROS2SensorSubscriber::processESPData(const std::string& json_data, int esp_id) {
+    if (!running_) {
+        return;
+    }
+    
+    if (json_data.empty()) {
+        RCLCPP_WARN(this->get_logger(), "Empty JSON data from ESP%d", esp_id);
+        return;
+    }
+    
+    // Log first 200 characters of the JSON to see format
+    std::string preview = json_data.substr(0, std::min(200, (int)json_data.size()));
+    RCLCPP_INFO(this->get_logger(), "ESP%d JSON preview: %s...", esp_id, preview.c_str());
+    
     try {
         Json::Value root;
         Json::Reader reader;
-
-        if (!reader.parse(json_data, root)) {
+        bool parsingSuccessful = reader.parse(json_data, root);
+        
+        if (!parsingSuccessful) {
             RCLCPP_WARN(this->get_logger(),
-                        "Failed to parse JSON from ESP%d", esp_id);
+                       "Failed to parse JSON from ESP%d: %s", 
+                       esp_id, reader.getFormattedErrorMessages().c_str());
             return;
         }
 
-        if (root.isMember("sensors") && root["sensors"].isArray()) {
-            const Json::Value& sensors = root["sensors"];
-            int sensors_updated = 0;
+        // Check for esp_id field in JSON
+        if (root.isMember("esp_id")) {
+            int json_esp_id = root["esp_id"].asInt();
+            RCLCPP_INFO(this->get_logger(), "ESP%d message contains esp_id: %d", esp_id, json_esp_id);
+        }
 
-            for (const Json::Value& sensor_data : sensors) {
-                if (sensor_data.isMember("sensor_id") &&
-                    sensor_data.isMember("pressure_bar") &&
-                    sensor_data.isMember("level_pct") &&
-                    sensor_data.isMember("valve")) {
+        if (!root.isMember("sensors") || !root["sensors"].isArray()) {
+            RCLCPP_WARN(this->get_logger(),
+                       "Invalid JSON format from ESP%d: no sensors array", esp_id);
+            return;
+        }
 
-                    int sensor_id = sensor_data["sensor_id"].asInt();
-                    float pressure_kpa =
-                        sensor_data["pressure_bar"].asFloat() * 100.0f;
-                    float level_pct =
-                        sensor_data["level_pct"].asFloat();
-                    float valve_pct =
-                        sensor_data["valve"].asInt() ? 100.0f : 0.0f;
+        const Json::Value& sensors = root["sensors"];
+        int sensors_count = sensors.size();
+        int sensors_updated = 0;
+        
+        RCLCPP_INFO(this->get_logger(), "ESP%d: Processing %d sensors", esp_id, sensors_count);
 
-                    // ✅ NOW LEGAL — CityNetwork is fully defined
-                    city_network_->updateSensorFromROS2(
-                        sensor_id, valve_pct, pressure_kpa, level_pct, esp_id);
-
-                    sensors_updated++;
-                }
+        for (const Json::Value& sensor_data : sensors) {
+            if (!sensor_data.isMember("sensor_id") ||
+                !sensor_data.isMember("pressure_bar") ||
+                !sensor_data.isMember("level_pct") ||
+                !sensor_data.isMember("valve")) {
+                RCLCPP_WARN(this->get_logger(),
+                           "Incomplete sensor data from ESP%d", esp_id);
+                continue;
             }
 
-            total_updates_++;
+            try {
+                int sensor_id = sensor_data["sensor_id"].asInt();
+                float pressure_kpa = sensor_data["pressure_bar"].asFloat() * 100.0f;
+                float level_pct = sensor_data["level_pct"].asFloat();
+                float valve_pct = sensor_data["valve"].asInt() ? 100.0f : 0.0f;
 
-            if (total_updates_ % 100 == 0) {
-                RCLCPP_INFO(this->get_logger(),
-                    "ESP%d: Updated %d sensors (total %d)",
-                    esp_id, sensors_updated, total_updates_);
+                // Check if city_network still exists
+                if (!city_network_) {
+                    RCLCPP_WARN(this->get_logger(),
+                               "CityNetwork pointer is null, ignoring ESP%d data", esp_id);
+                    return;
+                }
+
+                // Only log first few updates to avoid spam
+                if (sensors_updated < 5) {
+                    RCLCPP_INFO(this->get_logger(), 
+                               "ESP%d updating sensor %d: valve=%.1f%%, pressure=%.1fkPa, level=%.1f%%",
+                               esp_id, sensor_id, valve_pct, pressure_kpa, level_pct);
+                }
+
+                city_network_->updateSensorFromROS2(
+                    sensor_id, valve_pct, pressure_kpa, level_pct, esp_id);
+
+                sensors_updated++;
+            } catch (const std::exception& e) {
+                RCLCPP_ERROR(this->get_logger(),
+                            "Error processing individual sensor from ESP%d: %s",
+                            esp_id, e.what());
             }
         }
+
+        total_updates_++;
+        RCLCPP_INFO(this->get_logger(), 
+                   "ESP%d: Successfully updated %d/%d sensors (total updates: %d)",
+                   esp_id, sensors_updated, sensors_count, total_updates_.load());
+
     }
     catch (const std::exception& e) {
         RCLCPP_ERROR(this->get_logger(),
-                     "ESP%d processing error: %s",
-                     esp_id, e.what());
+                    "ESP%d processing error: %s",
+                    esp_id, e.what());
+    }
+    catch (...) {
+        RCLCPP_ERROR(this->get_logger(),
+                    "ESP%d processing error: Unknown exception", esp_id);
     }
 }
 
@@ -1963,6 +2121,22 @@ void idle() {
     glutPostRedisplay();
 }
 
+void signal_handler(int signum) {
+    if (signum == SIGINT || signum == SIGTERM) {
+        std::cout << "\n\nReceived shutdown signal (Ctrl+C)" << std::endl;
+        g_shutdown_requested = true;
+        
+        // Don't exit immediately, let the main loop handle it
+        static int signal_count = 0;
+        signal_count++;
+        
+        if (signal_count >= 3) {
+            std::cout << "Force exiting..." << std::endl;
+            exit(1);
+        }
+    }
+}
+
 void keyboard(unsigned char key, int x, int y) {
     switch (key) {
         case 'b': case 'B':
@@ -2030,7 +2204,11 @@ void keyboard(unsigned char key, int x, int y) {
             break;
         }
         case 'q': case 'Q': case 27:
+            std::cout << "\n=== SHUTTING DOWN SIMULATION ===" << std::endl;
+            std::cout << "Stopping ROS2..." << std::endl;
             city.shutdownROS2();
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            std::cout << "Exiting simulation." << std::endl;
             exit(0);
             break;
     }
@@ -2108,13 +2286,15 @@ void printInstructions() {
 }
 
 int main(int argc, char** argv) {
+    std::signal(SIGINT, signal_handler);
+    std::signal(SIGTERM, signal_handler);
     srand(time(nullptr));
     
     printInstructions();
     
     std::cout << "Generating city with " << currentBuildingCount << " buildings...\n";
     city.generateCity(currentBuildingCount);
-    city.generateInitSensorJSON("init_sensor.json");
+    city.generateInitSensorJSON("/home/arka/aqua_sentinel/simulator/init_sensor.json");
     
     std::cout << "\nInitializing ROS2 Humble...\n";
     city.initializeROS2();
