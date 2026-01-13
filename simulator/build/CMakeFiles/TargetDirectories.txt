@@ -1,0 +1,10 @@
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/uninstall.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/water_scada_sim_uninstall.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/sim.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/test.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/edit_cache.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/rebuild_cache.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/list_install_components.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/install.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/install/local.dir
+/home/arka/aqua_sentinel/simulator/build/CMakeFiles/install/strip.dir

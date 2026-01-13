@@ -1328,7 +1328,7 @@ void setup() {
     Serial.println("DYNAMIC CONFIG RECEIVED!");
     Serial.print("Active sensors: ");
     Serial.println(activeSensorCount);
-    Serial.println("===========================================");
+    Serial.println("=================   ==========================");
   } else {
     Serial.println("===========================================");
     Serial.println("TIMEOUT! Using DEFAULT configuration");

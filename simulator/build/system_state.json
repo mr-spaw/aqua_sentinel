@@ -1,0 +1,1630 @@
+{
+  "header": {
+    "timestamp": 1768295282,
+    "sim_time_sec": 2.128,
+    "sim_dt_sec": 0.016,
+    "step_count": 133
+  },
+  "global_state": {
+    "reservoir_level_m": 21.00,
+    "reservoir_volume_m3": 7000.00,
+    "total_fresh_demand_m3s": 1.2195,
+    "total_sewage_flow_m3s": 1.1050,
+    "total_leak_flow_m3s": 0.0000,
+    "active_leak_count": 0,
+    "leaking_pipe_ids": [],
+    "ros2_sensor_stats": {
+      "total_sensors": 442,
+      "active_sensors": 0,
+      "stale_sensors": 442,
+      "update_rate": 0.0
+    }
+  },
+  "building_water_usage": {
+    "total_buildings": 200,
+    "total_consumption_m3": 0.00,
+    "current_demand_m3s": 1.2195,
+    "buildings": [
+      {
+        "id": 0,
+        "cluster": 0,
+        "floors": 5,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.71,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 1,
+        "cluster": 0,
+        "floors": 7,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.34,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 2,
+        "cluster": 0,
+        "floors": 2,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.86,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 3,
+        "cluster": 0,
+        "floors": 1,
+        "current_flow_m3s": 0.000042,
+        "daily_consumption_m3": 3.64,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 4,
+        "cluster": 0,
+        "floors": 7,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.31,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 5,
+        "cluster": 0,
+        "floors": 5,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.40,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 6,
+        "cluster": 0,
+        "floors": 2,
+        "current_flow_m3s": 0.000040,
+        "daily_consumption_m3": 3.49,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 7,
+        "cluster": 0,
+        "floors": 3,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.31,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 8,
+        "cluster": 0,
+        "floors": 15,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.69,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 9,
+        "cluster": 0,
+        "floors": 5,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.98,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 10,
+        "cluster": 1,
+        "floors": 15,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.94,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 11,
+        "cluster": 1,
+        "floors": 1,
+        "current_flow_m3s": 0.000037,
+        "daily_consumption_m3": 3.19,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 12,
+        "cluster": 1,
+        "floors": 2,
+        "current_flow_m3s": 0.000057,
+        "daily_consumption_m3": 4.90,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 13,
+        "cluster": 1,
+        "floors": 1,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.36,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 14,
+        "cluster": 1,
+        "floors": 7,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.03,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 15,
+        "cluster": 1,
+        "floors": 1,
+        "current_flow_m3s": 0.000042,
+        "daily_consumption_m3": 3.60,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 16,
+        "cluster": 1,
+        "floors": 3,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.74,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 17,
+        "cluster": 1,
+        "floors": 6,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 4.00,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 18,
+        "cluster": 1,
+        "floors": 12,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.60,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 19,
+        "cluster": 1,
+        "floors": 4,
+        "current_flow_m3s": 0.000059,
+        "daily_consumption_m3": 5.12,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 20,
+        "cluster": 2,
+        "floors": 7,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.87,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 21,
+        "cluster": 2,
+        "floors": 1,
+        "current_flow_m3s": 0.000042,
+        "daily_consumption_m3": 3.64,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 22,
+        "cluster": 2,
+        "floors": 12,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.85,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 23,
+        "cluster": 2,
+        "floors": 5,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.33,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 24,
+        "cluster": 2,
+        "floors": 3,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.71,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 25,
+        "cluster": 2,
+        "floors": 3,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.89,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 26,
+        "cluster": 2,
+        "floors": 8,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.69,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 27,
+        "cluster": 2,
+        "floors": 4,
+        "current_flow_m3s": 0.000056,
+        "daily_consumption_m3": 4.86,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 28,
+        "cluster": 2,
+        "floors": 15,
+        "current_flow_m3s": 0.000048,
+        "daily_consumption_m3": 4.14,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 29,
+        "cluster": 2,
+        "floors": 5,
+        "current_flow_m3s": 0.000054,
+        "daily_consumption_m3": 4.67,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 30,
+        "cluster": 3,
+        "floors": 12,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.22,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 31,
+        "cluster": 3,
+        "floors": 1,
+        "current_flow_m3s": 0.000056,
+        "daily_consumption_m3": 4.80,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 32,
+        "cluster": 3,
+        "floors": 12,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.90,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 33,
+        "cluster": 3,
+        "floors": 1,
+        "current_flow_m3s": 0.000042,
+        "daily_consumption_m3": 3.62,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 34,
+        "cluster": 3,
+        "floors": 4,
+        "current_flow_m3s": 0.000058,
+        "daily_consumption_m3": 4.97,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 35,
+        "cluster": 3,
+        "floors": 2,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.82,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 36,
+        "cluster": 3,
+        "floors": 9,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.36,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 37,
+        "cluster": 3,
+        "floors": 6,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.90,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 38,
+        "cluster": 3,
+        "floors": 6,
+        "current_flow_m3s": 0.000057,
+        "daily_consumption_m3": 4.96,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 39,
+        "cluster": 3,
+        "floors": 1,
+        "current_flow_m3s": 0.000054,
+        "daily_consumption_m3": 4.68,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 40,
+        "cluster": 4,
+        "floors": 15,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.07,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 41,
+        "cluster": 4,
+        "floors": 12,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.10,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 42,
+        "cluster": 4,
+        "floors": 1,
+        "current_flow_m3s": 0.000040,
+        "daily_consumption_m3": 3.50,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 43,
+        "cluster": 4,
+        "floors": 2,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.96,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 44,
+        "cluster": 4,
+        "floors": 1,
+        "current_flow_m3s": 0.000059,
+        "daily_consumption_m3": 5.12,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 45,
+        "cluster": 4,
+        "floors": 5,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.25,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 46,
+        "cluster": 4,
+        "floors": 4,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.34,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 47,
+        "cluster": 4,
+        "floors": 9,
+        "current_flow_m3s": 0.000054,
+        "daily_consumption_m3": 4.64,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 48,
+        "cluster": 4,
+        "floors": 5,
+        "current_flow_m3s": 0.000038,
+        "daily_consumption_m3": 3.25,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 49,
+        "cluster": 4,
+        "floors": 9,
+        "current_flow_m3s": 0.000058,
+        "daily_consumption_m3": 5.02,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 50,
+        "cluster": 5,
+        "floors": 8,
+        "current_flow_m3s": 0.000059,
+        "daily_consumption_m3": 5.13,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 51,
+        "cluster": 5,
+        "floors": 2,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.77,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 52,
+        "cluster": 5,
+        "floors": 6,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.91,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 53,
+        "cluster": 5,
+        "floors": 12,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.89,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 54,
+        "cluster": 5,
+        "floors": 2,
+        "current_flow_m3s": 0.000042,
+        "daily_consumption_m3": 3.65,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 55,
+        "cluster": 5,
+        "floors": 8,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.71,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 56,
+        "cluster": 5,
+        "floors": 8,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.27,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 57,
+        "cluster": 5,
+        "floors": 7,
+        "current_flow_m3s": 0.000052,
+        "daily_consumption_m3": 4.49,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 58,
+        "cluster": 5,
+        "floors": 6,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.26,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 59,
+        "cluster": 5,
+        "floors": 7,
+        "current_flow_m3s": 0.000059,
+        "daily_consumption_m3": 5.07,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 60,
+        "cluster": 6,
+        "floors": 3,
+        "current_flow_m3s": 0.000055,
+        "daily_consumption_m3": 4.78,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 61,
+        "cluster": 6,
+        "floors": 5,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.02,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 62,
+        "cluster": 6,
+        "floors": 9,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.70,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 63,
+        "cluster": 6,
+        "floors": 6,
+        "current_flow_m3s": 0.000038,
+        "daily_consumption_m3": 3.27,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 64,
+        "cluster": 6,
+        "floors": 7,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.35,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 65,
+        "cluster": 6,
+        "floors": 3,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.95,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 66,
+        "cluster": 6,
+        "floors": 5,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.25,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 67,
+        "cluster": 6,
+        "floors": 15,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.04,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 68,
+        "cluster": 6,
+        "floors": 1,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.24,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 69,
+        "cluster": 6,
+        "floors": 3,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.81,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 70,
+        "cluster": 7,
+        "floors": 4,
+        "current_flow_m3s": 0.000057,
+        "daily_consumption_m3": 4.93,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 71,
+        "cluster": 7,
+        "floors": 6,
+        "current_flow_m3s": 0.000061,
+        "daily_consumption_m3": 5.24,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 72,
+        "cluster": 7,
+        "floors": 5,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.58,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 73,
+        "cluster": 7,
+        "floors": 3,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.22,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 74,
+        "cluster": 7,
+        "floors": 12,
+        "current_flow_m3s": 0.000061,
+        "daily_consumption_m3": 5.27,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 75,
+        "cluster": 7,
+        "floors": 7,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.58,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 76,
+        "cluster": 7,
+        "floors": 6,
+        "current_flow_m3s": 0.000040,
+        "daily_consumption_m3": 3.44,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 77,
+        "cluster": 7,
+        "floors": 2,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.95,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 78,
+        "cluster": 7,
+        "floors": 2,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.67,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 79,
+        "cluster": 7,
+        "floors": 5,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.70,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 80,
+        "cluster": 8,
+        "floors": 5,
+        "current_flow_m3s": 0.000063,
+        "daily_consumption_m3": 5.46,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 81,
+        "cluster": 8,
+        "floors": 3,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.38,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 82,
+        "cluster": 8,
+        "floors": 8,
+        "current_flow_m3s": 0.000056,
+        "daily_consumption_m3": 4.85,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 83,
+        "cluster": 8,
+        "floors": 15,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.25,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 84,
+        "cluster": 8,
+        "floors": 9,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.05,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 85,
+        "cluster": 8,
+        "floors": 5,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.24,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 86,
+        "cluster": 8,
+        "floors": 6,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.83,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 87,
+        "cluster": 8,
+        "floors": 3,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.75,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 88,
+        "cluster": 8,
+        "floors": 8,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.80,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 89,
+        "cluster": 8,
+        "floors": 1,
+        "current_flow_m3s": 0.000054,
+        "daily_consumption_m3": 4.66,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 90,
+        "cluster": 9,
+        "floors": 15,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.23,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 91,
+        "cluster": 9,
+        "floors": 8,
+        "current_flow_m3s": 0.000038,
+        "daily_consumption_m3": 3.25,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 92,
+        "cluster": 9,
+        "floors": 8,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.44,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 93,
+        "cluster": 9,
+        "floors": 2,
+        "current_flow_m3s": 0.000041,
+        "daily_consumption_m3": 3.58,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 94,
+        "cluster": 9,
+        "floors": 4,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.40,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 95,
+        "cluster": 9,
+        "floors": 4,
+        "current_flow_m3s": 0.000038,
+        "daily_consumption_m3": 3.32,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 96,
+        "cluster": 9,
+        "floors": 4,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.94,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 97,
+        "cluster": 9,
+        "floors": 15,
+        "current_flow_m3s": 0.000058,
+        "daily_consumption_m3": 4.97,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 98,
+        "cluster": 9,
+        "floors": 12,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.02,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 99,
+        "cluster": 9,
+        "floors": 8,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.96,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 100,
+        "cluster": 10,
+        "floors": 5,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.27,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 101,
+        "cluster": 10,
+        "floors": 12,
+        "current_flow_m3s": 0.000052,
+        "daily_consumption_m3": 4.52,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 102,
+        "cluster": 10,
+        "floors": 2,
+        "current_flow_m3s": 0.000052,
+        "daily_consumption_m3": 4.45,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 103,
+        "cluster": 10,
+        "floors": 9,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.44,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 104,
+        "cluster": 10,
+        "floors": 6,
+        "current_flow_m3s": 0.000052,
+        "daily_consumption_m3": 4.50,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 105,
+        "cluster": 10,
+        "floors": 4,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.34,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 106,
+        "cluster": 10,
+        "floors": 9,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.60,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 107,
+        "cluster": 10,
+        "floors": 5,
+        "current_flow_m3s": 0.000055,
+        "daily_consumption_m3": 4.75,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 108,
+        "cluster": 10,
+        "floors": 4,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.36,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 109,
+        "cluster": 10,
+        "floors": 3,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.73,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 110,
+        "cluster": 11,
+        "floors": 4,
+        "current_flow_m3s": 0.000056,
+        "daily_consumption_m3": 4.88,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 111,
+        "cluster": 11,
+        "floors": 6,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.90,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 112,
+        "cluster": 11,
+        "floors": 6,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.61,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 113,
+        "cluster": 11,
+        "floors": 7,
+        "current_flow_m3s": 0.000048,
+        "daily_consumption_m3": 4.10,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 114,
+        "cluster": 11,
+        "floors": 1,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.29,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 115,
+        "cluster": 11,
+        "floors": 9,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.57,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 116,
+        "cluster": 11,
+        "floors": 8,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.71,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 117,
+        "cluster": 11,
+        "floors": 2,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.27,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 118,
+        "cluster": 11,
+        "floors": 4,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.79,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 119,
+        "cluster": 11,
+        "floors": 9,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.68,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 120,
+        "cluster": 12,
+        "floors": 8,
+        "current_flow_m3s": 0.000042,
+        "daily_consumption_m3": 3.59,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 121,
+        "cluster": 12,
+        "floors": 3,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.67,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 122,
+        "cluster": 12,
+        "floors": 4,
+        "current_flow_m3s": 0.000055,
+        "daily_consumption_m3": 4.72,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 123,
+        "cluster": 12,
+        "floors": 2,
+        "current_flow_m3s": 0.000043,
+        "daily_consumption_m3": 3.73,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 124,
+        "cluster": 12,
+        "floors": 2,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 4.01,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 125,
+        "cluster": 12,
+        "floors": 15,
+        "current_flow_m3s": 0.000038,
+        "daily_consumption_m3": 3.27,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 126,
+        "cluster": 12,
+        "floors": 5,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.23,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 127,
+        "cluster": 12,
+        "floors": 9,
+        "current_flow_m3s": 0.000060,
+        "daily_consumption_m3": 5.15,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 128,
+        "cluster": 12,
+        "floors": 12,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.23,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 129,
+        "cluster": 12,
+        "floors": 5,
+        "current_flow_m3s": 0.000057,
+        "daily_consumption_m3": 4.89,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 130,
+        "cluster": 13,
+        "floors": 5,
+        "current_flow_m3s": 0.000057,
+        "daily_consumption_m3": 4.93,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 131,
+        "cluster": 13,
+        "floors": 2,
+        "current_flow_m3s": 0.000055,
+        "daily_consumption_m3": 4.76,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 132,
+        "cluster": 13,
+        "floors": 7,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.42,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 133,
+        "cluster": 13,
+        "floors": 6,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.33,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 134,
+        "cluster": 13,
+        "floors": 1,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.55,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 135,
+        "cluster": 13,
+        "floors": 12,
+        "current_flow_m3s": 0.000048,
+        "daily_consumption_m3": 4.19,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 136,
+        "cluster": 13,
+        "floors": 8,
+        "current_flow_m3s": 0.000048,
+        "daily_consumption_m3": 4.19,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 137,
+        "cluster": 13,
+        "floors": 15,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.99,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 138,
+        "cluster": 13,
+        "floors": 1,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.59,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 139,
+        "cluster": 13,
+        "floors": 9,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.96,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 140,
+        "cluster": 14,
+        "floors": 8,
+        "current_flow_m3s": 0.000059,
+        "daily_consumption_m3": 5.09,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 141,
+        "cluster": 14,
+        "floors": 3,
+        "current_flow_m3s": 0.000065,
+        "daily_consumption_m3": 5.58,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 142,
+        "cluster": 14,
+        "floors": 7,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.33,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 143,
+        "cluster": 14,
+        "floors": 15,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.32,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 144,
+        "cluster": 14,
+        "floors": 15,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.23,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 145,
+        "cluster": 14,
+        "floors": 12,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.56,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 146,
+        "cluster": 14,
+        "floors": 6,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.56,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 147,
+        "cluster": 14,
+        "floors": 5,
+        "current_flow_m3s": 0.000058,
+        "daily_consumption_m3": 4.99,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 148,
+        "cluster": 14,
+        "floors": 4,
+        "current_flow_m3s": 0.000040,
+        "daily_consumption_m3": 3.45,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 149,
+        "cluster": 14,
+        "floors": 7,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.40,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 150,
+        "cluster": 15,
+        "floors": 12,
+        "current_flow_m3s": 0.000056,
+        "daily_consumption_m3": 4.80,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 151,
+        "cluster": 15,
+        "floors": 7,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.04,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 152,
+        "cluster": 15,
+        "floors": 15,
+        "current_flow_m3s": 0.000057,
+        "daily_consumption_m3": 4.96,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 153,
+        "cluster": 15,
+        "floors": 4,
+        "current_flow_m3s": 0.000055,
+        "daily_consumption_m3": 4.75,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 154,
+        "cluster": 15,
+        "floors": 3,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.22,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 155,
+        "cluster": 15,
+        "floors": 12,
+        "current_flow_m3s": 0.000042,
+        "daily_consumption_m3": 3.63,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 156,
+        "cluster": 15,
+        "floors": 1,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.24,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 157,
+        "cluster": 15,
+        "floors": 5,
+        "current_flow_m3s": 0.000061,
+        "daily_consumption_m3": 5.24,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 158,
+        "cluster": 15,
+        "floors": 6,
+        "current_flow_m3s": 0.000059,
+        "daily_consumption_m3": 5.13,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 159,
+        "cluster": 15,
+        "floors": 2,
+        "current_flow_m3s": 0.000052,
+        "daily_consumption_m3": 4.49,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 160,
+        "cluster": 16,
+        "floors": 5,
+        "current_flow_m3s": 0.000042,
+        "daily_consumption_m3": 3.66,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 161,
+        "cluster": 16,
+        "floors": 4,
+        "current_flow_m3s": 0.000060,
+        "daily_consumption_m3": 5.21,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 162,
+        "cluster": 16,
+        "floors": 7,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.34,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 163,
+        "cluster": 16,
+        "floors": 5,
+        "current_flow_m3s": 0.000041,
+        "daily_consumption_m3": 3.54,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 164,
+        "cluster": 16,
+        "floors": 5,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.28,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 165,
+        "cluster": 16,
+        "floors": 6,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.62,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 166,
+        "cluster": 16,
+        "floors": 1,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.40,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 167,
+        "cluster": 16,
+        "floors": 8,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.29,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 168,
+        "cluster": 16,
+        "floors": 6,
+        "current_flow_m3s": 0.000046,
+        "daily_consumption_m3": 3.95,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 169,
+        "cluster": 16,
+        "floors": 2,
+        "current_flow_m3s": 0.000054,
+        "daily_consumption_m3": 4.63,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 170,
+        "cluster": 17,
+        "floors": 9,
+        "current_flow_m3s": 0.000037,
+        "daily_consumption_m3": 3.19,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 171,
+        "cluster": 17,
+        "floors": 15,
+        "current_flow_m3s": 0.000048,
+        "daily_consumption_m3": 4.15,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 172,
+        "cluster": 17,
+        "floors": 2,
+        "current_flow_m3s": 0.000062,
+        "daily_consumption_m3": 5.34,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 173,
+        "cluster": 17,
+        "floors": 2,
+        "current_flow_m3s": 0.000045,
+        "daily_consumption_m3": 3.90,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 174,
+        "cluster": 17,
+        "floors": 12,
+        "current_flow_m3s": 0.000054,
+        "daily_consumption_m3": 4.66,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 175,
+        "cluster": 17,
+        "floors": 6,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.30,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 176,
+        "cluster": 17,
+        "floors": 2,
+        "current_flow_m3s": 0.000039,
+        "daily_consumption_m3": 3.41,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 177,
+        "cluster": 17,
+        "floors": 9,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.34,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 178,
+        "cluster": 17,
+        "floors": 4,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.56,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 179,
+        "cluster": 17,
+        "floors": 8,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.21,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 180,
+        "cluster": 18,
+        "floors": 15,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.79,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 181,
+        "cluster": 18,
+        "floors": 6,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.81,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 182,
+        "cluster": 18,
+        "floors": 2,
+        "current_flow_m3s": 0.000040,
+        "daily_consumption_m3": 3.43,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 183,
+        "cluster": 18,
+        "floors": 8,
+        "current_flow_m3s": 0.000060,
+        "daily_consumption_m3": 5.22,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 184,
+        "cluster": 18,
+        "floors": 2,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.25,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 185,
+        "cluster": 18,
+        "floors": 15,
+        "current_flow_m3s": 0.000055,
+        "daily_consumption_m3": 4.79,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 186,
+        "cluster": 18,
+        "floors": 2,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.26,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 187,
+        "cluster": 18,
+        "floors": 9,
+        "current_flow_m3s": 0.000055,
+        "daily_consumption_m3": 4.78,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 188,
+        "cluster": 18,
+        "floors": 1,
+        "current_flow_m3s": 0.000048,
+        "daily_consumption_m3": 4.15,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 189,
+        "cluster": 18,
+        "floors": 2,
+        "current_flow_m3s": 0.000053,
+        "daily_consumption_m3": 4.60,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 190,
+        "cluster": 19,
+        "floors": 3,
+        "current_flow_m3s": 0.000049,
+        "daily_consumption_m3": 4.27,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 191,
+        "cluster": 19,
+        "floors": 2,
+        "current_flow_m3s": 0.000065,
+        "daily_consumption_m3": 5.61,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 192,
+        "cluster": 19,
+        "floors": 3,
+        "current_flow_m3s": 0.000054,
+        "daily_consumption_m3": 4.71,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 193,
+        "cluster": 19,
+        "floors": 4,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.32,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 194,
+        "cluster": 19,
+        "floors": 2,
+        "current_flow_m3s": 0.000041,
+        "daily_consumption_m3": 3.55,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 195,
+        "cluster": 19,
+        "floors": 2,
+        "current_flow_m3s": 0.000066,
+        "daily_consumption_m3": 5.68,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 196,
+        "cluster": 19,
+        "floors": 15,
+        "current_flow_m3s": 0.000050,
+        "daily_consumption_m3": 4.34,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 197,
+        "cluster": 19,
+        "floors": 15,
+        "current_flow_m3s": 0.000044,
+        "daily_consumption_m3": 3.76,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 198,
+        "cluster": 19,
+        "floors": 12,
+        "current_flow_m3s": 0.000047,
+        "daily_consumption_m3": 4.05,
+        "total_consumed_m3": 0.00
+      },
+      {
+        "id": 199,
+        "cluster": 19,
+        "floors": 1,
+        "current_flow_m3s": 0.000051,
+        "daily_consumption_m3": 4.42,
+        "total_consumed_m3": 0.00
+      }
+    ]
+  }
+}

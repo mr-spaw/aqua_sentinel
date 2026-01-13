@@ -618,7 +618,7 @@ public:
             std::string summary_topic = "pipes/system/summary" + std::to_string(i);
             mosquitto_subscribe(mosq_, nullptr, summary_topic.c_str(), 0);
         }
-        
+
         RCLCPP_INFO(this->get_logger(), " Subscribed to topics for %d ESPs", max_esp_count_);
         
         // ROS2 subscribers
@@ -656,7 +656,7 @@ public:
         mosquitto_lib_cleanup();
     }
     
-    void valveControlCallback(const std_msgs::msg::String::SharedPtr msg) {
+    void valveControlCallback(const std_msgs::msg::String::SharedPtr msg) {  
         try {
             std::string data = msg->data;
             size_t pos = data.find(':');
