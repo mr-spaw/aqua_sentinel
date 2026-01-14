@@ -11,14 +11,15 @@ const char* WIFI_PASSWORD = "123456789";
 const char* MQTT_SERVER = "172.20.10.5";  //Linux System wlan ip  
 const int MQTT_PORT = 1883;
 
-//const char* MQTT_TOPIC = "pipes/sensors1"; // ESP_CHANGE
+
+//const char* MQTT_TOPIC = "pipes/sensors1";  //ESP_CHANGE
 //const char* MQTT_CLIENT_ID = "ESP32_PipeSystem1";  //ESP_CHANGE
 
 //const char* MQTT_TOPIC = "pipes/sensors2"; 
 //const char* MQTT_CLIENT_ID = "ESP32_PipeSystem2";  
 
 const char* MQTT_TOPIC = "pipes/sensors3"; 
-const char* MQTT_CLIENT_ID = "ESP32_PipeSystem3";  
+const char* MQTT_CLIENT_ID = "ESP32_PipeSystem3";
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -32,7 +33,7 @@ PubSubClient mqttClient(espClient);
 #define PIPE_ROUGHNESS     0.000015f // m 
 
 /* ================= CONFIG ================= */
-#define TOTAL_PIPES        500       //RAM limitation for ESP 32 S3
+#define TOTAL_PIPES        500      //RAM limitation for ESP 32 WROOM 32
 #define UPDATE_INTERVAL    2000     
 #define PHYSICS_DT         0.1f     
 
@@ -51,14 +52,10 @@ PubSubClient mqttClient(espClient);
 #define MAX_SENSORS_PER_MESSAGE 100 
 #define MQTT_BUFFER_SIZE   32768    
 
-
-
-
 enum PipeType {
   FRESH_WATER = 0,
   SEWAGE = 1
 };
-
 
 struct Sensor {
   int sensorId;
@@ -108,8 +105,6 @@ int remainingToDegrade = TOTAL_PIPES;
 unsigned long lastMqttPublish = 0;
 int mqttPublishIndex = 0;
 int activeSensorCount = 0;
-
-
 
 bool configReceived = false;
 bool initializedFromConfig = false;
@@ -244,7 +239,7 @@ void initSystem() {
       
       // UNIQUE initial pressure
       sensors[i]._pressurePa = sensors[i].supplyPressure * (0.6f + (i % 5) * 0.1f);
-      sensors[i].pressure = sensors[i]._pressurePa / 100000.0f;
+      sensors[i].pressure = sensors[i]._pressurePa / 1000.0f;
       sensors[i].flowRate = sensors[i].demandFlow;
       sensors[i].level = 70.0f + (i % 31) * 1.0f; 
       
@@ -260,7 +255,7 @@ void initSystem() {
       sensors[i].demandFlow = 0.002f + (i % 14) * 0.001f; 
       
       sensors[i]._pressurePa = AIR_PRESSURE + 5000.0f + (i % 11) * 1000.0f;
-      sensors[i].pressure = sensors[i]._pressurePa / 100000.0f;
+      sensors[i].pressure = sensors[i]._pressurePa / 1000.0f;
       sensors[i].flowRate = sensors[i].demandFlow;
       sensors[i].level = 30.0f + (i % 71) * 1.0f; 
     }
@@ -286,7 +281,7 @@ void initSystem() {
   }
   
   Serial.println("System initialized with unique sensor properties");
-  Serial.println("===========================================");
+  Serial.println("------------------------------------------------");
 }
 
 /* ================= DEGRADATION ================= */
@@ -426,7 +421,7 @@ void updatePhysics(float dt) {
       }
       
       s._pressurePa = clampf(s._pressurePa, 50000.0f, 800000.0f);
-      s.pressure = s._pressurePa / 100000.0f;
+      s.pressure = s._pressurePa / 1000.0f; 
       
       // Level variations
       if (s.leakCoeff > 0.01f) {
@@ -463,7 +458,7 @@ void updatePhysics(float dt) {
       
       float fluidHeight = (s.level / 100.0f) * s.diameter;
       s._pressurePa = AIR_PRESSURE + WATER_DENSITY * GRAVITY * fluidHeight;
-      s.pressure = s._pressurePa / 100000.0f;
+      s.pressure = s._pressurePa / 1000.0f; 
     }
     
     // DEGRADATION EFFECTS 
@@ -524,7 +519,7 @@ void printSensor(int i) {
   Serial.print(s.type == FRESH_WATER ? "FRESH" : "SEWAGE");
   Serial.print(" | PRESSURE=");
   Serial.print(s.pressure, 3);  
-  Serial.print(" bar | LEVEL=");
+  Serial.print(" kpa | LEVEL=");
   Serial.print(s.level, 2);    
   Serial.print("% | VALVE=");
   Serial.print(s.valveOpen ? "OPEN" : "CLOSED");
@@ -570,8 +565,8 @@ void verifySensorUniqueness() {
     Serial.print("m, Elev=");
     Serial.print(s.elevation, 1);
     Serial.print("m, Supply=");
-    Serial.print(s.supplyPressure / 100000.0f, 2);
-    Serial.print("bar, Demand=");
+    Serial.print(s.supplyPressure / 1000.0f, 2);
+    Serial.print("kpa, Demand=");
     Serial.print(s.demandFlow * 1000.0f, 2);
     Serial.println(" L/s");
   }
@@ -581,7 +576,7 @@ void verifySensorUniqueness() {
 
 void resetSensorsToInitialConfig(const std::vector<int>& sensor_ids) {
   Serial.println("===========================================");
-  Serial.println(" RESETTING TO INITIAL CONFIGURED STATE");
+  Serial.println("🛠️ RESETTING TO INITIAL CONFIGURED STATE");
   Serial.println("===========================================");
   
   int resetCount = 0;
@@ -603,14 +598,14 @@ void resetSensorsToInitialConfig(const std::vector<int>& sensor_ids) {
           Serial.print(" to initial config state: ");
           Serial.print("P=");
           Serial.print(initialStates[i].initialPressure);
-          Serial.print("bar, L=");
+          Serial.print("kpa, L=");
           Serial.print(initialStates[i].initialLevel);
           Serial.print("%, V=");
           Serial.println(initialStates[i].initialValve);
           
           // Reset to INITIAL CONFIG values
           s.pressure = initialStates[i].initialPressure;
-          s._pressurePa = s.pressure * 100000.0f;
+          s._pressurePa = s.pressure * 1000.0f;
           s.supplyPressure = s._pressurePa;  // Also reset supply pressure
           
           s.level = initialStates[i].initialLevel;
@@ -629,7 +624,7 @@ void resetSensorsToInitialConfig(const std::vector<int>& sensor_ids) {
           s.headLoss = 0.0f;
           
           resetCount++;
-          Serial.println(" Reset to initial config complete");
+          Serial.println("Reset to initial config complete");
         } else {
           Serial.print("No initial config stored for sensor ");
           Serial.println(target_sensor_id);
@@ -640,7 +635,7 @@ void resetSensorsToInitialConfig(const std::vector<int>& sensor_ids) {
     }
     
     if (!found) {
-      Serial.print(" Sensor ");
+      Serial.print("Sensor ");
       Serial.print(target_sensor_id);
       Serial.println(" not found in active sensors");
     }
@@ -679,7 +674,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
         sensors[i].valveOpen = (valve_state == 1);
         found = true;
         
-        Serial.print("Valve control: Sensor ");
+        Serial.print(" Valve control: Sensor ");
         Serial.print(target_sensor_id);
         Serial.print(" -> ");
         Serial.println(sensors[i].valveOpen ? "OPEN" : "CLOSED");
@@ -688,52 +683,15 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     }
     
     if (!found) {
-      Serial.print(" Valve control: Sensor ");
+      Serial.print("Valve control: Sensor ");
       Serial.print(target_sensor_id);
       Serial.println(" not found on this ESP");
     }
     
-    return;  // Exit after handling valve control
+    return;  
   }*/
 
-  /*if (strcmp(topic, "pipes/control/valve2") == 0) {
-    DynamicJsonDocument doc(512);
-    DeserializationError error = deserializeJson(doc, payload, length);
-    
-    if (error) {
-      Serial.print("Valve control JSON parsing failed: ");
-      Serial.println(error.c_str());
-      return;
-    }
-    
-    int target_sensor_id = doc["sensor_id"];
-    int valve_state = doc["valve"];
-    
-    // Find the sensor in our array
-    bool found = false;
-    for (int i = 0; i < activeSensorCount; i++) {
-      if (sensors[i].sensorId == target_sensor_id) {
-        sensors[i].valveOpen = (valve_state == 1);
-        found = true;
-        
-        Serial.print("Valve control: Sensor ");
-        Serial.print(target_sensor_id);
-        Serial.print(" -> ");
-        Serial.println(sensors[i].valveOpen ? "OPEN" : "CLOSED");
-        break;
-      }
-    }
-    
-    if (!found) {
-      Serial.print(" Valve control: Sensor ");
-      Serial.print(target_sensor_id);
-      Serial.println(" not found on this ESP");
-    }
-    
-    return;  // Exit after handling valve control
-  }*/
-
-  if (strcmp(topic, "pipes/control/valve3") == 0) {
+  /*if (strcmp(topic, "pipes/control/valve2") == 0) { 
     DynamicJsonDocument doc(512);
     DeserializationError error = deserializeJson(doc, payload, length);
     
@@ -762,16 +720,53 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     }
     
     if (!found) {
-      Serial.print(" Valve control: Sensor ");
+      Serial.print("Valve control: Sensor ");
       Serial.print(target_sensor_id);
       Serial.println(" not found on this ESP");
     }
     
-    return;  // Exit after handling valve control
+    return; 
+  }*/
+
+  if (strcmp(topic, "pipes/control/valve3") == 0) { 
+    DynamicJsonDocument doc(512);
+    DeserializationError error = deserializeJson(doc, payload, length);
+    
+    if (error) {
+      Serial.print("Valve control JSON parsing failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    
+    int target_sensor_id = doc["sensor_id"];
+    int valve_state = doc["valve"];
+    
+    // Find the sensor in our array
+    bool found = false;
+    for (int i = 0; i < activeSensorCount; i++) {
+      if (sensors[i].sensorId == target_sensor_id) {
+        sensors[i].valveOpen = (valve_state == 1);
+        found = true;
+        
+        Serial.print(" Valve control: Sensor ");
+        Serial.print(target_sensor_id);
+        Serial.print(" -> ");
+        Serial.println(sensors[i].valveOpen ? "OPEN" : "CLOSED");
+        break;
+      }
+    }
+    
+    if (!found) {
+      Serial.print("Valve control: Sensor ");
+      Serial.print(target_sensor_id);
+      Serial.println(" not found on this ESP");
+    }
+    
+    return;  
   }
 
   // 2. MAINTENANCE HANDLER (your existing code for ESP1)
-  /*if (strcmp(topic, "pipes/maintenance/esp1") == 0) {  //ESP_CHANGE
+  /*if (strcmp(topic, "pipes/maintenance/esp1") == 0) { //ESP_CHANGE
     DynamicJsonDocument doc(512);
     DeserializationError error = deserializeJson(doc, payload, length);
     
@@ -869,7 +864,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     return;  
   }*/
 
-  if (strcmp(topic, "pipes/maintenance/esp3") == 0) {
+  if (strcmp(topic, "pipes/maintenance/esp3") == 0) { 
     DynamicJsonDocument doc(512);
     DeserializationError error = deserializeJson(doc, payload, length);
     
@@ -919,6 +914,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   }
 
   // 3. CONFIG HANDLER (your existing code for ESP1)
+
   /*if (strcmp(topic, "pipes/config/init1") != 0) { //ESP_CHANGE
     return;
   }*/
@@ -988,7 +984,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     int originalSensorId = sensorObj["sensor_id"] | -1;
     int pipeId = sensorObj["pipe_id"] | originalSensorId;
     const char* typeStr = sensorObj["type"] | "fresh";
-    float pressureBar = sensorObj["pressure_bar"] | 0.0f;
+    float pressurekpa = sensorObj["pressure_kpa"] | 0.0f;
     float levelPct = sensorObj["level_pct"] | 0.0f;
     int valve = sensorObj["valve"] | 1;
     
@@ -1003,8 +999,8 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     s.pipeId = pipeId;
     s.type = (strcmp(typeStr, "fresh") == 0) ? FRESH_WATER : SEWAGE;
     s.valveOpen = (valve == 1);
-    s.pressure = pressureBar;
-    s._pressurePa = pressureBar * 100000.0f;
+    s.pressure = pressurekpa;
+    s._pressurePa = pressurekpa * 1000.0f;
     s.supplyPressure = s._pressurePa;
     s.level = clampf(levelPct, 0.0f, 100.0f);
     
@@ -1033,7 +1029,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     s.degrading = false;
     
     // STORE INITIAL VALUES FOR MAINTENANCE
-    initialStates[localIndex].initialPressure = pressureBar;
+    initialStates[localIndex].initialPressure = pressurekpa;
     initialStates[localIndex].initialLevel = levelPct;
     initialStates[localIndex].initialValve = valve;
     initialStates[localIndex].stored = true;
@@ -1062,7 +1058,6 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   nextDegradeTime = millis() + FIRST_FAIL_MIN_MS;
   remainingToDegrade = activeSensorCount;
 }
-
 
 void setupWiFi() {
   Serial.println();
@@ -1098,21 +1093,21 @@ void reconnectMQTT() {
       mqttConnectTime = millis();
       
       // Subscribe to config topic
-      //mqttClient.subscribe("pipes/config/init1");  //ESP_CHANGE
+      //mqttClient.subscribe("pipes/config/init1"); //ESP_CHANGE
       //mqttClient.subscribe("pipes/config/init2");
-      mqttClient.subscribe("pipes/config/init3");
-      
+     mqttClient.subscribe("pipes/config/init3");
+
       // Subscribe to maintenance topic
       //mqttClient.subscribe("pipes/maintenance/esp1"); //ESP_CHANGE
       //mqttClient.subscribe("pipes/maintenance/esp2");
       mqttClient.subscribe("pipes/maintenance/esp3");
-      
+
       // ADD THIS: Subscribe to valve control topic
       //mqttClient.subscribe("pipes/control/valve1"); //ESP_CHANGE
       //mqttClient.subscribe("pipes/control/valve2");
       mqttClient.subscribe("pipes/control/valve3");
-      
-      Serial.println("✅ Subscribed to topics:");
+
+      Serial.println(" Subscribed to topics:");
       Serial.println("  - pipes/config/init1");
       Serial.println("  - pipes/maintenance/esp1");
       Serial.println("  - pipes/control/valve");
@@ -1134,7 +1129,7 @@ void publishSensorData(int i) {
   doc["sensor_id"] = s.sensorId;
   doc["pipe_id"] = s.pipeId;
   doc["type"] = (s.type == FRESH_WATER) ? "fresh" : "sewage";
-  doc["pressure_bar"] = round(s.pressure * 1000.0) / 1000.0;
+  doc["pressure_kpa"] = round(s.pressure * 1000.0) / 1000.0;
   doc["level_pct"] = round(s.level * 1000.0) / 1000.0;
   doc["valve"] = s.valveOpen ? 1 : 0;
   doc["flow_rate_Ls"] = round(s.flowRate * 1000.0 * 100.0) / 100.0;
@@ -1191,7 +1186,7 @@ void publishAllSensors() {
       sensorObj["sensor_id"] = s.sensorId;
       sensorObj["pipe_id"] = s.pipeId;
       sensorObj["type"] = (s.type == FRESH_WATER) ? "fresh" : "sewage";
-      sensorObj["pressure_bar"] = round(s.pressure * 1000.0) / 1000.0;
+      sensorObj["pressure_kpa"] = round(s.pressure * 1000.0) / 1000.0;
       sensorObj["level_pct"] = round(s.level * 1000.0) / 1000.0;
       sensorObj["valve"] = s.valveOpen ? 1 : 0;
       sensorObj["flow_rate_Ls"] = round(s.flowRate * 1000.0 * 100.0) / 100.0;
@@ -1218,7 +1213,7 @@ void publishAllSensors() {
       bool published = mqttClient.publish(topicBuffer, mqttBuffer);
       
       if (!published) {
-        Serial.print("Publish failed for chunk ");
+        Serial.print("⚠ Publish failed for chunk ");
         Serial.println(chunk);
       }
     } else {
@@ -1270,7 +1265,7 @@ void publishSystemSummary() {
   doc["sewage_count"] = sewageCount;
   doc["degrading_count"] = degradingCount;
   doc["closed_valves"] = closedValves;
-  doc["avg_pressure_fresh_bar"] = round(avgPressureFresh * 1000.0) / 1000.0;
+  doc["avg_pressure_fresh_kpa"] = round(avgPressureFresh * 1000.0) / 1000.0;
   doc["avg_level_sewage_pct"] = round(avgLevelSewage * 100.0) / 100.0;
   doc["total_flow_fresh_Ls"] = round(totalFlowFresh * 100.0) / 100.0;
   doc["total_flow_sewage_Ls"] = round(totalFlowSewage * 100.0) / 100.0;
@@ -1279,6 +1274,7 @@ void publishSystemSummary() {
   //mqttClient.publish("pipes/system/summary1", mqttBuffer); //ESP_CHANGE
   //mqttClient.publish("pipes/system/summary2", mqttBuffer);
   mqttClient.publish("pipes/system/summary3", mqttBuffer);
+
 }
 
 
@@ -1328,7 +1324,7 @@ void setup() {
     Serial.println("DYNAMIC CONFIG RECEIVED!");
     Serial.print("Active sensors: ");
     Serial.println(activeSensorCount);
-    Serial.println("=================   ==========================");
+    Serial.println("===========================================");
   } else {
     Serial.println("===========================================");
     Serial.println("TIMEOUT! Using DEFAULT configuration");
@@ -1355,7 +1351,6 @@ void loop() {
   mqttClient.loop();
   return;
 }
-
 
   unsigned long now = millis();
   

@@ -137,7 +137,7 @@ public:
                 sensor_obj["sensor_id"] = s["sensor_id"];
                 sensor_obj["pipe_id"] = s["pipe_id"];
                 sensor_obj["type"] = (s["pipe_type"].get<int>() == 0) ? "fresh" : "sewage";
-                sensor_obj["pressure_bar"] = s["pressure_bar"];
+                sensor_obj["pressure_kpa"] = s["pressure_kpa"];
                 sensor_obj["level_pct"] = s["level_pct"];
                 sensor_obj["valve"] = s.contains("valve") ? s["valve"].get<int>() : 1;
                 

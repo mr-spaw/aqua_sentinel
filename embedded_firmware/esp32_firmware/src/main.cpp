@@ -233,7 +233,7 @@ void initSystem() {
       
       // UNIQUE initial pressure
       sensors[i]._pressurePa = sensors[i].supplyPressure * (0.6f + (i % 5) * 0.1f);
-      sensors[i].pressure = sensors[i]._pressurePa / 100000.0f;
+      sensors[i].pressure = sensors[i]._pressurePa / 1000.0f;
       sensors[i].flowRate = sensors[i].demandFlow;
       sensors[i].level = 70.0f + (i % 31) * 1.0f; 
       
@@ -249,7 +249,7 @@ void initSystem() {
       sensors[i].demandFlow = 0.002f + (i % 14) * 0.001f; 
       
       sensors[i]._pressurePa = AIR_PRESSURE + 5000.0f + (i % 11) * 1000.0f;
-      sensors[i].pressure = sensors[i]._pressurePa / 100000.0f;
+      sensors[i].pressure = sensors[i]._pressurePa / 1000.0f;
       sensors[i].flowRate = sensors[i].demandFlow;
       sensors[i].level = 30.0f + (i % 71) * 1.0f; 
     }
@@ -415,7 +415,7 @@ void updatePhysics(float dt) {
       }
       
       s._pressurePa = clampf(s._pressurePa, 50000.0f, 800000.0f);
-      s.pressure = s._pressurePa / 100000.0f;
+      s.pressure = s._pressurePa / 1000.0f; 
       
       // Level variations
       if (s.leakCoeff > 0.01f) {
@@ -452,7 +452,7 @@ void updatePhysics(float dt) {
       
       float fluidHeight = (s.level / 100.0f) * s.diameter;
       s._pressurePa = AIR_PRESSURE + WATER_DENSITY * GRAVITY * fluidHeight;
-      s.pressure = s._pressurePa / 100000.0f;
+      s.pressure = s._pressurePa / 1000.0f; 
     }
     
     // DEGRADATION EFFECTS 
@@ -513,7 +513,7 @@ void printSensor(int i) {
   Serial.print(s.type == FRESH_WATER ? "FRESH" : "SEWAGE");
   Serial.print(" | PRESSURE=");
   Serial.print(s.pressure, 3);  
-  Serial.print(" bar | LEVEL=");
+  Serial.print(" kpa | LEVEL=");
   Serial.print(s.level, 2);    
   Serial.print("% | VALVE=");
   Serial.print(s.valveOpen ? "OPEN" : "CLOSED");
@@ -559,8 +559,8 @@ void verifySensorUniqueness() {
     Serial.print("m, Elev=");
     Serial.print(s.elevation, 1);
     Serial.print("m, Supply=");
-    Serial.print(s.supplyPressure / 100000.0f, 2);
-    Serial.print("bar, Demand=");
+    Serial.print(s.supplyPressure / 1000.0f, 2);
+    Serial.print("kpa, Demand=");
     Serial.print(s.demandFlow * 1000.0f, 2);
     Serial.println(" L/s");
   }
@@ -592,14 +592,14 @@ void resetSensorsToInitialConfig(const std::vector<int>& sensor_ids) {
           Serial.print(" to initial config state: ");
           Serial.print("P=");
           Serial.print(initialStates[i].initialPressure);
-          Serial.print("bar, L=");
+          Serial.print("kpa, L=");
           Serial.print(initialStates[i].initialLevel);
           Serial.print("%, V=");
           Serial.println(initialStates[i].initialValve);
           
           // Reset to INITIAL CONFIG values
           s.pressure = initialStates[i].initialPressure;
-          s._pressurePa = s.pressure * 100000.0f;
+          s._pressurePa = s.pressure * 1000.0f;
           s.supplyPressure = s._pressurePa;  // Also reset supply pressure
           
           s.level = initialStates[i].initialLevel;
@@ -797,7 +797,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     int originalSensorId = sensorObj["sensor_id"] | -1;
     int pipeId = sensorObj["pipe_id"] | originalSensorId;
     const char* typeStr = sensorObj["type"] | "fresh";
-    float pressureBar = sensorObj["pressure_bar"] | 0.0f;
+    float pressurekpa = sensorObj["pressure_kpa"] | 0.0f;
     float levelPct = sensorObj["level_pct"] | 0.0f;
     int valve = sensorObj["valve"] | 1;
     
@@ -812,8 +812,8 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     s.pipeId = pipeId;
     s.type = (strcmp(typeStr, "fresh") == 0) ? FRESH_WATER : SEWAGE;
     s.valveOpen = (valve == 1);
-    s.pressure = pressureBar;
-    s._pressurePa = pressureBar * 100000.0f;
+    s.pressure = pressurekpa;
+    s._pressurePa = pressurekpa * 1000.0f;
     s.supplyPressure = s._pressurePa;
     s.level = clampf(levelPct, 0.0f, 100.0f);
     
@@ -842,7 +842,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     s.degrading = false;
     
     // STORE INITIAL VALUES FOR MAINTENANCE
-    initialStates[localIndex].initialPressure = pressureBar;
+    initialStates[localIndex].initialPressure = pressurekpa;
     initialStates[localIndex].initialLevel = levelPct;
     initialStates[localIndex].initialValve = valve;
     initialStates[localIndex].stored = true;
@@ -936,7 +936,7 @@ void publishSensorData(int i) {
   doc["sensor_id"] = s.sensorId;
   doc["pipe_id"] = s.pipeId;
   doc["type"] = (s.type == FRESH_WATER) ? "fresh" : "sewage";
-  doc["pressure_bar"] = round(s.pressure * 1000.0) / 1000.0;
+  doc["pressure_kpa"] = round(s.pressure * 1000.0) / 1000.0;
   doc["level_pct"] = round(s.level * 1000.0) / 1000.0;
   doc["valve"] = s.valveOpen ? 1 : 0;
   doc["flow_rate_Ls"] = round(s.flowRate * 1000.0 * 100.0) / 100.0;
@@ -993,7 +993,7 @@ void publishAllSensors() {
       sensorObj["sensor_id"] = s.sensorId;
       sensorObj["pipe_id"] = s.pipeId;
       sensorObj["type"] = (s.type == FRESH_WATER) ? "fresh" : "sewage";
-      sensorObj["pressure_bar"] = round(s.pressure * 1000.0) / 1000.0;
+      sensorObj["pressure_kpa"] = round(s.pressure * 1000.0) / 1000.0;
       sensorObj["level_pct"] = round(s.level * 1000.0) / 1000.0;
       sensorObj["valve"] = s.valveOpen ? 1 : 0;
       sensorObj["flow_rate_Ls"] = round(s.flowRate * 1000.0 * 100.0) / 100.0;
@@ -1072,7 +1072,7 @@ void publishSystemSummary() {
   doc["sewage_count"] = sewageCount;
   doc["degrading_count"] = degradingCount;
   doc["closed_valves"] = closedValves;
-  doc["avg_pressure_fresh_bar"] = round(avgPressureFresh * 1000.0) / 1000.0;
+  doc["avg_pressure_fresh_kpa"] = round(avgPressureFresh * 1000.0) / 1000.0;
   doc["avg_level_sewage_pct"] = round(avgLevelSewage * 100.0) / 100.0;
   doc["total_flow_fresh_Ls"] = round(totalFlowFresh * 100.0) / 100.0;
   doc["total_flow_sewage_Ls"] = round(totalFlowSewage * 100.0) / 100.0;

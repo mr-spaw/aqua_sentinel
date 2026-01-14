@@ -480,7 +480,7 @@ void on_message(struct mosquitto *, void *, const struct mosquitto_message *msg)
                         essential_sensor["sensor_id"] = s.value("sensor_id", -1);
                         essential_sensor["pipe_id"] = s.value("pipe_id", -1);
                         essential_sensor["pipe_type"] = s.value("type", "fresh") == "fresh" ? 0 : 1;
-                        essential_sensor["pressure_bar"] = s.value("pressure_bar", 0.0);
+                        essential_sensor["pressure_kpa"] = s.value("pressure_kpa", 0.0);
                         essential_sensor["level_pct"] = s.value("level_pct", 0.0);
                         essential_sensor["valve"] = s.value("valve", 1);
                         
