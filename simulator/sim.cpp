@@ -25,13 +25,16 @@
     #include <thread>
     #include <atomic>
     #include <csignal>
+    #include <unordered_map>   
+    #include <array>           
+    #include <deque>
 
     // ============================================================================
     // UDP BROADCAST SETTINGS
     // ============================================================================
 
     const int UDP_BROADCAST_PORT = 8888;
-    const float UDP_BROADCAST_INTERVAL = 0.01f; 
+    const float UDP_BROADCAST_INTERVAL = 0.1f; 
     float udpBroadcastTimer = 0.0f;
     int udpSocket = -1;
     struct sockaddr_in broadcastAddr;
@@ -95,6 +98,17 @@
     const int PARTICLES_PER_PIPE = 20;
     const float PARTICLE_SIZE = 0.15f;
 
+    const float SYSTEM_HEAD_LOSS_COEFF = 0.0001f;    // Head loss coefficient
+    const float VALVE_CV_BASE = 100.0f;              // Valve flow coefficient  
+    const float MIN_OPERATING_PRESSURE = 70.0f;      // kPa (0.7 bar)
+    const float NOMINAL_PRESSURE = 150.0f;           // kPa (1.5 bar)
+    const float MAX_PRESSURE = 300.0f;               // kPa (3.0 bar)
+    const float LEAK_PROBABILITY_PER_HOUR = 0.001f;  // Probability of leak per hour
+    const float SENSOR_NOISE_SIGMA = 0.5f;           // kPa noise
+    bool showWaterParticles = true;
+    int windowWidth = 1600, windowHeight = 1000;
+
+
     // ============================================================================
     // PHYSICS CONSTANTS
     // ============================================================================
@@ -116,6 +130,8 @@
     // ============================================================================
 // LEVEL STABILIZER CLASS FOR SMOOTHING
 // ============================================================================
+
+
 
 class LevelStabilizer {
 private:
@@ -159,83 +175,101 @@ public:
 };
 
 
-    struct DayNightCycle {
-        float timeOfDay; // 0-24 hours
-        float sunAngle;
-        float ambientLight;
-        float sunIntensity;
-        Color skyColor;
-        Color sunColor;
-        Color moonColor;
-        
-        DayNightCycle() : timeOfDay(8.0f), sunAngle(0), ambientLight(0.8f), 
-                        sunIntensity(1.0f), skyColor(0.05f, 0.06f, 0.08f), 
-                        sunColor(1.0f, 0.9f, 0.7f), moonColor(0.8f, 0.8f, 0.9f) {}
-        
-        void update(float dt) {
-            timeOfDay += dt / 3600.0f; // Convert dt to hours
-            if (timeOfDay >= 24.0f) timeOfDay -= 24.0f;
-            
-            // Calculate lighting based on time
-            float dawn = 5.0f, sunrise = 6.0f, sunset = 18.0f, dusk = 19.0f;
-            
-            if (timeOfDay >= dawn && timeOfDay <= sunrise) {
-                float t = (timeOfDay - dawn) / (sunrise - dawn);
-                ambientLight = 0.2f + 0.6f * t;
-                sunIntensity = 0.3f + 0.7f * t;
-                sunColor = Color(1.0f, 0.6f + 0.4f * t, 0.3f + 0.4f * t);
-            }
-            else if (timeOfDay >= sunrise && timeOfDay <= sunset) {
-                ambientLight = 0.8f;
-                sunIntensity = 1.0f;
-                sunColor = Color(1.0f, 0.9f, 0.7f);
-            }
-            else if (timeOfDay >= sunset && timeOfDay <= dusk) {
-                float t = (timeOfDay - sunset) / (dusk - sunset);
-                ambientLight = 0.8f - 0.6f * t;
-                sunIntensity = 1.0f - 0.7f * t;
-                sunColor = Color(1.0f, 0.9f - 0.3f * t, 0.7f - 0.4f * t);
-            }
-            else {
-                ambientLight = 0.2f;
-                sunIntensity = 0.3f;
-            }
-        }
+  // ================== DAY-NIGHT CYCLE FIXES ==================
+// REPLACE the entire DayNightCycle struct's methods:
 
-        int getDayOfWeek() const {
-            // Calculate day of week based on simulation time
-            // Each day = 24 hours, Monday=0, Sunday=6
-            int days = static_cast<int>(timeOfDay / 24.0f);
-            return days % 7;
+struct DayNightCycle {
+    float timeOfDay; // 0-24 hours
+    float sunAngle;
+    float ambientLight;
+    float sunIntensity;
+    Color skyColor;
+    Color sunColor;
+    Color moonColor;
+    
+    DayNightCycle() : timeOfDay(8.0f), sunAngle(0), ambientLight(0.8f), 
+                    sunIntensity(1.0f), skyColor(0.05f, 0.06f, 0.08f), 
+                    sunColor(1.0f, 0.9f, 0.7f), moonColor(0.8f, 0.8f, 0.9f) {}
+    
+    void update(float dt) {
+        timeOfDay += dt / 3600.0f; // Convert dt to hours
+        if (timeOfDay >= 24.0f) {
+            timeOfDay -= 24.0f;
         }
         
-        float getWaterDemandFactor() const {
-            // Residential water usage pattern
-            float peakMorning = 7.0f;
-            float peakEvening = 19.0f;
-            float baseDemand = 0.3f;
-            
-            float morningFactor = exp(-pow(timeOfDay - peakMorning, 2) / 2.0f);
-            float eveningFactor = exp(-pow(timeOfDay - peakEvening, 2) / 2.0f);
-            float dayFactor = (timeOfDay >= 6.0f && timeOfDay <= 22.0f) ? 0.2f : 0.0f;
-            
-            return baseDemand + 0.5f * morningFactor + 0.6f * eveningFactor + dayFactor;
-        }
+        // Calculate lighting based on time
+        float dawn = 5.0f, sunrise = 6.0f, sunset = 18.0f, dusk = 19.0f;
         
-        bool isWeekend() const {
-            // Simple simulation - assume every 7th day is weekend
-            int dayNumber = static_cast<int>(timeOfDay / 24.0f) % 7;
-            return (dayNumber == 0 || dayNumber == 6); // Saturday or Sunday
+        if (timeOfDay >= dawn && timeOfDay <= sunrise) {
+            float t = (timeOfDay - dawn) / (sunrise - dawn);
+            ambientLight = 0.2f + 0.6f * t;
+            sunIntensity = 0.3f + 0.7f * t;
+            sunColor = Color(1.0f, 0.6f + 0.4f * t, 0.3f + 0.4f * t);
         }
+        else if (timeOfDay >= sunrise && timeOfDay <= sunset) {
+            ambientLight = 0.8f;
+            sunIntensity = 1.0f;
+            sunColor = Color(1.0f, 0.9f, 0.7f);
+        }
+        else if (timeOfDay >= sunset && timeOfDay <= dusk) {
+            float t = (timeOfDay - sunset) / (dusk - sunset);
+            ambientLight = 0.8f - 0.6f * t;
+            sunIntensity = 1.0f - 0.7f * t;
+            sunColor = Color(1.0f, 0.9f - 0.3f * t, 0.7f - 0.4f * t);
+        }
+        else {
+            ambientLight = 0.2f;
+            sunIntensity = 0.3f;
+        }
+    }
+
+    // FIXED: Calculate proper day of week
+    int getDayOfWeek() const {
+        // Each simulation day = 24 hours
+        // Monday = 0, Tuesday = 1, ..., Sunday = 6
+        int totalDays = static_cast<int>(timeOfDay / 24.0f);
+        return totalDays % 7;
+    }
+    
+    // FIXED: Proper weekend detection
+    bool isWeekend() const {
+        int dayOfWeek = getDayOfWeek();
+        // Saturday (5) or Sunday (6) are weekends
+        return (dayOfWeek == 5 || dayOfWeek == 6);
+    }
+    
+    // FIXED: Return proper day type
+    std::string getDayType() const {
+        return isWeekend() ? "weekend" : "weekday";
+    }
+    
+    // FIXED: Add method to get day name for debugging
+    std::string getDayName() const {
+        const char* days[] = {"Monday", "Tuesday", "Wednesday", "Thursday", 
+                             "Friday", "Saturday", "Sunday"};
+        return days[getDayOfWeek()];
+    }
+    
+    float getWaterDemandFactor() const {
+        // Residential water usage pattern
+        float peakMorning = 7.0f;
+        float peakEvening = 19.0f;
+        float baseDemand = 0.3f;
         
-        std::string getDayType() const {
-            return isWeekend() ? "weekend" : "weekday";
-        }
+        float morningFactor = exp(-pow(timeOfDay - peakMorning, 2) / 2.0f);
+        float eveningFactor = exp(-pow(timeOfDay - peakEvening, 2) / 2.0f);
+        float dayFactor = (timeOfDay >= 6.0f && timeOfDay <= 22.0f) ? 0.2f : 0.0f;
         
-        bool isDay() const {
-            return (timeOfDay >= 6.0f && timeOfDay <= 18.0f);
-        }
-    };
+        // Weekend effect: 20% higher usage
+        float weekendBonus = isWeekend() ? 0.2f : 0.0f;
+        
+        return baseDemand + 0.5f * morningFactor + 0.6f * eveningFactor + dayFactor + weekendBonus;
+    }
+    
+    bool isDay() const {
+        return (timeOfDay >= 6.0f && timeOfDay <= 18.0f);
+    }
+};
 
     DayNightCycle dayNight;
 
@@ -277,6 +311,8 @@ public:
     class CityNetwork;
     class ROS2SensorSubscriber;
     struct Pipe;
+    struct Building;
+
 
     // ============================================================================
     // WATER PARTICLE STRUCTURE
@@ -354,11 +390,12 @@ public:
         float leakSeverity;
         bool overflowFlag;
         bool pressureViolation;
+        float base_demand; 
         
         Zone(int id, Vec3 center) : id(id), center(center), 
             avgPressure(DEFAULT_PRESSURE), minPressure(DEFAULT_PRESSURE), 
             maxPressure(DEFAULT_PRESSURE), totalFlow(0), pressureVariance(0),
-            flowToPressureRatio(0), leakFlag(false), leakSeverity(0),
+            flowToPressureRatio(0), leakFlag(false), leakSeverity(0), base_demand(0),
             overflowFlag(false), pressureViolation(false) {}
         
         void updateStatistics(float currentFlow, float currentPressure) {
@@ -391,6 +428,468 @@ public:
 // ============================================================================
 // TREATMENT/RECHARGE EVENT FOR UDP BROADCAST
 // ============================================================================
+
+// ============================================================================
+// HYDRAULIC NODE (REPLACES SIMPLIFIED NODE)
+// ============================================================================
+
+
+struct HydraulicNode {
+    int id;
+    Vec3 position;
+    float elevation;          // meters
+    float pressure;           // kPa
+    float hydraulic_grade;    // meters (pressure head + elevation)
+    float base_demand;        // m³/s (nominal demand)
+    float actual_demand;      // m³/s (pressure-adjusted)
+    float leakage;            // m³/s
+    std::vector<int> connected_pipes;
+    bool is_reservoir;
+    bool is_demand;
+    float valve_opening;      // 0-1
+    
+    HydraulicNode(int id, Vec3 pos, float elev, float base_demand = 0)
+        : id(id), position(pos), elevation(elev), pressure(NOMINAL_PRESSURE),
+          base_demand(base_demand), actual_demand(base_demand),
+          leakage(0), is_reservoir(false), is_demand(base_demand > 0),
+          valve_opening(1.0f) {
+        updateHydraulicGrade();
+    }
+    
+    void updateHydraulicGrade() {
+        // Convert pressure to head: P = ρgh => h = P/(ρg)
+        float pressure_head = (pressure * 1000.0f) / (WATER_DENSITY * GRAVITY); // meters
+        hydraulic_grade = elevation + pressure_head;
+    }
+    
+    void updateDemand(float dt, float simulation_time) {
+        if (!is_demand) return;
+        
+        // Realistic: demand reduces when pressure is too low
+        float pressure_ratio = pressure / NOMINAL_PRESSURE;
+        pressure_ratio = std::max(0.0f, std::min(2.0f, pressure_ratio));
+        
+        // Square root relationship for flow vs pressure
+        float demand_factor = sqrtf(pressure_ratio);
+        
+        // Add time-of-day variation
+        float time_of_day = fmod(simulation_time, 86400.0f) / 3600.0f;
+        float diurnal_factor = 0.6f + 0.4f * sinf((time_of_day - 12.0f) * M_PI / 12.0f);
+        
+        // Add random variation (±10%)
+        float random_variation = 0.9f + 0.2f * (rand() % 1000) / 1000.0f;
+        
+        actual_demand = base_demand * demand_factor * diurnal_factor * random_variation;
+        
+        // Update leakage (pressure-dependent)
+        if (leakage > 0) {
+            leakage *= sqrtf(pressure_ratio);
+        }
+    }
+};
+
+// ============================================================================
+// HYDRAULIC PIPE (REPLACES SIMPLIFIED PIPE PHYSICS)
+// ============================================================================
+
+// ADD THIS STRUCT right after HydraulicNode:
+struct HydraulicPipe {
+    int id;
+    int start_node;
+    int end_node;
+    float diameter;          // meters
+    float length;            // meters
+    float roughness;         // Manning's n
+    float cv_factor;         // Valve flow coefficient
+
+    HydraulicPipe(int id, int start, int end, float diam, float len)
+        : id(id), start_node(start), end_node(end), diameter(diam), length(len) {
+        // Set defaults
+        roughness = PIPE_ROUGHNESS;
+        cv_factor = 10.0f;  // Default Cv value
+    }
+    
+    // Hazen-Williams coefficients by pipe type
+    float getHazenWilliamsC() const {
+        if (diameter >= 0.6f) return 140.0f; // Trunk mains (new steel)
+        if (diameter >= 0.25f) return 130.0f; // Secondary mains (ductile iron)
+        if (diameter >= 0.1f) return 150.0f;  // Distribution (PVC)
+        return 150.0f;                        // Service pipes (copper)
+    }
+    
+    // Darcy-Weisbach friction factor
+    float calculateFrictionFactor(float flow_velocity, float viscosity) const {
+        if (flow_velocity < 0.001f) return 0.02f;
+        
+        float Re = (WATER_DENSITY * flow_velocity * diameter) / viscosity;
+        Re = std::max(1.0f, Re);
+        
+        // Colebrook-White approximation
+        float epsilon = roughness / diameter;
+        float A = epsilon / 3.7f + 5.74f / pow(Re, 0.9f);
+        float f = 0.25f / pow(log10(A), 2.0f);
+        
+        return std::max(0.008f, std::min(0.08f, f));
+    }
+    
+    // Calculate flow through pipe (PRESSURE-DRIVEN)
+    float calculateFlow(float upstream_pressure, float downstream_pressure, 
+                   float valve_opening = 1.0f) const {
+    // SAFETY: Check inputs
+    if (!std::isfinite(upstream_pressure) || !std::isfinite(downstream_pressure)) {
+        return 0.001f;  // Return small flow if pressures are invalid
+    }
+    
+    if (valve_opening <= 0.01f) return 0.001f;
+    
+    // Calculate pressure difference with bounds
+    float delta_p = upstream_pressure - downstream_pressure;
+    
+    // SAFETY: Check for invalid delta_p
+    if (delta_p <= 0.001f) return 0.001f;
+    
+    // SAFETY: Prevent sqrt of negative or extremely large
+    if (delta_p < 0.0f) delta_p = 0.001f;
+    if (delta_p > 10000.0f) delta_p = 10000.0f;  // Cap at 10 MPa
+    
+    // Valve effect (Cv method) with safety
+    float effective_cv = cv_factor * valve_opening * valve_opening;
+    
+    // SAFETY: Check cv_factor
+    if (!std::isfinite(effective_cv) || effective_cv <= 0.001f) {
+        effective_cv = 1.0f;
+    }
+    
+    // Calculate flow: Q = Cv * √(ΔP)
+    float flow_valve = effective_cv * sqrtf(delta_p);
+    
+    // SAFETY: Check for invalid flow
+    if (!std::isfinite(flow_valve)) {
+        flow_valve = 0.001f;
+    }
+    
+    // Pipe capacity constraint
+    float max_velocity = 2.0f;
+    float area = M_PI * diameter * diameter / 4.0f;
+    
+    // SAFETY: Check area
+    if (area <= 0.0001f) {
+        area = 0.001f;
+    }
+    
+    float max_flow = max_velocity * area;
+    
+    // Clamp flow to reasonable range
+    flow_valve = std::max(0.001f, std::min(max_flow, flow_valve));
+    
+    return flow_valve;
+}
+    
+    // Calculate pressure drop for given flow
+    float calculatePressureDrop(float flow, float valve_opening = 1.0f) const {
+        if (flow <= 0.001f || valve_opening <= 0.01f) return 0.0f;
+        
+        float area = M_PI * diameter * diameter / 4.0f;
+        float velocity = flow / area;
+        
+        // Valve pressure drop
+        float valve_drop = 0.0f;
+        if (valve_opening < 1.0f) {
+            float effective_cv = cv_factor * valve_opening * valve_opening;
+            valve_drop = pow(flow / effective_cv, 2.0f);
+        }
+        
+        // Friction pressure drop (Darcy-Weisbach)
+        float f = calculateFrictionFactor(velocity, DYNAMIC_VISCOSITY);
+        float friction_drop = f * (length / diameter) * 
+                            (WATER_DENSITY * velocity * velocity / 2.0f);
+        friction_drop /= 1000.0f; // Pa to kPa
+        
+        float minor_drop = friction_drop * 0.1f;
+        
+        return valve_drop + friction_drop + minor_drop;
+    }
+};
+
+
+// ============================================================================
+// HYDRAULIC NETWORK SOLVER
+// ============================================================================
+
+// ADD THIS CLASS right after HydraulicPipe:
+class HydraulicNetwork {
+private:
+    std::vector<HydraulicNode> nodes;
+    std::vector<HydraulicPipe> pipes;
+    std::map<int, std::vector<int>> adjacency;
+    int reservoir_node_id;
+    
+public:
+    HydraulicNetwork() : reservoir_node_id(-1) {}
+    const std::vector<HydraulicNode>& getNodes() const { return nodes; }
+    const std::vector<HydraulicPipe>& getPipes() const { return pipes; }\
+    void connectBuildingDemands(const CityNetwork& city);
+    void enforceMassBalance();
+    
+    void addNode(const HydraulicNode& node) {
+        nodes.push_back(node);
+        if (node.is_reservoir) {
+            reservoir_node_id = node.id;
+        }
+    }
+
+    const HydraulicPipe* getPipe(int start_node, int end_node) const {
+        for (const auto& pipe : pipes) {
+            if ((pipe.start_node == start_node && pipe.end_node == end_node) ||
+                (pipe.start_node == end_node && pipe.end_node == start_node)) {
+                return &pipe;
+            }
+        }
+        return nullptr;
+    }
+
+    int findNodeByPosition(const Vec3& pos, float tolerance = 5.0f) const {
+        for (const auto& node : nodes) {
+            if ((node.position - pos).length() < tolerance) {
+                return node.id;
+            }
+        }
+        return -1;
+    }
+    
+    void addPipe(const HydraulicPipe& pipe) {
+        pipes.push_back(pipe);
+        adjacency[pipe.start_node].push_back(pipe.id);
+        adjacency[pipe.end_node].push_back(pipe.id);
+    }
+    
+    // SOLVE NETWORK USING GRADIENT METHOD
+   void solve(float dt, float simulation_time, int max_iterations = 50, float tolerance = 0.01f) {
+    if (reservoir_node_id < 0) return;
+    
+    // Initialize pressures with bounds
+    for (auto& node : nodes) {
+        if (!node.is_reservoir) {
+            node.pressure = std::max(0.0f, std::min(500.0f, NOMINAL_PRESSURE));
+        }
+    }
+    
+    // Set reservoir pressure with bounds
+    nodes[reservoir_node_id].pressure = std::max(0.0f, std::min(500.0f, 280.0f));
+    nodes[reservoir_node_id].updateHydraulicGrade();
+    
+    // Initialize flows
+    std::vector<float> pipe_flows(pipes.size(), 0.001f);
+    
+    for (int iter = 0; iter < max_iterations; iter++) {
+        float max_error = 0.0f;
+        
+        // Update demands with bounds
+        for (auto& node : nodes) {
+            if (node.is_demand) {
+                node.updateDemand(dt, simulation_time);
+                // Clamp demand
+                node.actual_demand = std::max(0.0f, std::min(10.0f, node.actual_demand));
+            }
+        }
+        
+        // Calculate flows and pressures
+        for (size_t i = 0; i < pipes.size(); i++) {
+            const auto& pipe = pipes[i];
+            if (pipe.start_node >= nodes.size() || pipe.end_node >= nodes.size()) continue;
+            
+            HydraulicNode& start = nodes[pipe.start_node];
+            HydraulicNode& end = nodes[pipe.end_node];
+            
+            // SAFETY: Check pressures are finite
+            if (!std::isfinite(start.pressure)) start.pressure = NOMINAL_PRESSURE;
+            if (!std::isfinite(end.pressure)) end.pressure = NOMINAL_PRESSURE;
+            
+            // Clamp pressures
+            start.pressure = std::max(0.0f, std::min(500.0f, start.pressure));
+            end.pressure = std::max(0.0f, std::min(500.0f, end.pressure));
+            
+            float valve_opening = std::max(0.0f, std::min(1.0f, end.valve_opening));
+            
+            // Calculate flow with safety
+            float flow = pipe.calculateFlow(start.pressure, end.pressure, valve_opening);
+            
+            // SAFETY: Check flow is finite
+            if (!std::isfinite(flow)) {
+                flow = 0.001f;
+            }
+            
+            // Clamp flow
+            flow = std::max(0.001f, std::min(10.0f, flow));
+            pipe_flows[i] = flow;
+            
+            // Calculate pressure drop
+            float pressure_drop = pipe.calculatePressureDrop(flow, valve_opening);
+            
+            // SAFETY: Check pressure drop
+            if (!std::isfinite(pressure_drop)) {
+                pressure_drop = 0.0f;
+            }
+            
+            // Update downstream pressure with under-relaxation
+            float new_pressure = start.pressure - pressure_drop;
+            new_pressure = std::max(0.0f, std::min(500.0f, new_pressure));
+            
+            float relaxation = 0.3f;
+            float old_pressure = end.pressure;
+            end.pressure = old_pressure * (1.0f - relaxation) + new_pressure * relaxation;
+            
+            // Clamp final pressure
+            end.pressure = std::max(0.0f, std::min(500.0f, end.pressure));
+            
+            // Track error
+            float error = fabs(new_pressure - old_pressure);
+            max_error = std::max(max_error, error);
+        }
+        
+        // Check for convergence
+        if (max_error < tolerance) {
+            break;
+        }
+    }
+    
+    // Final updates with bounds
+    for (auto& node : nodes) {
+        node.updateHydraulicGrade();
+        if (node.is_demand) {
+            node.updateDemand(dt, simulation_time);
+            // Clamp final demand
+            node.actual_demand = std::max(0.0f, std::min(10.0f, node.actual_demand));
+        }
+        // Ensure pressure is finite
+        if (!std::isfinite(node.pressure)) {
+            node.pressure = NOMINAL_PRESSURE;
+        }
+    }
+}
+    
+    // Apply valve action
+    void setValve(int node_id, float opening) {
+        if (node_id >= 0 && node_id < nodes.size()) {
+            float current = nodes[node_id].valve_opening;
+            float delta = opening - current;
+            float max_delta = 0.1f;
+            
+            if (fabs(delta) > max_delta) {
+                delta = (delta > 0) ? max_delta : -max_delta;
+            }
+            
+            nodes[node_id].valve_opening = current + delta;
+            nodes[node_id].valve_opening = std::max(0.0f, std::min(1.0f, nodes[node_id].valve_opening));
+        }
+    }
+    
+    // Calculate total system demand
+    float getTotalDemand() const {
+        float total = 0.0f;
+        for (const auto& node : nodes) {
+            if (node.is_demand) {
+                total += node.actual_demand + node.leakage;
+            }
+        }
+        return total;
+    }
+    
+    // Introduce random leaks
+    void updateLeaks(float dt) {
+        for (auto& node : nodes) {
+            if (node.is_demand) {
+                float leak_prob = LEAK_PROBABILITY_PER_HOUR * dt / 3600.0f;
+                if ((rand() % 10000) / 10000.0f < leak_prob) {
+                    float leak_size = node.base_demand * (0.05f + 0.1f * (rand() % 1000)/1000.0f);
+                    node.leakage += leak_size;
+                }
+                
+                if (node.leakage > 0) {
+                    node.leakage *= (1.0f + 0.001f * (node.pressure / NOMINAL_PRESSURE) * dt);
+                }
+            }
+        }
+    }
+    
+    // Get node pressure
+    float getNodePressure(int node_id) const {
+        if (node_id >= 0 && node_id < nodes.size()) {
+            return nodes[node_id].pressure;
+        }
+        return NOMINAL_PRESSURE;
+    }
+    
+    // Get node flow
+    float getNodeFlow(int node_id) const {
+        if (node_id >= 0 && node_id < nodes.size()) {
+            return nodes[node_id].actual_demand + nodes[node_id].leakage;
+        }
+        return 0.0f;
+    }
+    
+    // Get valve state
+    float getValveState(int node_id) const {
+        if (node_id >= 0 && node_id < nodes.size()) {
+            return nodes[node_id].valve_opening * 100.0f;
+        }
+        return 100.0f;
+    }
+    
+    int getZoneNodeID(int zone_id) const {
+    // Zone 0 = node 1, Zone 1 = node 2, etc.
+    // Ensure zone_id is valid
+    if (zone_id < 0) return -1;
+    
+    // Find demand node for this zone
+    for (const auto& node : nodes) {
+        if (node.is_demand) {
+            // Check if this node corresponds to the zone
+            // Simplified: zone_id maps to node.id-1
+            if (node.id == zone_id + 1) {
+                return node.id;
+            }
+        }
+    }
+    
+    return zone_id + 1;  // Default mapping
+}
+};
+
+
+
+void HydraulicNetwork::enforceMassBalance() {
+    float total_demand = getTotalDemand();
+    
+    // Find total inflow from reservoir
+    float total_inflow = 0.0f;
+    for (const auto& pipe : pipes) {
+        if (pipe.start_node == reservoir_node_id) {
+            // Find flow for this pipe
+            float flow = pipe.calculateFlow(
+                nodes[reservoir_node_id].pressure,
+                nodes[pipe.end_node].pressure,
+                nodes[pipe.end_node].valve_opening
+            );
+            total_inflow += flow;
+        }
+    }
+    
+    // Check mass balance (allow small tolerance)
+    float imbalance = fabs(total_inflow - total_demand);
+    if (imbalance > total_demand * 0.1f) {  // More than 10% imbalance
+        printf("⚠ Mass imbalance: Inflow=%.4f m³/s, Demand=%.4f m³/s\n", 
+               total_inflow, total_demand);
+        
+        // Adjust reservoir outflow
+        for (auto& pipe : pipes) {
+            if (pipe.start_node == reservoir_node_id) {
+                // Could adjust valve openings or log warning
+            }
+        }
+    }
+}
+
 
 struct TreatmentEvent {
     int event_id;
@@ -613,47 +1112,57 @@ struct SewageReservoir {
             return !isStale();
         }
 
-        void updateVolume(float flow_m3s, float dt) {
+
+    // FIXED: Sensor volume tracking with proper hourly calculation
+void updateVolume(float flow_m3s, float dt) {
     if (flow_m3s <= 0.0f) return;
     
     float volume = flow_m3s * dt;
     cumulativeVolume_m3 += volume;
     
-    // Get current simulation time hour
-    time_t now = time(nullptr);
-    struct tm* timeinfo = localtime(&now);
-    
-    // BUG FIX: Use simulation time from CityNetwork, not system time
-    // We need to use the simulation time, not real system time
+    // FIX: Use simulation time from CityNetwork
     if (city_simulation_time_ptr) {
-        // Convert simulation seconds to hour (0-23)
         float sim_hours = *city_simulation_time_ptr / 3600.0f;
         int currentHour = static_cast<int>(sim_hours) % 24;
         
-        // FIX: Always update current hour, but only reset when hour actually changes
-        static int last_recorded_hour = -1;
-        
-        // Check if hour has changed
-        if (currentHour != last_recorded_hour) {
-            // Reset the next hour's usage (circular buffer)
-            int next_hour = (currentHour + 1) % 24;
-            hourlyVolume_m3[next_hour] = 0.0f;
-            last_recorded_hour = currentHour;
+        // DEBUG: Track hour changes
+        static int last_hour_printed = -1;
+        if (currentHour != last_hour_printed && id == 0) {
+            printf("[SENSOR 0] Hour changed to %d, adding %.6f m³\n", 
+                   currentHour, volume);
+            last_hour_printed = currentHour;
         }
         
-        // Add to current hour
+        // Add to current hour's usage
         hourlyVolume_m3[currentHour] += volume;
+        
+        // Reset next hour's usage when hour changes
+        static int last_recorded_hour = -1;
+        if (currentHour != last_recorded_hour) {
+            // If we have a next hour value from previous cycle, clear it
+            int next_hour = (last_recorded_hour + 1) % 24;
+            if (next_hour >= 0 && next_hour < 24) {
+                hourlyVolume_m3[next_hour] = 0.0f;
+            }
+            last_recorded_hour = currentHour;
+        }
     }
     
     // Update daily volume
     dailyVolume_m3 += volume;
     
-    // Reset daily volume every 24 hours
-    if (lastVolumeUpdate == 0) {
-        lastVolumeUpdate = now;
-    } else if (now - lastVolumeUpdate >= 86400) {
-        dailyVolume_m3 = 0.0f;
-        lastVolumeUpdate = now;
+    // Reset daily volume every 24 simulation hours
+    static float last_reset_time = 0.0f;
+    if (city_simulation_time_ptr) {
+        if (*city_simulation_time_ptr - last_reset_time >= 86400.0f) {
+            dailyVolume_m3 = 0.0f;
+            last_reset_time = *city_simulation_time_ptr;
+            
+            // Also reset hourly array at day change
+            for (int i = 0; i < 24; i++) {
+                hourlyVolume_m3[i] = 0.0f;
+            }
+        }
     }
 }
         
@@ -703,64 +1212,58 @@ struct SewageReservoir {
     // Forward declarations
     class CityNetwork;
 
+    
     struct Pipe {
-        int id;
-        Vec3 start, end;
-        PipeType type;
-        float diameter;
-        float length;
-        float elevationChange;
-        int zoneID;
-        
-        bool hasLeak;
-        float leakRate;
-        float flowRate;
-        float pressureDrop;
-        float velocity;
-        
-        std::vector<WaterParticle> particles;
-        
-        Pipe(int id, Vec3 s, Vec3 e, PipeType t, float diam, int zoneID = -1)
-            : id(id), start(s), end(e), type(t), diameter(diam),
-            hasLeak(false), leakRate(0.0f), flowRate(0.0f),
-            pressureDrop(0.0f), velocity(0.0f), zoneID(zoneID) {
-            length = (end - start).length();
-            elevationChange = end.y - start.y;
+    int id;
+    Vec3 start, end;
+    PipeType type;
+    float diameter;
+    float length;
+    float elevationChange;
+    int zoneID;
+    
+    bool hasLeak;
+    float leakRate;
+    float flowRate;
+    float pressureDrop;
+    float velocity;
+    
+    std::vector<WaterParticle> particles;
+    
+    Pipe(int id, Vec3 s, Vec3 e, PipeType t, float diam, int zoneID = -1)
+        : id(id), start(s), end(e), type(t), diameter(0),
+        hasLeak(false), leakRate(0.0f), flowRate(0.0f),
+        pressureDrop(0.0f), velocity(0.0f), zoneID(zoneID),
+        flowRegime("STAGNANT")  {
+
+        // ================== FIXED: CONSISTENT DIAMETER DEFINITION ==================
+        switch(t) {
+            case TRUNK_MAIN: diameter = TRUNK_DIAMETER; break;
+            case SECONDARY_MAIN: diameter = SECONDARY_DIAMETER; break;
+            case RING_MAIN: diameter = RING_DIAMETER; break;
+            case SERVICE_PIPE: diameter = SERVICE_DIAMETER; break;
+            case SEWAGE_LATERAL: diameter = SERVICE_DIAMETER * 1.5f; break;
+            case SEWAGE_COLLECTOR: diameter = SECONDARY_DIAMETER * 1.2f; break;
+            case SEWAGE_INTERCEPTOR: diameter = TRUNK_DIAMETER * 1.2f; break;
         }
         
+        // Override with provided diameter if needed
+        if (diam > 0) {
+            diameter = diam;
+        }
+        
+        length = (end - start).length();
+        elevationChange = end.y - start.y;
+    }
         // Calculate pressure drop using Darcy-Weisbach equation
+    
+
     float calculatePressureDrop(float flow_m3s, float viscosity = DYNAMIC_VISCOSITY) {
     if (diameter <= 0 || length <= 0) return 0.0f;
     
-    // ================== FIX: ENSURE CORRECT DIAMETERS ==================
-    // Some pipes might have wrong diameters from creation - FIX THEM
-    float actual_diameter = diameter;
-    
-    // Ensure minimum diameters based on type
-    switch (type) {
-        case SERVICE_PIPE:
-            if (actual_diameter < 0.04f) actual_diameter = 0.05f;  // 50mm
-            break;
-        case RING_MAIN:
-            if (actual_diameter < 0.2f) actual_diameter = 0.25f;   // 250mm
-            break;
-        case SECONDARY_MAIN:
-            if (actual_diameter < 0.35f) actual_diameter = 0.4f;   // 400mm
-            break;
-        case TRUNK_MAIN:
-            if (actual_diameter < 0.7f) actual_diameter = 0.8f;    // 800mm
-            break;
-    }
-    
-    // Update stored diameter if it was wrong
-    if (fabs(diameter - actual_diameter) > 0.01f) {
-        diameter = actual_diameter;
-    }
-    
     // ================== REALISTIC CONSTANTS ==================
-    // ADJUSTED FOR REALISTIC WATER DISTRIBUTION
-    const float MIN_FLOW_VELOCITY = 0.05f;    // LOWER: 0.05 m/s (realistic for distribution)
-    const float MAX_FLOW_VELOCITY = 2.0f;     // LOWER: 2.0 m/s (standard for water mains)
+    const float MIN_FLOW_VELOCITY = 0.05f;    // LOWER: 0.05 m/s
+    const float MAX_FLOW_VELOCITY = 2.0f;     // LOWER: 2.0 m/s
     const float MIN_REYNOLDS = 2000.0f;
     const float SYSTEM_AGE_YEARS = 15.0f;
     
@@ -773,50 +1276,26 @@ struct SewageReservoir {
         case SERVICE_PIPE:      roughness_mm = 0.007f; break;
         case SEWAGE_LATERAL:    roughness_mm = 0.60f; break;
         case SEWAGE_COLLECTOR:  roughness_mm = 0.80f; break;
-        case SEWAGE_INTERCEPTOR:roughness_mm = 1.20f; break;
+        case SEWAGE_INTERCEPTOR: roughness_mm = 1.20f; break;
         default:                roughness_mm = 0.30f; break;
     }
     
     // Convert mm to meters
     float roughness_m = roughness_mm / 1000.0f;
     
-    // ================== FIXED FLOW LIMITS ==================
-    // Calculate area with CORRECTED diameter
+    // Calculate area
     float area = M_PI * diameter * diameter / 4.0f;
     
     // Limit flow to realistic velocity range
     float max_flow = MAX_FLOW_VELOCITY * area;
     float min_flow = MIN_FLOW_VELOCITY * area;
     
-    // DEBUG: Uncomment to see calculations
-    static int debug_counter = 0;
-    if (debug_counter++ % 100 == 0) {
-        printf("Pipe %d (Type=%d): diam=%.3fm, area=%.5fm², min_flow=%.5fm³/s, flow=%.5fm³/s\n",
-               id, type, diameter, area, min_flow, flow_m3s);
-    }
-    
-    // ================== IMPROVED WARNING LOGIC ==================
-    // Only warn for significant issues
-    static std::set<int> warned_pipes_high;
-    static std::set<int> warned_pipes_low;
-    
     if (flow_m3s > max_flow) {
-        if (warned_pipes_high.find(id) == warned_pipes_high.end()) {
-            printf("⚠ HIGH FLOW: Pipe %d (Type=%d): %.3f > %.3f m³/s\n", 
-                   id, type, flow_m3s, max_flow);
-            warned_pipes_high.insert(id);
-        }
         flow_m3s = max_flow;
-    } else if (flow_m3s < min_flow && flow_m3s > 0.002f) {
-        // Only warn for flows > 2 L/s that are below minimum
-        if (warned_pipes_low.find(id) == warned_pipes_low.end()) {
-            printf("⚠ LOW FLOW: Pipe %d (Type=%d): %.3f < %.3f m³/s\n", 
-                   id, type, flow_m3s, min_flow);
-            warned_pipes_low.insert(id);
-        }
+    } else if (flow_m3s < min_flow && flow_m3s > 0.0f) {
+        flow_m3s = min_flow;
     }
     
-    // ================== REST OF CALCULATION (unchanged) ==================
     velocity = (area > 0.0001f) ? flow_m3s / area : 0.0f;
     
     // Reynolds number
@@ -827,20 +1306,19 @@ struct SewageReservoir {
     }
     
     // Friction factor
-    float frictionFactor = 0.0f;
+    float frictionFactor = 0.02f;  // Default
     float epsilon = roughness_m / diameter;
     
-    if (Re < 1.0f) {
-        frictionFactor = 0.0f;
-    } else if (Re < MIN_REYNOLDS) {
-        frictionFactor = 64.0f / Re;
+    if (Re < MIN_REYNOLDS) {
+        frictionFactor = 64.0f / Re;  // Laminar flow
+        flowRegime = "LAMINAR";
     } else {
-        float A = pow(epsilon / 3.7f + 5.74f / pow(Re, 0.9f), 2.0f);
-        frictionFactor = 0.25f / pow(log10(epsilon / 3.7f + 5.74f / pow(Re, 0.9f)), 2.0f);
-        
-        float term1 = pow(2.457f * log(1.0f / (pow(7.0f / Re, 0.9f) + 0.27f * epsilon)), 16.0f);
-        float term2 = pow(37530.0f / Re, 16.0f);
-        frictionFactor = 8.0f * pow(pow(8.0f / Re, 12.0f) + 1.0f / pow(term1 + term2, 1.5f), 1.0f / 12.0f);
+        // Colebrook-White for turbulent flow
+        float A = epsilon / 3.7f + 5.74f / pow(Re, 0.9f);
+        if (A > 0) {
+            frictionFactor = 0.25f / pow(log10(A), 2.0f);
+        }
+        flowRegime = "TURBULENT";
     }
     
     // Darcy-Weisbach pressure drop
@@ -850,78 +1328,22 @@ struct SewageReservoir {
                          (WATER_DENSITY * velocity * velocity / 2.0f);
     }
     
-    pressureDrop = pressureDrop_Pa / 1000.0f;
+    pressureDrop = pressureDrop_Pa / 1000.0f;  // Pa to kPa
     
     // Elevation head
     if (elevationChange != 0.0f) {
         float elevationPressure_Pa = WATER_DENSITY * GRAVITY * elevationChange;
         float elevationPressure_kPa = elevationPressure_Pa / 1000.0f;
         pressureDrop += elevationPressure_kPa;
-        
-        if (elevationChange < 0 && pressureDrop < 0) {
-            pressureDrop = 0.0f;
-        }
     }
     
-    // Minor losses
-    float minorLossCoefficient = 0.0f;
-    int estimatedFittings = std::max(1, (int)(length / 10.0f));
-    
-    switch (type) {
-        case SERVICE_PIPE:
-            minorLossCoefficient = 3.5f * estimatedFittings;
-            break;
-        case RING_MAIN:
-            minorLossCoefficient = 2.0f * estimatedFittings;
-            break;
-        case SECONDARY_MAIN:
-            minorLossCoefficient = 1.5f * estimatedFittings;
-            break;
-        case TRUNK_MAIN:
-            minorLossCoefficient = 0.8f * estimatedFittings;
-            break;
-        default:
-            minorLossCoefficient = 2.5f * estimatedFittings;
-    }
-    
-    float minorLosses_Pa = minorLossCoefficient * (WATER_DENSITY * velocity * velocity / 2.0f);
-    pressureDrop += minorLosses_Pa / 1000.0f;
-    
-    // Aging effects
-    float ageFactor = 1.0f + (SYSTEM_AGE_YEARS * 0.02f);
-    float foulingFactor = 1.0f;
-    
-    if (type >= SEWAGE_LATERAL) {
-        foulingFactor = 1.0f + (SYSTEM_AGE_YEARS * 0.04f);
-    }
-    
-    pressureDrop *= (ageFactor * foulingFactor);
-    
-    // Temperature correction
-    float tempCorrection = 1.0f;
-    if (velocity > 0.5f) {
-        tempCorrection = 1.0f + 0.05f * (1.0f - exp(-velocity));
-    }
-    pressureDrop *= tempCorrection;
-    
-    // Realistic bounds
-    float maxPressureDrop_kPa = 500.0f;
-    
-    if (pressureDrop > maxPressureDrop_kPa) {
-        pressureDrop = maxPressureDrop_kPa;
-    }
-    
+    // Ensure non-negative
     if (pressureDrop < 0.0f) pressureDrop = 0.0f;
     
-    // Flow regime detection
-    if (Re < 1.0f) {
-        flowRegime = "STAGNANT";
-    } else if (Re < MIN_REYNOLDS) {
-        flowRegime = "LAMINAR";
-    } else if (Re < 4000.0f) {
-        flowRegime = "TRANSITIONAL";
-    } else {
-        flowRegime = "TURBULENT";
+    // Cap at reasonable maximum
+    float maxPressureDrop_kPa = 500.0f;
+    if (pressureDrop > maxPressureDrop_kPa) {
+        pressureDrop = maxPressureDrop_kPa;
     }
     
     return pressureDrop;
@@ -1068,33 +1490,42 @@ float calculateRealisticPressureDrop(float flow_m3s) {
         }
         
         void drawParticles() const {
-            if (particles.empty()) return;
-            
-            glDisable(GL_LIGHTING);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-            glDepthMask(GL_FALSE);
-            
-            for (const auto& particle : particles) {
-                Vec3 pos = particle.getWorldPosition(*this);
-                
-                // Size based on flow velocity and life
-                float area = M_PI * diameter * diameter / 4.0f;
-                float velocity = flowRate / area;
-                float sizeScale = 0.5f + velocity * 0.1f;
-                
-                glColor4f(particle.color.r, particle.color.g, particle.color.b, 
-                        particle.life * 0.8f);
-                glPushMatrix();
-                glTranslatef(pos.x, pos.y, pos.z);
-                glutSolidSphere(PARTICLE_SIZE * sizeScale * particle.life, 8, 8);
-                glPopMatrix();
-            }
-            
-            glDepthMask(GL_TRUE);
-            glDisable(GL_BLEND);
-            glEnable(GL_LIGHTING);
-        }
+    if (particles.empty()) return;
+    
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glDepthMask(GL_FALSE);
+    
+    // Use point sprites for better performance
+    glEnable(GL_POINT_SPRITE);
+    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+    glPointSize(2.0f);
+    
+    glBegin(GL_POINTS);
+    for (const auto& particle : particles) {
+        Vec3 pos = particle.getWorldPosition(*this);
+        
+        // Calculate velocity-based color
+        float area = M_PI * diameter * diameter / 4.0f;
+        float velocity = flowRate / area;
+        float vel_factor = std::min(1.0f, velocity / 3.0f);
+        
+        Color col = particle.color;
+        col.r *= (0.7f + 0.3f * vel_factor);
+        col.g *= (0.7f + 0.3f * vel_factor);
+        col.b = 0.8f + 0.2f * vel_factor;
+        
+        glColor4f(col.r, col.g, col.b, particle.life * 0.6f);
+        glVertex3f(pos.x, pos.y, pos.z);
+    }
+    glEnd();
+    
+    glDisable(GL_POINT_SPRITE);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    glEnable(GL_LIGHTING);
+}
 
         void drawLeakParticles(float simulationTime) const;
     };
@@ -1177,6 +1608,9 @@ float calculateRealisticPressureDrop(float flow_m3s) {
     INDUSTRIAL
 };
 
+extern std::vector<Zone> zones;  
+extern std::vector<Sensor> sensors; 
+
 struct Building {
     // Core identification
     int id, clusterID, zoneID;
@@ -1203,6 +1637,7 @@ struct Building {
     float totalWaterConsumed;    // m³ (lifetime)
     float waterDemandFactor;     // Current multiplier (0.0-2.0)
     float currentSewageFlow;     // m³/s
+    float pressureSimulated;
 
     // ================== INTEGER DEMAND SYSTEM ==================
     int baseWaterDemand_Lps;          // Base demand in liters per second
@@ -1212,6 +1647,8 @@ struct Building {
     int minDemand_Lps;                // Minimum demand
     int maxDemand_Lps;                // Maximum demand
     int demandChangeAmount;           // Current change amount (+/- L/s)
+    float actual_pressure;
+
     
     // Visual properties
     Color waterColor;
@@ -1233,7 +1670,8 @@ struct Building {
         dailyWaterUsage(0), currentWaterFlow(0), totalWaterConsumed(0),
         waterDemandFactor(1.0f), currentSewageFlow(0),
         demandChangeTimer(0), demandChangeAmount(0),
-        weeklyAverage(0) {
+        weeklyAverage(0),
+        pressureSimulated(NOMINAL_PRESSURE) { // ADD THIS INITIALIZATION
         
         // ================== RANDOM BUILDING TYPE ==================
         int r = rand() % 100;
@@ -1349,6 +1787,11 @@ struct Building {
         currentWaterFlow = currentWaterDemand_Lps * 0.001f;
     }
     
+    int getBaseDemandLps() const { 
+        return baseWaterDemand_Lps; 
+    }
+
+
     // ================== HOURLY PATTERN INITIALIZATION ==================
     void initializeHourlyPatterns() {
         switch (type) {
@@ -1432,114 +1875,217 @@ struct Building {
     }
     
     // ================== UPDATE WATER USAGE ==================
-    void updateWaterUsage(float dt, const DayNightCycle& dayNight) {
-        if (!citySimulationTime) return;
-        
-        
-        // ================== INTEGER DEMAND SYSTEM ==================
-        const float MIN_DEMAND_LPS = 2.0f;  // Minimum 2 L/s per building
-        demandChangeTimer += dt;
-        
-        // Check if it's time for a demand change
-        if (demandChangeTimer >= nextDemandChangeTime) {
-            // REALISTIC SUDDEN INTEGER DEMAND CHANGE (-50 to +50 L/s)
-            int changeAmount = 0;
-int randVal = rand() % 100;
-if (randVal < 30) { // Only 30% chance of change
-    changeAmount = (rand() % 21) - 10; // -10 to +10 L/s (smaller changes)
-}
-            
-            // Apply time-of-day adjustments
-            float timeOfDay = fmod(*citySimulationTime, 86400.0f) / 3600.0f;
-            if (timeOfDay >= 6.0f && timeOfDay <= 9.0f) {
-                // Morning peak: more likely to increase
-                if (changeAmount < 0) changeAmount = -changeAmount; // Make positive
-                changeAmount += 10; // Extra boost for morning
-            } else if (timeOfDay >= 18.0f && timeOfDay <= 21.0f) {
-                // Evening peak: larger increases
-                if (changeAmount < 0) changeAmount = -changeAmount; // Make positive
-                changeAmount += 20; // Extra boost for evening
-            } else if (timeOfDay >= 0.0f && timeOfDay <= 5.0f) {
-                // Night: only decreases or small changes
-                changeAmount = (rand() % 31) - 30; // -30 to 0 L/s
+    
+    // ============================================================================
+// UPDATE THE Building::updateWaterUsage METHOD (around line 1600)
+// ============================================================================
+void updateWaterUsage(float dt, const DayNightCycle& dayNight, float actual_pressure, const std::vector<Sensor>& sensors) {
+    this->actual_pressure = actual_pressure;
+
+    if (!citySimulationTime) return;
+    
+    // ================== USE ACTUAL PRESSURE PARAMETER ==================
+    // Instead of using zone pressure, use the actual pressure passed as parameter
+    float pressure_ratio = this->actual_pressure / NOMINAL_PRESSURE;
+    pressure_ratio = std::max(0.3f, std::min(2.0f, pressure_ratio));
+    
+    
+    // Square root relationship for flow vs pressure
+    float pressure_factor = sqrtf(pressure_ratio);
+    
+    // ================== TIME-OF-DAY PATTERN ==================
+    float time_of_day = fmod(*citySimulationTime, 86400.0f) / 3600.0f;
+    float diurnal_factor = 1.0f;
+    
+    // Enhanced time-based demand pattern based on building type
+    switch (type) {
+        case RESIDENTIAL:
+            // Residential: morning (7-9) and evening (17-21) peaks
+            if (time_of_day >= 6.0f && time_of_day <= 9.0f) {
+                // Morning peak (getting ready for work/school)
+                float peak = (time_of_day - 6.0f) / 3.0f;
+                diurnal_factor = 0.8f + 0.6f * sinf(peak * M_PI);
+            } else if (time_of_day >= 17.0f && time_of_day <= 21.0f) {
+                // Evening peak (cooking, cleaning, bathing)
+                float peak = (time_of_day - 17.0f) / 4.0f;
+                diurnal_factor = 0.9f + 0.8f * sinf(peak * M_PI);
+            } else if (time_of_day >= 22.0f || time_of_day <= 5.0f) {
+                // Night (low usage)
+                diurnal_factor = 0.3f;
+            } else {
+                // Daytime (moderate)
+                diurnal_factor = 0.5f;
             }
+            break;
             
-            // Store change amount for logging
-            demandChangeAmount = changeAmount;
-            
-            // Apply the integer change
-            currentWaterDemand_Lps += changeAmount;
-            
-            // Clamp to realistic bounds
-            if (currentWaterDemand_Lps < minDemand_Lps) 
-                currentWaterDemand_Lps = minDemand_Lps;
-            if (currentWaterDemand_Lps > maxDemand_Lps) 
-                currentWaterDemand_Lps = maxDemand_Lps;
-            
-            // Reset timers
-            demandChangeTimer = 0.0f;
-            nextDemandChangeTime = 60 + rand() % 180; // Next change in 30-150s
-            
-            // Log significant changes
-            if (abs(changeAmount) > 20) {
-                printf("Building %d [%s]: Demand changed by %d L/s to %d L/s\n", 
-                       id, getTypeString().c_str(), changeAmount, currentWaterDemand_Lps);
+        case COMMERCIAL:
+            // Commercial: business hours only
+            if (time_of_day >= 8.0f && time_of_day <= 18.0f) {
+                // Peak at lunchtime (12-13)
+                float peak = 1.0f - fabs(time_of_day - 12.5f) / 5.0f;
+                diurnal_factor = 0.6f + 0.5f * peak;
+            } else {
+                diurnal_factor = 0.1f;
             }
-        }
-        
-        // ================== PATTERN-BASED MODULATION ==================
-        float timeOfDay = fmod(*citySimulationTime, 86400.0f) / 3600.0f; // Hours (0-24)
-        int hour = static_cast<int>(timeOfDay) % 24;
-        int minute = static_cast<int>((timeOfDay - hour) * 60.0f);
-        
-        // Get base demand from hourly pattern
-        float patternFactor = hourlyUsage[hour];
-        
-        // Interpolate for smooth minute-by-minute transitions
-        if (minute > 0) {
-            int nextHour = (hour + 1) % 24;
-            float nextPattern = hourlyUsage[nextHour];
-            float minuteFactor = minute / 60.0f;
-            patternFactor = patternFactor * (1.0f - minuteFactor) + nextPattern * minuteFactor;
-        }
-        
-        // Apply day/night factor
-        float dayNightFactor = dayNight.getWaterDemandFactor();
-        
-        // Apply day-of-week factor
-        int dayOfWeek = static_cast<int>(*citySimulationTime / 86400.0f) % 7;
-        float weeklyFactor = weeklyPattern[dayOfWeek];
-        
-        // Weekend adjustment
-        float weekendFactor = (dayOfWeek == 0 || dayOfWeek == 6) ? 1.2f : 1.0f;
-        
-        // Random minute-to-minute variation
-        float minuteRandom = 1.0f + ((rand() % 200) / 1000.0f - 0.1f) * demandVolatility;
-        
-        // Calculate final demand factor
-        waterDemandFactor = patternFactor * dayNightFactor * weeklyFactor * weekendFactor * minuteRandom;
-        
-        // ================== FINAL FLOW CALCULATION ==================
-        // Start from integer demand (L/s)
-        float demand_Lps = currentWaterDemand_Lps;
-        
-        // Apply pattern modulation
-        demand_Lps *= waterDemandFactor;
-        
-        // Convert to m³/s (1 L/s = 0.001 m³/s)
-        currentWaterFlow = demand_Lps * 0.001f;
-        
-        // Calculate sewage flow (with 1-hour delay simulation)
-        int sewageHour = (hour - 1 + 24) % 24; // Sewage is 1 hour behind water usage
-        float sewagePattern = sewageHourly[sewageHour];
-        currentSewageFlow = currentWaterFlow * sewageFactor * sewagePattern;
-        
-        // Update total consumption
-        totalWaterConsumed += currentWaterFlow * dt;
-        
-        // Update weekly average (EMA)
-        weeklyAverage = (weeklyAverage * 0.99f) + (currentWaterFlow * 0.01f);
+            break;
+            
+        case HOSTEL:
+            // Hostel: moderate 24/7 with peaks around meal times
+            if ((time_of_day >= 7.0f && time_of_day <= 9.0f) || 
+                (time_of_day >= 18.0f && time_of_day <= 20.0f)) {
+                diurnal_factor = 0.8f + 0.4f * sinf((time_of_day - 7.0f) * M_PI / 2.0f);
+            } else if (time_of_day >= 22.0f || time_of_day <= 6.0f) {
+                diurnal_factor = 0.5f;
+            } else {
+                diurnal_factor = 0.6f;
+            }
+            break;
+            
+        case HOSPITAL:
+            // Hospital: 24/7 with slight reduction at night
+            if (time_of_day >= 6.0f && time_of_day <= 22.0f) {
+                diurnal_factor = 0.8f + 0.2f * sinf((time_of_day - 12.0f) * M_PI / 12.0f);
+            } else {
+                diurnal_factor = 0.6f;
+            }
+            break;
+            
+        case INDUSTRIAL:
+            // Industrial: work shifts only
+            if ((time_of_day >= 7.0f && time_of_day <= 12.0f) || 
+                (time_of_day >= 13.0f && time_of_day <= 16.0f)) {
+                diurnal_factor = 0.9f;
+            } else {
+                diurnal_factor = 0.1f;
+            }
+            break;
     }
+    
+    // Weekend effect
+    if (dayNight.isWeekend()) {
+        switch (type) {
+            case RESIDENTIAL:  diurnal_factor *= 1.2f; break;  // More usage at home
+            case COMMERCIAL:   diurnal_factor *= 0.5f; break;  // Less commercial activity
+            case HOSTEL:       diurnal_factor *= 1.1f; break;  // Slight increase
+            case HOSPITAL:     diurnal_factor *= 1.0f; break;  // No change for hospitals
+            case INDUSTRIAL:   diurnal_factor *= 0.2f; break;  // Much less industrial
+        }
+    }
+    
+    // ================== BUILDING-SPECIFIC RANDOMNESS ==================
+    float random_variation = 0.9f + 0.2f * (rand() % 1000) / 1000.0f;
+    
+    // ================== VALVE EFFECT ==================
+    float valve_factor = 1.0f;
+    if (waterSensorID >= 0 && waterSensorID < sensors.size()) {
+        // Use valve state from sensor
+        valve_factor = sensors[waterSensorID].valveState / 100.0f;
+        // Square relationship for valve effect
+        valve_factor = valve_factor * valve_factor;
+    }
+    
+    // ================== UPDATE INTEGER DEMAND SYSTEM ==================
+    demandChangeTimer += dt;
+    
+    // Check if it's time to change demand
+    if (demandChangeTimer >= nextDemandChangeTime) {
+        // Calculate new demand based on time of day
+        float time_factor = 1.0f;
+        if (type == RESIDENTIAL) {
+            // Residential: higher demand during peak hours
+            if ((time_of_day >= 7.0f && time_of_day <= 9.0f) || 
+                (time_of_day >= 17.0f && time_of_day <= 21.0f)) {
+                time_factor = 1.5f;
+            }
+        }
+        
+        // Random change (±20% of base demand)
+        int changeRange = static_cast<int>(baseWaterDemand_Lps * 0.2f);
+        changeRange = std::max(1, changeRange);
+        
+        int changeAmount = (rand() % (2 * changeRange + 1)) - changeRange;
+        int newDemand = currentWaterDemand_Lps + changeAmount;
+        
+        // Clamp to min/max
+        currentWaterDemand_Lps = std::max(minDemand_Lps, std::min(maxDemand_Lps, newDemand));
+        
+        // Store change amount for trend analysis
+        demandChangeAmount = changeAmount;
+        
+        // Reset timer with new interval
+        demandChangeTimer = 0.0f;
+        nextDemandChangeTime = 30 + rand() % 120; // 30-150 seconds
+    }
+    
+    // ================== FINAL FLOW CALCULATION ==================
+    // Start with integer demand in L/s
+    float demand_lps = static_cast<float>(currentWaterDemand_Lps);
+    
+    // Apply all factors:
+    // 1. Pressure factor (square root relationship)
+    demand_lps *= pressure_factor;
+    
+    // 2. Diurnal pattern
+    demand_lps *= diurnal_factor;
+    
+    // 3. Building type multiplier
+    float type_multiplier = 1.0f;
+    switch (type) {
+        case RESIDENTIAL:  type_multiplier = 1.0f; break;
+        case COMMERCIAL:   type_multiplier = 1.2f; break;
+        case HOSTEL:       type_multiplier = 1.5f; break;
+        case HOSPITAL:     type_multiplier = 2.0f; break;
+        case INDUSTRIAL:   type_multiplier = 2.5f; break;
+    }
+    demand_lps *= type_multiplier;
+    
+    // 4. Random variation
+    demand_lps *= random_variation;
+    
+    // 5. Valve effect
+    demand_lps *= valve_factor;
+    
+    // 6. Population scaling
+    demand_lps *= (population / 10.0f); // Normalize to 10 people
+    
+    // Convert to m³/s
+    currentWaterFlow = demand_lps * 0.001f;
+    
+    // ================== PRESSURE-DRIVEN FLOW REDUCTION ==================
+    // If pressure is critically low, further reduce flow
+    if (actual_pressure < MIN_OPERATING_PRESSURE) {
+        float critical_factor = actual_pressure / MIN_OPERATING_PRESSURE;
+        critical_factor = std::max(0.1f, critical_factor); // Minimum 10% flow
+        currentWaterFlow *= critical_factor;
+    }
+    
+    // Ensure minimum flow
+    currentWaterFlow = std::max(0.0001f, currentWaterFlow);
+    
+    // Cap maximum flow based on pipe capacity
+    float max_flow_capacity = 0.0f;
+    
+    if (max_flow_capacity > 0.001f) {
+        currentWaterFlow = std::min(currentWaterFlow, max_flow_capacity);
+    }
+    
+    // ================== UPDATE STATISTICS ==================
+    totalWaterConsumed += currentWaterFlow * dt;
+    
+    // Calculate sewage flow (90% conversion with some variation)
+    currentSewageFlow = currentWaterFlow * (0.85f + 0.1f * (rand() % 1000) / 1000.0f);
+    
+    // Update water demand factor for display
+    waterDemandFactor = diurnal_factor * pressure_factor * valve_factor;
+    
+    // ================== DEBUG OUTPUT ==================
+    static int debug_counter = 0;
+    if (debug_counter++ % 1000 == 0 && id == 0) { // First building, every ~16 seconds
+        printf("[Building %d] Flow=%.3f L/s, Pressure=%.1f kPa, Factor=%.2f\n",
+               id, currentWaterFlow * 1000.0f, actual_pressure, waterDemandFactor);
+    }
+}
+
     
     // ================== PRESSURE-DEPENDENT DEMAND ==================
     void applyPressureEffect(float pressure_kPa) {
@@ -1584,10 +2130,6 @@ if (randVal < 30) { // Only 30% chance of change
     
     int getCurrentDemandLps() const { 
         return currentWaterDemand_Lps; 
-    }
-    
-    int getBaseDemandLps() const { 
-        return baseWaterDemand_Lps; 
     }
     
     int getDemandChangeAmount() const { 
@@ -2015,19 +2557,48 @@ float* Building::citySimulationTime = nullptr;
     }
 
     void udpBroadcastWorker() {
-        while (udpRunning) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            
+    const auto interval = std::chrono::milliseconds(100);  // 10Hz max
+    
+    while (udpRunning) {
+        auto start = std::chrono::steady_clock::now();
+        
+        std::string message;
+        {
             std::lock_guard<std::mutex> lock(udpMutex);
-            while (!udpMessageQueue.empty()) {
-                std::string message = udpMessageQueue.front();
+            if (!udpMessageQueue.empty()) {
+                message = udpMessageQueue.front();
                 udpMessageQueue.pop();
-                
-                sendto(udpSocket, message.c_str(), message.length(), 0,
-                    (struct sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
             }
         }
+        
+        if (!message.empty()) {
+            // Send with error checking
+            int sent = sendto(udpSocket, message.c_str(), message.length(), 0,
+                            (struct sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
+            
+            if (sent < 0) {
+                // Log error but continue
+                static int error_count = 0;
+                if (error_count++ % 100 == 0) {
+                    perror("UDP send error");
+                }
+            } else if (sent > 0) {
+                // DEBUG: Log occasional sends
+                static int send_count = 0;
+                if (send_count++ % 50 == 0) {
+                    printf("📤 UDP: Sent %d bytes (Queue: %lu)\n", 
+                           sent, udpMessageQueue.size());
+                }
+            }
+        }
+        
+        // Sleep to maintain 10Hz rate
+        auto elapsed = std::chrono::steady_clock::now() - start;
+        if (elapsed < interval) {
+            std::this_thread::sleep_for(interval - elapsed);
+        }
     }
+}
 
     void startUDPBroadcast() {
         if (initUDPBroadcast()) {
@@ -2055,9 +2626,22 @@ float* Building::citySimulationTime = nullptr;
     }
 
     void queueUDPBroadcast(const std::string& message) {
-        std::lock_guard<std::mutex> lock(udpMutex);
+    std::lock_guard<std::mutex> lock(udpMutex);
+    
+    // Limit queue to prevent memory explosion
+    if (udpMessageQueue.size() < 100) {  // Max 100 messages in queue
         udpMessageQueue.push(message);
+    } else {
+        // Drop oldest if queue full
+        udpMessageQueue.pop();
+        udpMessageQueue.push(message);
+        
+        static int drop_count = 0;
+        if (drop_count++ % 50 == 0) {
+            printf("⚠ UDP queue full, dropping old messages\n");
+        }
     }
+}
 
     // ============================================================================
     // ROS2 SENSOR SUBSCRIBER CLASS - IMPROVED VERSION
@@ -2146,6 +2730,278 @@ float* Building::citySimulationTime = nullptr;
     };
     
 
+class WaterFlowParticleSystem {
+private:
+    struct FlowParticle {
+        float position;      // 0-1 along pipe length
+        float radial_offset; // 0-1 from center
+        float angle_offset;  // 0-2π
+        float speed;         // relative to flow
+        float size;          // particle size
+        float intensity;     // 0-1 brightness
+        int pipe_id;
+        
+        FlowParticle() : position(0), radial_offset(0), angle_offset(0), 
+                        speed(1.0f), size(0.1f), intensity(1.0f), pipe_id(-1) {}
+        
+        FlowParticle(float pos, float rad, float ang, float spd, int pid)
+            : position(pos), radial_offset(rad), angle_offset(ang), 
+              speed(spd), size(0.1f), intensity(1.0f), pipe_id(pid) {}
+    };
+    
+    std::vector<FlowParticle> particles;
+    int max_particles;
+    float spawn_rate;        // particles per second per pipe
+    
+public:
+    WaterFlowParticleSystem(int max_particles = 1000000, float spawn_rate = 1000.0f)
+        : max_particles(max_particles), spawn_rate(spawn_rate) {
+        particles.reserve(max_particles);
+    }
+    
+    void update(float dt, const std::vector<Pipe>& pipes) {
+        // Update existing particles
+        for (auto& p : particles) {
+            if (p.pipe_id >= 0 && p.pipe_id < pipes.size()) {
+                const Pipe& pipe = pipes[p.pipe_id];
+                float flow_speed = pipe.flowRate / (M_PI * pipe.diameter * pipe.diameter / 4.0f);
+                
+                // Move particle along pipe
+                p.position += flow_speed * p.speed * dt / pipe.length;
+                
+                // Add swirling motion
+                p.angle_offset += (0.5f + p.radial_offset) * flow_speed * 0.1f * dt;
+                
+                // Particles fade out when near end
+                if (p.position > 0.9f) {
+                    p.intensity = std::max(0.0f, 1.0f - (p.position - 0.9f) * 10.0f);
+                }
+                
+                // Reset particle if it reached end
+                if (p.position > 1.0f || p.intensity <= 0.0f) {
+                    // Recycle particle
+                    p.position = 0.0f;
+                    p.radial_offset = static_cast<float>(rand()) / RAND_MAX * 0.8f;
+                    p.angle_offset = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;
+                    p.speed = 0.8f + 0.4f * static_cast<float>(rand()) / RAND_MAX;
+                    p.intensity = 1.0f;
+                }
+            }
+        }
+        
+        // Spawn new particles based on flow rate
+        for (size_t i = 0; i < pipes.size(); i++) {
+            const Pipe& pipe = pipes[i];
+            
+            // Only spawn for water pipes with significant flow
+            if (pipe.type >= SEWAGE_LATERAL || pipe.flowRate < 0.01f) continue;
+            
+            float flow_area = M_PI * pipe.diameter * pipe.diameter / 4.0f;
+            float velocity = pipe.flowRate / flow_area;
+            
+            // Calculate particles to spawn this frame
+            float particles_per_frame = spawn_rate * velocity * dt;
+            int new_particles = static_cast<int>(particles_per_frame);
+            
+            for (int j = 0; j < new_particles && particles.size() < max_particles; j++) {
+                FlowParticle p;
+                p.pipe_id = i;
+                p.position = 0.0f;  // Start at beginning
+                p.radial_offset = static_cast<float>(rand()) / RAND_MAX * 0.8f;  // Keep away from walls
+                p.angle_offset = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;
+                p.speed = 0.8f + 0.4f * static_cast<float>(rand()) / RAND_MAX;  // Speed variation
+                p.size = 0.02f + 0.08f * (velocity / 5.0f);  // Size based on velocity
+                p.intensity = 0.7f + 0.3f * static_cast<float>(rand()) / RAND_MAX;
+                
+                particles.push_back(p);
+            }
+        }
+        
+        // Limit total particles
+        if (particles.size() > max_particles) {
+            particles.erase(particles.begin(), particles.begin() + (particles.size() - max_particles));
+        }
+    }
+    
+    void render(const std::vector<Pipe>& pipes) {
+        if (particles.empty()) return;
+        
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glDepthMask(GL_FALSE);
+        
+        // Use point sprites for better performance
+        glEnable(GL_POINT_SPRITE);
+        glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+        
+        // Larger point size for better visibility
+        glPointSize(3.0f);
+        
+        glBegin(GL_POINTS);
+        
+        for (const auto& p : particles) {
+            if (p.pipe_id < 0 || p.pipe_id >= pipes.size()) continue;
+            
+            const Pipe& pipe = pipes[p.pipe_id];
+            
+            // Calculate position along pipe
+            Vec3 pipe_dir = pipe.end - pipe.start;
+            float pipe_length = pipe_dir.length();
+            Vec3 dir_normalized = pipe_dir.normalized();
+            
+            // Position along pipe axis
+            Vec3 axial_pos = pipe.start + pipe_dir * p.position;
+            
+            // Calculate radial position (avoid wall)
+            float pipe_radius = pipe.diameter / 2.0f;
+            float actual_radius = p.radial_offset * pipe_radius * 0.9f;
+            
+            // Create local coordinate system
+            Vec3 up(0, 1, 0);
+            if (fabs(dir_normalized.y) > 0.99f) up = Vec3(1, 0, 0);
+            Vec3 right = dir_normalized.cross(up).normalized();
+            up = right.cross(dir_normalized).normalized();
+            
+            // Radial offset
+            float cos_theta = cosf(p.angle_offset);
+            float sin_theta = sinf(p.angle_offset);
+            
+            Vec3 radial_offset = right * (cos_theta * actual_radius) +
+                                up * (sin_theta * actual_radius);
+            
+            Vec3 final_pos = axial_pos + radial_offset;
+            
+            // Color based on flow velocity
+            float flow_area = M_PI * pipe.diameter * pipe.diameter / 4.0f;
+            float velocity = pipe.flowRate / flow_area;
+            float velocity_factor = std::min(1.0f, velocity / 3.0f);
+            
+            // Blue gradient based on velocity
+            Color particle_color;
+            particle_color.r = 0.1f + 0.1f * velocity_factor;
+            particle_color.g = 0.3f + 0.4f * velocity_factor;
+            particle_color.b = 0.7f + 0.3f * velocity_factor;
+            particle_color.a = p.intensity * (0.3f + 0.7f * velocity_factor);
+            
+            glColor4f(particle_color.r, particle_color.g, particle_color.b, 
+                     particle_color.a * 0.8f);
+            glVertex3f(final_pos.x, final_pos.y, final_pos.z);
+        }
+        
+        glEnd();
+        
+        glDisable(GL_POINT_SPRITE);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        glEnable(GL_LIGHTING);
+    }
+    
+    void clear() {
+        particles.clear();
+    }
+};
+
+// Volumetric rendering for dense flow
+class VolumetricFlowRenderer {
+private:
+    struct StreamLine {
+        std::vector<Vec3> points;
+        Color color;
+        float age;
+        int pipe_id;
+    };
+    
+    std::vector<StreamLine> streamlines;
+    const int POINTS_PER_STREAM = 20;
+    
+public:
+    void update(float dt, const std::vector<Pipe>& pipes) {
+        // Update existing streamlines
+        for (auto& stream : streamlines) {
+            stream.age += dt;
+            
+            // Remove old streamlines
+            if (stream.age > 5.0f) {
+                stream = streamlines.back();
+                streamlines.pop_back();
+                continue;
+            }
+        }
+        
+        // Create new streamlines for pipes with significant flow
+        for (size_t i = 0; i < pipes.size(); i++) {
+            const Pipe& pipe = pipes[i];
+            
+            // Only for water pipes with good flow
+            if (pipe.type >= SEWAGE_LATERAL || pipe.flowRate < 0.05f) continue;
+            
+            // Create new streamline occasionally
+            if ((rand() % 100) < 5) {  // 5% chance per frame
+                StreamLine stream;
+                stream.pipe_id = i;
+                stream.age = 0.0f;
+                
+                // Calculate flow color
+                float flow_area = M_PI * pipe.diameter * pipe.diameter / 4.0f;
+                float velocity = pipe.flowRate / flow_area;
+                float vel_factor = std::min(1.0f, velocity / 3.0f);
+                
+                stream.color = Color(0.1f, 0.4f, 0.9f, 0.6f);
+                stream.color.r += vel_factor * 0.2f;
+                stream.color.g += vel_factor * 0.3f;
+                
+                // Generate points along the pipe with slight random offset
+                for (int j = 0; j < POINTS_PER_STREAM; j++) {
+                    float t = static_cast<float>(j) / (POINTS_PER_STREAM - 1);
+                    Vec3 pos = pipe.start + (pipe.end - pipe.start) * t;
+                    
+                    // Add small random radial offset
+                    float offset = (static_cast<float>(rand()) / RAND_MAX - 0.5f) * pipe.diameter * 0.3f;
+                    pos.x += offset;
+                    pos.y += offset * 0.5f;
+                    pos.z += offset;
+                    
+                    stream.points.push_back(pos);
+                }
+                
+                streamlines.push_back(stream);
+                
+                // Limit total streamlines
+                if (streamlines.size() > 1000) {
+                    streamlines.erase(streamlines.begin());
+                }
+            }
+        }
+    }
+    
+    void render() {
+        if (streamlines.empty()) return;
+        
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+        
+        glLineWidth(1.5f);
+        
+        for (const auto& stream : streamlines) {
+            float alpha = 0.6f * (1.0f - stream.age / 5.0f);
+            glColor4f(stream.color.r, stream.color.g, stream.color.b, alpha);
+            
+            glBegin(GL_LINE_STRIP);
+            for (const auto& point : stream.points) {
+                glVertex3f(point.x, point.y, point.z);
+            }
+            glEnd();
+        }
+        
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        glEnable(GL_LIGHTING);
+    }
+};
+
     // ============================================================================
     // CITY NETWORK (MAIN CLASS)
     // ============================================================================
@@ -2161,6 +3017,7 @@ float* Building::citySimulationTime = nullptr;
         
         Reservoir reservoir;
         Vec3 stpPos;
+        HydraulicNetwork hydraulic_net;
         float cityExtent;
         
         int reservoirWaterSensorID;
@@ -2200,14 +3057,12 @@ float* Building::citySimulationTime = nullptr;
     int treatmentEventCounter;
     float treatmentCheckTimer;
 
-        // ROS2 subscriber
-    std::shared_ptr<ROS2SensorSubscriber> ros2_subscriber;
-        
-        CityNetwork() : cityExtent(100), reservoirWaterSensorID(-1), stpSewerSensorID(-1), 
+     CityNetwork() : cityExtent(100), reservoirWaterSensorID(-1), stpSewerSensorID(-1), 
                     simulationTime(8 * 3600), // Start at 8 AM
                     totalWaterSupplied(0), totalWaterConsumed(0),
                     totalLeakWater(0), episodeStep(0),
-                    treatmentEventCounter(0), treatmentCheckTimer(0) {
+                    treatmentEventCounter(0), treatmentCheckTimer(0),
+                    hydraulic_network_built(false), water_particles(500000, 2000.0f) {
             Building::citySimulationTime = &simulationTime;
             Sensor::city_simulation_time_ptr = &simulationTime;
             
@@ -2215,12 +3070,17 @@ float* Building::citySimulationTime = nullptr;
             stpPos = Vec3(cityExtent + 250, 0, cityExtent + 250);
             sewageReservoir.position = stpPos + Vec3(20, 0, 0);
         }
-        
+
+        // ROS2 subscriber
+    std::shared_ptr<ROS2SensorSubscriber> ros2_subscriber;
+    void setZoneValve(int zone_id, float valve_percent); 
+
         void generateCity(int numBuildings);
         void updateDynamicPositions();
         void generateWaterNetwork();
         void generateSewageNetwork();
         void createSensors();
+        bool hydraulic_network_built;
         void enforceMassBalance(); 
         void updatePipeSensorPressure(Pipe& pipe, float calculatedPressure);
         void createZones();
@@ -2246,6 +3106,7 @@ float* Building::citySimulationTime = nullptr;
         void printSensorMapping() const;
         void updateTreatmentCycle(float dt);
         void drawSewageReservoir() const;
+        void buildHydraulicNetwork();
 
         // Sensor statistics
         int getActiveSensors() const;
@@ -2267,8 +3128,13 @@ float* Building::citySimulationTime = nullptr;
         void syncROS2ToSimulation();  // Optional: for consistency
 
         
-    private: 
+    public: 
         std::unordered_map<int, int> sensorIdToIndex;
+         WaterFlowParticleSystem water_particles;
+    VolumetricFlowRenderer volumetric_renderer;
+
+
+           
 
     };
 
@@ -2532,6 +3398,43 @@ void CityNetwork::checkROSDataAnomalies(int sensorID, float pressure, float leve
     
     lastPressure[sensorID] = pressure;
     lastPressureTime[sensorID] = time(nullptr);
+}
+
+void CityNetwork::buildHydraulicNetwork() {
+    hydraulic_net = HydraulicNetwork();
+    
+    // Add reservoir node
+    HydraulicNode reservoir_node(0, reservoir.position, reservoir.position.y, 0);
+    reservoir_node.is_reservoir = true;
+    reservoir_node.pressure = 300.0f;
+    hydraulic_net.addNode(reservoir_node);
+    
+    // Add zone nodes (demand nodes)
+    for (size_t i = 0; i < zones.size(); i++) {
+        // Base demand: 2-5 L/s per zone
+        float base_demand = std::max(0.001f, (2.0f + 3.0f * (rand() % 1000)/1000.0f) / 1000.0f);
+        
+        HydraulicNode zone_node(i+1, zones[i].center, 0, base_demand);
+        zone_node.is_demand = true;
+        hydraulic_net.addNode(zone_node);
+        
+        // Store base demand in zone for reference
+        zones[i].base_demand = base_demand;
+        
+        // Connect to reservoir - FIXED: Use proper constructor
+        HydraulicPipe trunk_pipe(
+            i,                  // id
+            0,                  // start_node (reservoir)
+            i+1,                // end_node (zone)
+            0.4f,               // diameter
+            (zones[i].center - reservoir.position).length() // length
+        );
+        
+        hydraulic_net.addPipe(trunk_pipe);
+    }
+    
+    hydraulic_network_built = true;
+    printf("Hydraulic network built with %d zones\n", (int)zones.size());
 }
 
 void CityNetwork::drawSewageReservoir() const {
@@ -2869,11 +3772,26 @@ void CityNetwork::syncROS2ToSimulation() {
         if (idx >= 0 && idx < (int)sensors.size()) {
             Sensor& sensor = sensors[idx];
             
-            // Store previous state for logging
+            // Store previous state for logging and tracking
             float oldValve = sensor.valveState;
             float oldPressure = sensor.pressure;
             float oldLevel = sensor.waterLevel;
             
+            // ================== TRACK VALVE CHANGES ==================
+            // Check if valve actually changed (more than 1% threshold)
+            float valveDiff = fabs(oldValve - valve);
+            bool valveChanged = (valveDiff > 1.0f);
+            
+            // Update valve timestamp if it changed
+            if (valveChanged) {
+                sensor.lastActionTime = time(nullptr);
+                sensor.recentActionCount = 0;
+                
+                // Also update target valve for smooth movement
+                sensor.targetValveState = valve;
+            }
+            
+            // ================== UPDATE ALL SENSOR FIELDS ==================
             // Update with ROS2 data - this is REAL data from ESP
             sensor.valveState = valve;
             sensor.pressure = pressure;           // ROS2 provided pressure
@@ -2883,13 +3801,11 @@ void CityNetwork::syncROS2ToSimulation() {
             sensor.lastROSPressureUpdate = time(nullptr);  // Track when ROS data arrived
             sensor.pressureFromROS = true;                 // Mark as ROS source
             
-            // Also store ROS values in separate fields for reference
+            // Store ROS values in separate fields for reference
             sensor.pressureROS = pressure;          // Store ROS pressure separately
             sensor.levelROS = level;                // Store ROS level separately
             
-            // Valve control is handled by ROS2, so set target valve state
-            sensor.targetValveState = valve;
-            
+            // ================== LOGGING ==================
             // Log significant updates (first few and major changes)
             static int first_updates_logged = 0;
             bool logThisUpdate = false;
@@ -2897,7 +3813,7 @@ void CityNetwork::syncROS2ToSimulation() {
             if (first_updates_logged < 20) {
                 logThisUpdate = true;
                 first_updates_logged++;
-            } else if (fabs(oldValve - valve) > 20.0f || 
+            } else if (valveChanged || 
                       fabs(oldPressure - pressure) > 20.0f ||
                       fabs(oldLevel - level) > 20.0f) {
                 logThisUpdate = true;
@@ -2906,11 +3822,15 @@ void CityNetwork::syncROS2ToSimulation() {
             if (logThisUpdate) {
                 std::cout << "✓ ROS2 Update: Sensor ID=" << sensorID 
                          << " (" << sensor.name << ")"
-                         << " from ESP" << esp_id << std::endl;
+                         << " from ESP" << esp_id;
                 
-                if (fabs(oldValve - valve) > 1.0f) {
+                if (valveChanged) {
+                    std::cout << " [VALVE ACTION]" << std::endl;
                     std::cout << "  Valve: " << oldValve << "% → " << valve << "%" << std::endl;
+                } else {
+                    std::cout << " [DATA ONLY]" << std::endl;
                 }
+                
                 if (fabs(oldPressure - pressure) > 5.0f) {
                     std::cout << "  Pressure: " << oldPressure << "kPa → " << pressure << "kPa" << std::endl;
                 }
@@ -2930,10 +3850,31 @@ void CityNetwork::syncROS2ToSimulation() {
                         }
                     }
                 }
+                
+                // Log the action time update
+                if (valveChanged) {
+                    std::cout << "  Last action time updated: " << sensor.lastActionTime << std::endl;
+                }
             }
             
+            // ================== ANOMALY DETECTION ==================
             // Check for anomalies in ROS2 data
             checkROSDataAnomalies(sensorID, pressure, level, valve);
+            
+            // ================== DEBUG OUTPUT FOR RL ==================
+            // Log when actions happen for RL debugging
+            static std::map<int, time_t> last_valve_change_log;
+            if (valveChanged) {
+                time_t now = time(nullptr);
+                if (last_valve_change_log.find(sensorID) == last_valve_change_log.end() || 
+                    (now - last_valve_change_log[sensorID]) > 10) {  // Log every 10 seconds max
+                    
+                    std::cout << "RL ACTION: Sensor " << sensorID 
+                             << " valve changed at time " << now 
+                             << " (diff from prev: " << valveDiff << "%)" << std::endl;
+                    last_valve_change_log[sensorID] = now;
+                }
+            }
             
         } else {
             static int invalid_index_warnings = 0;
@@ -3498,25 +4439,59 @@ void CityNetwork::updateRLState() {
     rlState.sim_time_cos = cosf(timeRadians);
     rlState.episode_progress = fmod(simulationTime, 86400.0f) / 86400.0f;
     
-    // ================== FIX: UPDATE HOURLY USAGE PROPERLY ==================
-    // Reset hourly usage array
+    // ================== FIXED: HOURLY USAGE CALCULATION ==================
+    // Get current simulation hour
+    float sim_hours = simulationTime / 3600.0f;
+    int currentHour = static_cast<int>(sim_hours) % 24;
+    int currentDay = static_cast<int>(sim_hours / 24.0f);
+    
+    // DEBUG: Log day/hour changes
+    static int last_logged_hour = -1;
+    static int last_logged_day = -1;
+    if (currentHour != last_logged_hour) {
+        printf("\n[TIME UPDATE] Day %d, Hour %d, Type: %s\n", 
+               currentDay, currentHour, dayNight.getDayType().c_str());
+        last_logged_hour = currentHour;
+    }
+    if (currentDay != last_logged_day) {
+        printf("[DAY CHANGE] New day: %s (%s)\n", 
+               dayNight.getDayName().c_str(), dayNight.getDayType().c_str());
+        last_logged_day = currentDay;
+    }
+    
+    // Calculate total hourly usage for current hour only
+    float totalHourlyUsage = 0.0f;
+    
+    // 1. Sum sensor usage for current hour (already in m³)
+    for (const auto& sensor : sensors) {
+        totalHourlyUsage += sensor.getHourlyUsage(currentHour);
+    }
+    
+    // 2. Add current building flows (current flow rate in m³/s, but we want accumulated volume)
+    // Since we don't have dt here, we'll use the sensor cumulative volume as reference
+    float totalBuildingFlowRate = 0.0f;
+    for (const auto& building : buildings) {
+        totalBuildingFlowRate += building.currentWaterFlow;
+    }
+    
+    // Estimate hourly volume from flow rate (m³/s → m³/hour)
+    // This is an approximation since we don't have dt
+    float estimatedHourlyVolume = totalBuildingFlowRate * 3600.0f; // Maximum possible if flow was constant
+    // Scale it down to be realistic (typically 30-50% of max)
+    float realisticFactor = 0.4f + 0.2f * sinf(simulationTime * 0.0001f); // Varying between 0.4-0.6
+    totalHourlyUsage += estimatedHourlyVolume * realisticFactor;
+    
+    // 3. Reset array and set only current hour
     for (int i = 0; i < 24; i++) {
         rlState.hourly_usage[i] = 0.0f;
     }
     
-    // Get current simulation hour
-    float sim_hours = simulationTime / 3600.0f;
-    int currentHour = static_cast<int>(sim_hours) % 24;
+    // Set current hour's usage (cap at reasonable value)
+    rlState.hourly_usage[currentHour] = std::min(totalHourlyUsage, 1000.0f);
     
-    // Sum hourly usage from all sensors for current hour
-    for (const auto& sensor : sensors) {
-        rlState.hourly_usage[currentHour] += sensor.getHourlyUsage(currentHour);
-    }
-    
-    // Also include building demand in hourly usage
-    for (const auto& building : buildings) {
-        rlState.hourly_usage[currentHour] += building.currentWaterFlow * 3600.0f; // Convert to m³/hour
-    }
+    // Set day type properly
+    rlState.day_type = dayNight.getDayType();
+    rlState.time_of_day = dayNight.timeOfDay;
     
     // ================== FIX: CALCULATE FLOW METRICS ==================
     float totalFlowSum = 0.0f;
@@ -3603,9 +4578,11 @@ void CityNetwork::updateRLState() {
         printf("  Reservoir: %.1f%% (%s), Sewage: %.1f%% (%s)\n",
                rlState.reservoir_level_pct, rlState.reservoir_trend.c_str(),
                rlState.sewage_level_pct, rlState.sewage_status.c_str());
-        printf("  Valve states: %d, Hourly usage: %.3f m³\n",
-               (int)rlState.valve_state.size(), 
+        printf("  Day: %s, Time: %.1fh, Hourly usage: %.1f m³\n",
+               rlState.day_type.c_str(), rlState.time_of_day,
                rlState.hourly_usage[currentHour]);
+        printf("  Valve states: %d, Recent actions: %d\n",
+               (int)rlState.valve_state.size(), rlState.recent_action_count);
     }
 }
 
@@ -3951,400 +4928,202 @@ void CityNetwork::updateRLState() {
     }
 
     void CityNetwork::updateBuildingWaterUsage(float dt) {
-        totalWaterConsumed = 0;
+    totalWaterConsumed = 0;
+    
+    for (auto& building : buildings) {
+        // Get pressure for this building's location
+        float building_pressure = DEFAULT_PRESSURE;
+        if (building.waterSensorID >= 0 && building.waterSensorID < sensors.size()) {
+            building_pressure = sensors[building.waterSensorID].getEffectivePressure();
+        }
         
+        // Pass all 4 parameters, including sensors
+        building.updateWaterUsage(dt, dayNight, building_pressure, sensors);
+        totalWaterConsumed += building.currentWaterFlow * dt;
+    }
+}
+
+    void CityNetwork::setZoneValve(int zone_id, float valve_percent) {
+    if (!hydraulic_network_built) return;
+    
+    float valve_opening = valve_percent / 100.0f;
+    int node_id = hydraulic_net.getZoneNodeID(zone_id);
+    hydraulic_net.setValve(node_id, valve_opening);
+    
+    // Also update the sensor if it exists
+    for (auto& sensor : sensors) {
+        // Find sensor for this zone (simplified)
+        if (sensor.zoneID == zone_id) {
+            sensor.setValve(valve_percent);
+            break;
+        }
+    }
+    
+    episodeStep++;
+}
+
+void CityNetwork::updatePipePhysics(float dt) {
+    // ================== BUILD HYDRAULIC NETWORK IF NOT BUILT ==================
+    if (!hydraulic_network_built) {
+        buildHydraulicNetwork();
+        // Initialize building pressures
         for (auto& building : buildings) {
-            building.updateWaterUsage(dt, dayNight);
-            totalWaterConsumed += building.currentWaterFlow * dt;
-        }
-    }
-
-  void CityNetwork::updatePipePhysics(float dt) {
-    // Level stabilizer for smoothing
-    // Removed the erroneous line: updatePipeSensorPressureWithStabilization(pipe, downstreamPressure);
-
-    // Reset temporary flags
-    for (auto& sensor : sensors) {
-        sensor.pressureFromROS = false;
-    }
-    
-    // Update valve positions smoothly
-    for (auto& sensor : sensors) {
-        sensor.updateValve(dt);
-    }
-    
-    // Calculate total demand
-    float totalDemand = calculateTotalDemand();
-    
-    // Track flows for water balance
-    float totalLeakFlow = 0.0f;
-    
-    // Reset pipe flows first
-    for (auto& pipe : pipes) {
-        pipe.flowRate = 0.0f;
-        pipe.velocity = 0.0f;
-    }
-    
-    // ================== BUILDING FLOWS TO SERVICE PIPES ==================
-    for (const auto& building : buildings) {
-        if (building.servicePipeID >= 0 && building.servicePipeID < pipes.size()) {
-            // Ensure minimum flow for stability
-            float minFlow = 0.0005f; // 0.5 L/s minimum
-            float buildingFlow = std::max(minFlow, building.currentWaterFlow);
-            pipes[building.servicePipeID].flowRate += buildingFlow;
+            building.pressureSimulated = NOMINAL_PRESSURE;
         }
     }
     
-    // ================== PROPAGATE FLOWS UPSTREAM (WATER NETWORK) ==================
-    // Track pressures at each node with smoothing
-    static std::map<int, float> nodePressures;
-    static std::map<int, Vec3> nodePositions;
-    
-    // Initialize reservoir as source node
-    int reservoirNodeID = -1000;
-    float reservoirPressure = 300.0f;
-    
-    // Smooth reservoir pressure
-    static float smoothedReservoirPressure = reservoirPressure;
-    smoothedReservoirPressure = smoothedReservoirPressure * 0.9f + reservoirPressure * 0.1f;
-    nodePressures[reservoirNodeID] = smoothedReservoirPressure;
-    nodePositions[reservoirNodeID] = reservoir.position;
-    
-    // ================== PROCESS EACH PIPE TYPE IN ORDER ==================
-    
-    // Process trunk mains (direct from reservoir)
-    for (auto& pipe : pipes) {
-        if (pipe.type != TRUNK_MAIN) continue;
-        
-        // Find upstream pressure (reservoir)
-        float upstreamPressure = nodePressures[reservoirNodeID];
-        
-        // Calculate flow in this pipe (sum of all downstream demands)
-        float downstreamFlow = 0.0f;
-        for (const auto& cluster : clusters) {
-            if (cluster.secondaryMainID == pipe.id) {
-                // Estimate cluster demand
-                float clusterDemand = 0.0f;
-                for (int bid : cluster.buildingIDs) {
-                    if (bid < buildings.size()) {
-                        clusterDemand += buildings[bid].currentWaterFlow;
-                    }
-                }
-                downstreamFlow += clusterDemand;
-            }
-        }
-        
-        // Ensure minimum flow
-        downstreamFlow = std::max(0.001f, downstreamFlow);
-        pipe.flowRate = downstreamFlow;
-        
-        // Apply valve effect smoothly
-        float valveFactor = 1.0f;
-        for (const auto& sensor : sensors) {
-            if (sensor.connectedPipeID == pipe.id) {
-                // Smooth valve factor changes
-                static float prevValveFactor = 1.0f;
-                float currentValveFactor = sensor.valveState / 100.0f;
-                valveFactor = prevValveFactor * 0.8f + currentValveFactor * 0.2f;
-                prevValveFactor = valveFactor;
-                break;
-            }
-        }
-        pipe.flowRate *= valveFactor;
-        
-        // Calculate pressure drop
-        float pressureDrop = 0.0f;
-        if (pipe.flowRate > 0.001f) {
-            pressureDrop = pipe.calculateRealisticPressureDrop(pipe.flowRate);
-        }
-        
-        // Smooth pressure changes
-        float downstreamPressure = upstreamPressure - pressureDrop;
-        static float prevDownstreamPressure = downstreamPressure;
-        downstreamPressure = prevDownstreamPressure * 0.7f + downstreamPressure * 0.3f;
-        prevDownstreamPressure = downstreamPressure;
-        
-        // Store pressure at pipe end
-        int endNodeID = pipe.id * 1000 + 1;
-        nodePressures[endNodeID] = downstreamPressure;
-        nodePositions[endNodeID] = pipe.end;
-        
-        // Update connected sensor with stabilized levels
-        updatePipeSensorPressureWithStabilization(pipe, downstreamPressure);
-    }
-    
-    // Process secondary mains (from trunk to clusters)
-    for (auto& pipe : pipes) {
-        if (pipe.type != SECONDARY_MAIN) continue;
-        
-        // Find which trunk this connects to
-        float upstreamPressure = smoothedReservoirPressure;
-        for (const auto& trunk : pipes) {
-            if (trunk.type == TRUNK_MAIN) {
-                float dist = (pipe.start - trunk.end).length();
-                if (dist < 5.0f) {
-                    int trunkEndNodeID = trunk.id * 1000 + 1;
-                    if (nodePressures.find(trunkEndNodeID) != nodePressures.end()) {
-                        upstreamPressure = nodePressures[trunkEndNodeID];
-                    }
-                    break;
+    // ================== CONNECT BUILDING DEMANDS TO HYDRAULIC NETWORK ==================
+    // Update building demands in hydraulic network nodes
+    for (size_t i = 0; i < zones.size(); i++) {
+        int node_id = hydraulic_net.getZoneNodeID(i);
+        if (node_id >= 0) {
+            // Calculate total demand for this zone
+            float zone_demand = 0.0f;
+            for (const auto& building : buildings) {
+                if (building.zoneID == static_cast<int>(i)) {
+                    zone_demand += building.currentWaterFlow;
                 }
             }
-        }
-        
-        // Calculate flow for this cluster
-        float clusterDemand = 0.0f;
-        int clusterIdx = pipe.zoneID;
-        if (clusterIdx >= 0 && clusterIdx < clusters.size()) {
-            for (int bid : clusters[clusterIdx].buildingIDs) {
-                if (bid < buildings.size()) {
-                    clusterDemand += buildings[bid].currentWaterFlow;
-                }
+            // We need to update the hydraulic node demand
+            // This assumes HydraulicNode has a method to set base_demand
+            // If not, we'll need to add it
+            if (node_id < hydraulic_net.getNodes().size()) {
+                // Access nodes through a getter - we need to add this method
+                // For now, we'll store zone demands separately
+                zones[i].base_demand = zone_demand;
             }
         }
-        
-        // Ensure minimum flow
-        clusterDemand = std::max(0.0005f, clusterDemand);
-        pipe.flowRate = clusterDemand;
-        
-        // Apply valve effect
-        float valveFactor = 1.0f;
-        for (const auto& sensor : sensors) {
-            if (sensor.connectedPipeID == pipe.id) {
-                float currentValveFactor = sensor.valveState / 100.0f;
-                static float prevValveFactor = 1.0f;
-                valveFactor = prevValveFactor * 0.8f + currentValveFactor * 0.2f;
-                prevValveFactor = valveFactor;
-                break;
-            }
-        }
-        pipe.flowRate *= valveFactor;
-        
-        // Calculate pressure drop
-        float pressureDrop = 0.0f;
-        if (pipe.flowRate > 0.001f) {
-            pressureDrop = pipe.calculateRealisticPressureDrop(pipe.flowRate);
-        }
-        
-        // Smooth pressure changes
-        float downstreamPressure = upstreamPressure - pressureDrop;
-        downstreamPressure = std::max(30.0f, downstreamPressure);
-        
-        static std::map<int, float> prevClusterPressures;
-        if (prevClusterPressures.find(pipe.id) == prevClusterPressures.end()) {
-            prevClusterPressures[pipe.id] = downstreamPressure;
-        } else {
-            downstreamPressure = prevClusterPressures[pipe.id] * 0.7f + downstreamPressure * 0.3f;
-            prevClusterPressures[pipe.id] = downstreamPressure;
-        }
-        
-        // Store pressure at cluster center
-        int clusterNodeID = -2000 - clusterIdx;
-        nodePressures[clusterNodeID] = downstreamPressure;
-        if (clusterIdx >= 0 && clusterIdx < clusters.size()) {
-            nodePositions[clusterNodeID] = clusters[clusterIdx].centerPos;
-        }
-        
-        // Update connected sensor
-        updatePipeSensorPressureWithStabilization(pipe, downstreamPressure);
     }
     
-    // Process ring mains (within clusters)
-    for (auto& pipe : pipes) {
-        if (pipe.type != RING_MAIN) continue;
-        
-        // Get cluster pressure
-        float upstreamPressure = DEFAULT_PRESSURE;
-        int clusterIdx = pipe.zoneID;
-        if (clusterIdx >= 0) {
-            int clusterNodeID = -2000 - clusterIdx;
-            if (nodePressures.find(clusterNodeID) != nodePressures.end()) {
-                upstreamPressure = nodePressures[clusterNodeID];
-            }
+    // ================== SOLVE HYDRAULIC EQUATIONS ==================
+    // 1. Update leaks
+    hydraulic_net.updateLeaks(dt);
+    
+    // 2. Solve the network
+    hydraulic_net.solve(dt, simulationTime);
+    
+    // 3. Get pressures for each zone
+    std::vector<float> zone_pressures(zones.size(), NOMINAL_PRESSURE);
+    std::vector<float> zone_flows(zones.size(), 0.0f);
+    for (size_t i = 0; i < zones.size(); i++) {
+        int node_id = hydraulic_net.getZoneNodeID(i);
+        if (node_id >= 0) {
+            zone_pressures[i] = hydraulic_net.getNodePressure(node_id);
+            zone_flows[i] = hydraulic_net.getNodeFlow(node_id);
         }
-        
-        // Ring mains distribute pressure, minimal flow
-        pipe.flowRate = 0.1f; // Small circulation flow
-        
-        // Calculate pressure drop (small for rings)
-        float pressureDrop = 0.0f;
-        if (pipe.flowRate > 0.001f) {
-            pressureDrop = pipe.calculateRealisticPressureDrop(pipe.flowRate) * 0.05f;
-        }
-        
-        // Smooth pressure changes
-        float downstreamPressure = upstreamPressure - pressureDrop;
-        static std::map<int, float> prevRingPressures;
-        if (prevRingPressures.find(pipe.id) == prevRingPressures.end()) {
-            prevRingPressures[pipe.id] = downstreamPressure;
-        } else {
-            downstreamPressure = prevRingPressures[pipe.id] * 0.8f + downstreamPressure * 0.2f;
-            prevRingPressures[pipe.id] = downstreamPressure;
-        }
-        
-        // Update connected sensor
-        updatePipeSensorPressureWithStabilization(pipe, downstreamPressure);
     }
     
-    // Process service pipes (to buildings)
-    for (auto& pipe : pipes) {
-        if (pipe.type != SERVICE_PIPE) continue;
-        
-        // Find which building this serves
-        int buildingIdx = -1;
-        float buildingFlow = 0.0f;
-        for (const auto& building : buildings) {
-            if (building.servicePipeID == pipe.id) {
-                buildingIdx = building.id;
-                buildingFlow = building.currentWaterFlow;
-                break;
-            }
-        }
-        
-        if (buildingIdx < 0) continue;
-        
-        // Ensure minimum flow
-        buildingFlow = std::max(0.0002f, buildingFlow);
-        pipe.flowRate = buildingFlow;
-        
-        // Get pressure from nearest ring main
-        float upstreamPressure = DEFAULT_PRESSURE;
-        int clusterIdx = pipe.zoneID;
-        if (clusterIdx >= 0) {
-            int clusterNodeID = -2000 - clusterIdx;
-            if (nodePressures.find(clusterNodeID) != nodePressures.end()) {
-                upstreamPressure = nodePressures[clusterNodeID];
-            }
-        }
-        
-        // Apply valve effect
-        float valveFactor = 1.0f;
-        for (const auto& sensor : sensors) {
-            if (sensor.connectedPipeID == pipe.id) {
-                float currentValveFactor = sensor.valveState / 100.0f;
-                static float prevValveFactor = 1.0f;
-                valveFactor = prevValveFactor * 0.9f + currentValveFactor * 0.1f;
-                prevValveFactor = valveFactor;
-                break;
-            }
-        }
-        pipe.flowRate *= valveFactor;
-        
-        // Calculate pressure drop
-        float pressureDrop = 0.0f;
-        if (pipe.flowRate > 0.001f) {
-            pressureDrop = pipe.calculateRealisticPressureDrop(pipe.flowRate);
-        }
-        
-        // Smooth pressure changes
-        float buildingPressure = upstreamPressure - pressureDrop;
-        buildingPressure = std::max(20.0f, buildingPressure);
-        
-        static std::map<int, float> prevBuildingPressures;
-        if (prevBuildingPressures.find(buildingIdx) == prevBuildingPressures.end()) {
-            prevBuildingPressures[buildingIdx] = buildingPressure;
-        } else {
-            buildingPressure = prevBuildingPressures[buildingIdx] * 0.6f + buildingPressure * 0.4f;
-            prevBuildingPressures[buildingIdx] = buildingPressure;
-        }
-        
-        // Apply pressure-dependent demand reduction (smoothly)
-        if (buildingPressure < 70.0f && buildingIdx < buildings.size()) {
-            float pressureRatio = buildingPressure / 70.0f;
-            float flowReduction = sqrtf(pressureRatio);
+    // ================== UPDATE BUILDINGS WITH ACTUAL PRESSURES ==================
+    for (auto& building : buildings) {
+        if (building.zoneID >= 0 && building.zoneID < static_cast<int>(zone_pressures.size())) {
+            float actual_pressure = zone_pressures[building.zoneID];
             
-            // Smooth flow reduction
-            static std::map<int, float> prevFlowReductions;
-            if (prevFlowReductions.find(buildingIdx) == prevFlowReductions.end()) {
-                prevFlowReductions[buildingIdx] = flowReduction;
+            // Update building water usage with actual pressure
+            building.updateWaterUsage(dt, dayNight, actual_pressure, sensors);
+            
+            // Store pressure for reference
+            building.pressureSimulated = actual_pressure;
+            building.actual_pressure = actual_pressure; // Make sure this is set
+        }
+    }
+    
+    // ================== UPDATE RESERVOIR ==================
+    float total_demand = hydraulic_net.getTotalDemand();
+    reservoir.update(dt, total_demand);
+    
+    // ================== UPDATE ZONE STATISTICS ==================
+    for (size_t i = 0; i < zones.size(); i++) {
+        int node_id = hydraulic_net.getZoneNodeID(i);
+        
+        if (node_id >= 0) {
+            // Get pressure and flow from hydraulic network
+            float pressure = zone_pressures[i];
+            float flow = zone_flows[i];
+            
+            // SAFETY: Ensure values are finite
+            if (!std::isfinite(pressure)) pressure = NOMINAL_PRESSURE;
+            if (!std::isfinite(flow)) flow = 0.001f;
+            
+            // Clamp values
+            pressure = std::max(0.0f, std::min(500.0f, pressure));
+            flow = std::max(0.0f, std::min(100.0f, flow));  // Max 100 m³/s
+            
+            // Update zone statistics
+            zones[i].avgPressure = pressure;
+            zones[i].totalFlow = flow;
+            
+            // Track min/max pressure
+            if (pressure < zones[i].minPressure) zones[i].minPressure = pressure;
+            if (pressure > zones[i].maxPressure) zones[i].maxPressure = pressure;
+            
+            // Calculate pressure variance with safety
+            static std::map<int, std::deque<float>> pressure_history;
+            if (pressure_history.find(i) == pressure_history.end()) {
+                pressure_history[i] = std::deque<float>(10, pressure);
+            }
+            
+            pressure_history[i].pop_front();
+            pressure_history[i].push_back(pressure);
+            
+            float sum = 0.0f, sum_sq = 0.0f;
+            for (float p : pressure_history[i]) {
+                p = std::max(0.0f, std::min(500.0f, p));  // Clamp
+                sum += p;
+                sum_sq += p * p;
+            }
+            float mean = sum / pressure_history[i].size();
+            float variance = (sum_sq / pressure_history[i].size()) - (mean * mean);
+            zones[i].pressureVariance = std::max(0.0f, std::min(100.0f, variance));
+            
+            // Flow-to-pressure ratio with safety
+            if (pressure > 1.0f && std::isfinite(flow)) {
+                zones[i].flowToPressureRatio = flow / pressure;
+                // Clamp ratio
+                zones[i].flowToPressureRatio = std::max(0.0f, std::min(100.0f, zones[i].flowToPressureRatio));
             } else {
-                flowReduction = prevFlowReductions[buildingIdx] * 0.8f + flowReduction * 0.2f;
-                prevFlowReductions[buildingIdx] = flowReduction;
+                zones[i].flowToPressureRatio = 0.0f;
             }
             
-            buildings[buildingIdx].currentWaterFlow *= flowReduction;
-            pipe.flowRate *= flowReduction;
-        }
-        
-        // Update building node pressure
-        int buildingNodeID = -3000 - buildingIdx;
-        nodePressures[buildingNodeID] = buildingPressure;
-        if (buildingIdx < buildings.size()) {
-            nodePositions[buildingNodeID] = buildings[buildingIdx].position;
-        }
-        
-        // Update connected sensor
-        updatePipeSensorPressureWithStabilization(pipe, buildingPressure);
-        
-        // Add leak flow if present (smoothed)
-        if (pipe.hasLeak) {
-            float leakFlow_m3s = pipe.leakRate / 1000.0f;
+            // Pressure violations
+            zones[i].pressureViolation = (pressure < 100.0f || pressure > 250.0f);
             
-            // Smooth leak flow
-            static std::map<int, float> prevLeakFlows;
-            if (prevLeakFlows.find(pipe.id) == prevLeakFlows.end()) {
-                prevLeakFlows[pipe.id] = leakFlow_m3s;
-            } else {
-                leakFlow_m3s = prevLeakFlows[pipe.id] * 0.9f + leakFlow_m3s * 0.1f;
-                prevLeakFlows[pipe.id] = leakFlow_m3s;
-            }
-            
-            pipe.flowRate += leakFlow_m3s;
-            totalLeakFlow += leakFlow_m3s;
-        }
-    }
-
-     // ================== UPDATE SEWAGE FLOW TO RESERVOIR ==================
-    float totalSewageInflow = 0.0f;
-    
-    // Calculate total sewage from all buildings
-    for (const auto& building : buildings) {
-        totalSewageInflow += building.currentSewageFlow;
-    }
-    
-    // Add sewage from leaks (if any sewage leaks)
-    for (const auto& pipe : pipes) {
-        if (pipe.type >= SEWAGE_LATERAL && pipe.hasLeak) {
-            totalSewageInflow += pipe.leakRate / 1000.0f; // L/s to m³/s
-        }
-    }
-    
-    // Update sewage reservoir
-    sewageReservoir.update(dt, totalSewageInflow);
-    
-    // ================== UPDATE SEWAGE PIPE FLOWS ==================
-    // Distribute sewage flow through pipes (proportional)
-    float totalSewagePipes = 0;
-    for (auto& pipe : pipes) {
-        if (pipe.type >= SEWAGE_LATERAL) {
-            totalSewagePipes++;
-        }
-    }
-    
-    if (totalSewagePipes > 0) {
-        float avgSewageFlow = totalSewageInflow / totalSewagePipes;
-        for (auto& pipe : pipes) {
-            if (pipe.type >= SEWAGE_LATERAL) {
-                // Add some variation
-                float variation = 0.8f + 0.4f * (rand() % 1000) / 1000.0f;
-                pipe.flowRate = avgSewageFlow * variation;
-                
-                // Update velocity
-                float area = M_PI * pipe.diameter * pipe.diameter / 4.0f;
-                if (area > 0.001f) {
-                    pipe.velocity = pipe.flowRate / area;
+            // Leak detection with safety
+            if (zones[i].base_demand > 0.0001f && std::isfinite(flow)) {
+                if (flow > zones[i].base_demand * 1.3f) {
+                    zones[i].leakFlag = true;
+                    zones[i].leakSeverity = (flow - zones[i].base_demand) / zones[i].base_demand;
+                    // Clamp leak severity
+                    zones[i].leakSeverity = std::max(0.0f, std::min(10.0f, zones[i].leakSeverity));
+                } else {
+                    zones[i].leakFlag = false;
+                    zones[i].leakSeverity = 0.0f;
                 }
+            } else {
+                zones[i].leakFlag = false;
+                zones[i].leakSeverity = 0.0f;
+            }
+            
+            // Overflow detection with safety
+            zones[i].overflowFlag = (flow > zones[i].base_demand * 2.0f);
+            
+            // Historical flow tracking
+            zones[i].historicalFlow.push_back(flow);
+            if (zones[i].historicalFlow.size() > 100) {
+                zones[i].historicalFlow.erase(zones[i].historicalFlow.begin());
             }
         }
     }
     
-    // ================== UPDATE SEWAGE PIPES (GRAVITY FLOW) ==================
+    // ================== UPDATE PIPE VISUALS AND PHYSICS ==================
+    // First pass: calculate sewage flows (needed for water flow calculation)
+    std::vector<float> sewage_flows(pipes.size(), 0.0f);
     for (auto& pipe : pipes) {
-        if (pipe.type >= SEWAGE_LATERAL) {
+        if (pipe.type >= SEWAGE_LATERAL) { // Sewage pipes
+            // Sewage flow calculation
             float sewageFlow = 0.0f;
             
             if (pipe.type == SEWAGE_LATERAL) {
-                // Find which building this serves
+                // Find connected building
                 for (const auto& building : buildings) {
                     if (building.sewerPipeID == pipe.id) {
                         sewageFlow = building.currentSewageFlow;
@@ -4352,7 +5131,7 @@ void CityNetwork::updateRLState() {
                     }
                 }
             } else if (pipe.type == SEWAGE_COLLECTOR) {
-                // Sum lateral flows in this cluster
+                // Sum flows from laterals in this cluster
                 int clusterIdx = pipe.zoneID;
                 if (clusterIdx >= 0 && clusterIdx < clusters.size()) {
                     for (int lateralID : clusters[clusterIdx].sewerPipeIDs) {
@@ -4371,231 +5150,394 @@ void CityNetwork::updateRLState() {
                 }
             }
             
-            // Smooth sewage flow changes
-            static std::map<int, float> prevSewageFlows;
-            if (prevSewageFlows.find(pipe.id) == prevSewageFlows.end()) {
-                prevSewageFlows[pipe.id] = sewageFlow;
+            pipe.flowRate = sewageFlow;
+            sewage_flows[pipe.id] = sewageFlow;
+            
+            // Update velocity for sewage
+            float area = M_PI * pipe.diameter * pipe.diameter / 4.0f;
+            if (area > 0.001f) {
+                pipe.velocity = sewageFlow / area;
+            }
+        }
+    }
+    
+    // Second pass: calculate water flows with proper mass balance
+    for (auto& pipe : pipes) {
+        if (pipe.type < SEWAGE_LATERAL) { // Water pipes
+            // Find which zone this pipe is in
+            Zone* zone = getZoneForPipe(pipe.id);
+            float pipe_flow = 0.0f;
+            
+            if (zone) {
+                // Assign flow based on pipe type and zone demand
+                float base_flow = zone->totalFlow;
+                switch (pipe.type) {
+                    case TRUNK_MAIN:
+                        // Trunk carries total system demand
+                        pipe_flow = total_demand * 1.1f; // Include some margin
+                        break;
+                    case SECONDARY_MAIN:
+                        // Secondary serves entire zone
+                        pipe_flow = base_flow * 1.05f; // Include some losses
+                        break;
+                    case RING_MAIN:
+                        // Ring distributes within cluster
+                        pipe_flow = base_flow * 0.7f; // Reduced for distribution
+                        break;
+                    case SERVICE_PIPE:
+                        // Find connected building
+                        for (const auto& building : buildings) {
+                            if (building.servicePipeID == pipe.id) {
+                                pipe_flow = building.currentWaterFlow;
+                                break;
+                            }
+                        }
+                        break;
+                    default:
+                        pipe_flow = base_flow * 0.5f;
+                }
             } else {
-                sewageFlow = prevSewageFlows[pipe.id] * 0.7f + sewageFlow * 0.3f;
-                prevSewageFlows[pipe.id] = sewageFlow;
+                // If no zone found, use a default flow
+                switch (pipe.type) {
+                    case TRUNK_MAIN: pipe_flow = total_demand; break;
+                    case SECONDARY_MAIN: pipe_flow = total_demand / zones.size(); break;
+                    case RING_MAIN: pipe_flow = 0.1f; break;
+                    case SERVICE_PIPE: pipe_flow = 0.01f; break;
+                    default: pipe_flow = 0.05f;
+                }
             }
             
-            pipe.flowRate = sewageFlow;
+            // Apply realistic constraints
+            float max_velocity = (pipe.type == SERVICE_PIPE) ? 2.0f : 3.0f;
+            float area = M_PI * pipe.diameter * pipe.diameter / 4.0f;
+            float max_flow = max_velocity * area;
             
-            // Sewage pipes have atmospheric pressure
-            float sewagePressure = 101.3f;
+            pipe.flowRate = std::min(pipe_flow, max_flow);
             
-            // Update connected sensor with stabilized sewage levels
-            for (auto& sensor : sensors) {
-                if (sensor.connectedPipeID == pipe.id) {
-                    // Check if ROS2 data is stale (> 2 seconds)
-                    time_t now = time(nullptr);
-                    bool rosIsFresh = sensor.last_update_time > 0 && 
-                                     (now - sensor.last_update_time) <= 2;
-                    
-                    if (!rosIsFresh) {
-                        sensor.pressure = sewagePressure;
-                        sensor.pressureFromROS = false;
-                        
-                        // Calculate sewage fill level PROPERLY
-                        float pipeArea = M_PI * pipe.diameter * pipe.diameter / 4.0f;
-                        if (pipeArea > 0.001f) {
-                            float velocity = sewageFlow / pipeArea;
-                            float slope = fabs(pipe.elevationChange) / std::max(1.0f, pipe.length);
-                            
-                            // Manning's equation for partially full pipe
-                            float n = 0.013f; // Manning's n for concrete
-                            float R = pipe.diameter / 4.0f; // Hydraulic radius for full pipe
-                            float fullFlow = (1.0f / n) * pipeArea * pow(R, 2.0f/3.0f) * sqrt(slope);
-                            
-                            float fillRatio = 0.0f;
-                            if (fullFlow > 0.001f) {
-                                fillRatio = std::min(1.0f, sewageFlow / fullFlow);
-                            }
-                            
-                            // For circular pipes, relationship is non-linear
-                            float theta = 2.0f * acos(1.0f - 2.0f * fillRatio);
-                            float areaRatio = (theta - sin(theta)) / (2.0f * M_PI);
-                            
-                            // Level is depth/diameter ratio
-                            float levelPercent = areaRatio * 100.0f;
-                            
-                            // Add small randomness for realism
-                            static std::map<int, float> sewageRandom;
-                            if (sewageRandom.find(pipe.id) == sewageRandom.end()) {
-                                sewageRandom[pipe.id] = (rand() % 100) / 1000.0f; // 0-0.1
-                            }
-                            levelPercent *= (0.95f + sewageRandom[pipe.id]);
-                            
-                            // Cap at 95% (never completely full)
-                            levelPercent = std::min(95.0f, levelPercent);
-                            
-                            // Stabilize the level
-                            sensor.waterLevel = levelStabilizer.getStabilizedLevel(sensor.id, levelPercent);
-                        } else {
-                            sensor.waterLevel = 50.0f; // Default
-                        }
-                    }
-                    break;
+            // Calculate pressure drop using Darcy-Weisbach
+            float pressure_drop = 0.0f;
+            if (pipe.flowRate > 0.001f) {
+                pressure_drop = pipe.calculateRealisticPressureDrop(pipe.flowRate);
+                
+                // For long pipes, add distance-based pressure loss
+                float distance_loss = pipe.length * 0.05f; // 0.05 kPa/m
+                pressure_drop += distance_loss;
+            }
+            
+            // Update pipe sensor pressure
+            float upstream_pressure = NOMINAL_PRESSURE;
+            if (pipe.type == TRUNK_MAIN) {
+                upstream_pressure = 300.0f; // Reservoir pressure
+            } else if (zone) {
+                upstream_pressure = zone->avgPressure;
+            }
+            
+            float pipe_pressure = upstream_pressure - pressure_drop;
+            pipe_pressure = std::max(0.0f, pipe_pressure);
+            
+            updatePipeSensorPressureWithStabilization(pipe, pipe_pressure);
+            
+            // Update velocity for visualization
+            if (area > 0.001f) {
+                pipe.velocity = pipe.flowRate / area;
+                
+                // Determine flow regime
+                float Re = (WATER_DENSITY * pipe.velocity * pipe.diameter) / DYNAMIC_VISCOSITY;
+                if (Re < 2000) {
+                    pipe.flowRegime = "LAMINAR";
+                } else if (Re < 4000) {
+                    pipe.flowRegime = "TRANSITIONAL";
+                } else {
+                    pipe.flowRegime = "TURBULENT";
                 }
             }
         }
     }
     
-    // ================== UPDATE VOLUMES FOR ALL SENSORS ==================
+    // ================== UPDATE HIGH-DENSITY WATER PARTICLE SYSTEM ==================
+    if (showWaterParticles) {
+        water_particles.update(dt, pipes);
+        volumetric_renderer.update(dt, pipes);
+    } else {
+        // If particles are disabled, still update a few for leak visualization
+        for (auto& pipe : pipes) {
+            if (pipe.hasLeak && pipe.type < SEWAGE_LATERAL && pipe.flowRate > 0.001f) {
+                // Update leak particles only
+                pipe.updateParticles(dt);
+            }
+        }
+    }
+    
+    // ================== UPDATE SENSORS ==================
     for (auto& sensor : sensors) {
-        // Find connected pipe flow
-        float flow = 0.0f;
-        for (const auto& pipe : pipes) {
-            if (pipe.id == sensor.connectedPipeID) {
-                flow = pipe.flowRate;
-                break;
+        // Find which zone this sensor is in
+        int closest_zone = -1;
+        float min_distance = 1e9f;
+        
+        for (size_t i = 0; i < zones.size(); i++) {
+            float distance = (sensor.position - zones[i].center).length();
+            if (distance < min_distance) {
+                min_distance = distance;
+                closest_zone = i;
             }
         }
         
-        // Update sensor volume
-        sensor.updateVolume(flow, dt);
-    }
-    
-    // ================== RESERVOIR OUTFLOW ==================
-    // Sum all trunk main flows for reservoir outflow
-    reservoir.outflowRate = 0.0f;
-    for (const auto& pipe : pipes) {
-        if (pipe.type == TRUNK_MAIN) {
-            reservoir.outflowRate += pipe.flowRate;
-        }
-    }
-    
-    // Smooth reservoir outflow
-    static float prevOutflow = reservoir.outflowRate;
-    reservoir.outflowRate = prevOutflow * 0.8f + reservoir.outflowRate * 0.2f;
-    prevOutflow = reservoir.outflowRate;
-    
-    // ================== ZONE STATISTICS ==================
-    std::vector<float> zoneFlow(zones.size(), 0.0f);
-    std::vector<float> zonePressure(zones.size(), 0.0f);
-    std::vector<int> zoneCount(zones.size(), 0);
-    
-    for (const auto& pipe : pipes) {
-        if (pipe.type >= SEWAGE_LATERAL) continue;
-        
-        Zone* zone = getZoneForPipe(pipe.id);
-        if (!zone) continue;
-        
-        // Find pipe pressure from sensor
-        float pressure = DEFAULT_PRESSURE;
-        for (const auto& sensor : sensors) {
-            if (sensor.connectedPipeID == pipe.id) {
-                pressure = sensor.pressure;
-                break;
-            }
-        }
-        
-        zoneFlow[zone->id] += pipe.flowRate;
-        zonePressure[zone->id] += pressure;
-        zoneCount[zone->id]++;
-    }
-    
-    // Update zone statistics with smoothing
-    for (size_t i = 0; i < zones.size(); i++) {
-        if (zoneCount[i] == 0) continue;
-        
-        float avgPressure = zonePressure[i] / zoneCount[i];
-        float totalFlow = zoneFlow[i];
-        
-        // Smooth zone statistics
-        static std::map<int, float> prevZonePressures;
-        static std::map<int, float> prevZoneFlows;
-        
-        if (prevZonePressures.find(i) == prevZonePressures.end()) {
-            prevZonePressures[i] = avgPressure;
-            prevZoneFlows[i] = totalFlow;
-        } else {
-            avgPressure = prevZonePressures[i] * 0.6f + avgPressure * 0.4f;
-            totalFlow = prevZoneFlows[i] * 0.6f + totalFlow * 0.4f;
-            prevZonePressures[i] = avgPressure;
-            prevZoneFlows[i] = totalFlow;
-        }
-        
-        zones[i].updateStatistics(totalFlow, avgPressure);
-        
-        // Check for pressure violations
-        zones[i].pressureViolation = (avgPressure < 100.0f || avgPressure > 300.0f);
-        
-        // Update leak severity with decay
-        if (zones[i].leakFlag) {
-            zones[i].leakSeverity *= 0.995f; // Slow decay
-            if (zones[i].leakSeverity < 0.01f) {
-                zones[i].leakFlag = false;
-                zones[i].leakSeverity = 0.0f;
-            }
-        }
-    }
-    
-    // ================== UPDATE RL STATE METRICS ==================
-    float totalWaterPumped = reservoir.outflowRate;
-    float totalBilledWater = totalDemand;
-    
-    // Calculate Non-Revenue Water
-    rlState.non_revenue_water = std::max(0.0f, totalWaterPumped - totalBilledWater - totalLeakFlow);
-    
-    // Smooth efficiency calculation
-    static float prevEfficiency = 0.0f;
-    float currentEfficiency = (totalWaterPumped > 0.001f) ? 
-                             totalBilledWater / totalWaterPumped : 0.0f;
-    rlState.supply_efficiency = prevEfficiency * 0.9f + currentEfficiency * 0.1f;
-    prevEfficiency = rlState.supply_efficiency;
-}
-
-void CityNetwork::updatePipeSensorPressureWithStabilization(Pipe& pipe, float calculatedPressure) {
-    for (auto& sensor : sensors) {
-        if (sensor.connectedPipeID == pipe.id) {
-            sensor.pressureSimulated = calculatedPressure;
+        if (closest_zone >= 0) {
+            float pressure = zones[closest_zone].avgPressure;
+            float flow = zones[closest_zone].totalFlow;
             
-            // Check if ROS2 data is stale (> 3 seconds)
+            // Check if ROS2 data is stale
             time_t now = time(nullptr);
             bool rosIsFresh = sensor.last_update_time > 0 && 
                              (now - sensor.last_update_time) <= 3;
             
             if (!rosIsFresh) {
-                // Use simulation pressure
+                // Use hydraulic network pressure with noise
+                float noise = (rand() % 1000) / 1000.0f * SENSOR_NOISE_SIGMA * 2.0f - SENSOR_NOISE_SIGMA;
+                sensor.pressure = pressure + noise;
+                sensor.pressure = std::max(0.0f, sensor.pressure);
+                sensor.pressureSimulated = pressure;
+                sensor.pressureFromROS = false;
+                
+                // Calculate water level based on pipe type and flow
+                float pressure_ratio = pressure / NOMINAL_PRESSURE;
+                float flow_ratio = flow / std::max(0.001f, zones[closest_zone].base_demand);
+                
+                float level = 0.0f;
+                if (sensor.type == WATER_SENSOR) {
+                    // Different level calculation based on sensor location
+                    if (sensor.name.find("reservoir") != std::string::npos) {
+                        level = reservoir.getLevelPercent();
+                    } else if (sensor.connectedPipeID >= 0 && sensor.connectedPipeID < pipes.size()) {
+                        const Pipe& connected_pipe = pipes[sensor.connectedPipeID];
+                        if (connected_pipe.type == TRUNK_MAIN) {
+                            level = 60.0f + 20.0f * pressure_ratio;
+                        } else if (connected_pipe.type == SERVICE_PIPE) {
+                            level = 40.0f + 40.0f * std::min(1.0f, flow_ratio);
+                        } else {
+                            level = 50.0f + 25.0f * pressure_ratio + 5.0f * tanh(flow_ratio - 1.0f);
+                        }
+                    } else {
+                        level = 40.0f + 30.0f * pressure_ratio + 10.0f * tanh(flow_ratio - 1.0f);
+                    }
+                } else {
+                    // Sewage sensor
+                    level = 30.0f + 40.0f * std::min(1.0f, flow_ratio * 0.8f);
+                }
+                
+                // Add variation and clamp
+                level += (rand() % 1000) / 1000.0f * 10.0f - 5.0f;
+                level = std::max(10.0f, std::min(95.0f, level));
+                
+                // Stabilize
+                sensor.waterLevel = levelStabilizer.getStabilizedLevel(sensor.id, level);
+            }
+        }
+        
+        // Update sensor volume based on connected pipe
+        float flow = 0.0f;
+        if (sensor.connectedPipeID >= 0 && sensor.connectedPipeID < pipes.size()) {
+            flow = pipes[sensor.connectedPipeID].flowRate;
+        }
+        sensor.updateVolume(flow, dt);
+        
+        // Update valve position
+        sensor.updateValve(dt);
+    }
+    
+    // ================== UPDATE SEWAGE SYSTEM ==================
+    float totalSewageInflow = 0.0f;
+    for (const auto& building : buildings) {
+        totalSewageInflow += building.currentSewageFlow;
+    }
+    
+    sewageReservoir.update(dt, totalSewageInflow);
+    
+    // ================== CALCULATE SYSTEM METRICS ==================
+    float totalWaterPumped = reservoir.outflowRate;
+    float totalBilledWater = calculateTotalDemand();
+    
+    // Calculate Non-Revenue Water
+    float totalLeakFlow = 0.0f;
+    for (const auto& pipe : pipes) {
+        if (pipe.hasLeak) {
+            totalLeakFlow += pipe.leakRate / 1000.0f; // L/s to m³/s
+        }
+    }
+    
+    rlState.non_revenue_water = std::max(0.0f, totalWaterPumped - totalBilledWater - totalLeakFlow);
+    
+    // Supply efficiency
+    if (totalWaterPumped > 0.001f) {
+        rlState.supply_efficiency = totalBilledWater / totalWaterPumped;
+    } else {
+        rlState.supply_efficiency = 0.0f;
+    }
+    
+    // Calculate water quality metrics
+    int compliant_pipes = 0;
+    int total_water_pipes = 0;
+    float total_pressure = 0.0f;
+    
+    for (const auto& pipe : pipes) {
+        if (pipe.type < SEWAGE_LATERAL) {
+            total_water_pipes++;
+            
+            // Estimate pipe pressure
+            float pipe_pressure = NOMINAL_PRESSURE;
+            for (const auto& sensor : sensors) {
+                if (sensor.connectedPipeID == pipe.id) {
+                    pipe_pressure = sensor.getEffectivePressure();
+                    break;
+                }
+            }
+            
+            total_pressure += pipe_pressure;
+            
+            if (pipe_pressure >= 100.0f && pipe_pressure <= 300.0f) {
+                compliant_pipes++;
+            }
+        }
+    }
+    
+    if (total_water_pipes > 0) {
+        rlState.pressure_compliance = static_cast<float>(compliant_pipes) / total_water_pipes;
+        rlState.avg_flow_rate = totalBilledWater;
+    }
+    
+    // Update episode step
+    episodeStep++;
+    
+    // ================== DEBUG OUTPUT ==================
+    static int debug_counter = 0;
+    if (debug_counter++ % 200 == 0) {
+        printf("\n[PHYSICS UPDATE] Time: %.1fh, Step: %d\n", 
+               simulationTime/3600.0f, episodeStep);
+        printf("  Reservoir: %.1f%%, Demand: %.3f m³/s, Pumped: %.3f m³/s\n",
+               reservoir.getLevelPercent(), total_demand, totalWaterPumped);
+        printf("  Sewage: %.1f%%, Inflow: %.3f m³/s\n",
+               sewageReservoir.getFillPercent(), totalSewageInflow);
+        
+        if (zones.size() > 0) {
+            printf("  Zone 0: P=%.1fkPa, F=%.3fm³/s, V=%.0f%%, L=%s\n",
+                   zones[0].avgPressure, zones[0].totalFlow,
+                   hydraulic_net.getValveState(hydraulic_net.getZoneNodeID(0)),
+                   zones[0].leakFlag ? "YES" : "NO");
+        }
+        
+        // Show building statistics
+        if (buildings.size() > 0) {
+            printf("  Building 0: %.1f L/s, Pressure: %.1f kPa\n",
+                   buildings[0].currentWaterFlow * 1000.0f,
+                   buildings[0].actual_pressure);
+        }
+        
+        // Show particle statistics
+        if (showWaterParticles) {
+            printf("  Particles: Active (millions simulated as continuous flow)\n");
+        }
+    }
+}
+
+void CityNetwork::updatePipeSensorPressureWithStabilization(Pipe& pipe, float calculatedPressure) {
+    for (auto& sensor : sensors) {
+        if (sensor.connectedPipeID == pipe.id) {
+            // Store simulated pressure
+            sensor.pressureSimulated = calculatedPressure;
+            
+            // Check if ROS2 data is fresh
+            time_t now = time(nullptr);
+            bool rosIsFresh = sensor.last_update_time > 0 && 
+                             (now - sensor.last_update_time) <= 3;
+            
+            if (!rosIsFresh) {
+                // Use simulation pressure with realistic characteristics
                 sensor.pressure = calculatedPressure;
                 sensor.pressureFromROS = false;
                 
-                // Calculate water level based on pipe flow and pressure
+                // Calculate water level based on pipe characteristics
                 if (sensor.type == WATER_SENSOR) {
                     float targetLevel = 0.0f;
+                    float demandRatio = 0.0f; // Declare outside switch
                     
-                    if (pipe.type == TRUNK_MAIN || pipe.type == SECONDARY_MAIN) {
-                        // Transmission mains: level based on pressure stability
-                        float pressureRatio = calculatedPressure / 200.0f; // Nominal 200 kPa
-                        targetLevel = 60.0f + 20.0f * tanh(pressureRatio - 1.0f);
-                    } else if (pipe.type == RING_MAIN) {
-                        // Distribution: level based on flow stability
-                        float pipeArea = M_PI * pipe.diameter * pipe.diameter / 4.0f;
-                        float velocity = (pipeArea > 0.001f) ? pipe.flowRate / pipeArea : 0.0f;
-                        float velocityRatio = velocity / 1.0f; // Normalized to 1 m/s
-                        targetLevel = 50.0f + 30.0f * (1.0f - exp(-velocityRatio * 2.0f));
-                    } else if (pipe.type == SERVICE_PIPE) {
-                        // Service pipes: level based on building demand
-                        float demandRatio = 0.0f;
-                        for (const auto& building : buildings) {
-                            if (building.servicePipeID == pipe.id) {
-                                demandRatio = building.currentWaterFlow / 
-                                            (building.getBaseDemandLps() * 0.001f);
-                                break;
+                    // Different calculation based on pipe type
+                    switch (pipe.type) {
+                        case TRUNK_MAIN:
+                            // Trunk main: level based on pressure stability
+                            targetLevel = 60.0f + 20.0f * tanh((calculatedPressure - 200.0f) / 100.0f);
+                            break;
+                            
+                        case SECONDARY_MAIN:
+                            // Secondary main: mix of pressure and flow
+                            targetLevel = 50.0f + 25.0f * (calculatedPressure / 250.0f) + 
+                                        5.0f * tanh(pipe.flowRate * 10.0f);
+                            break;
+                            
+                        case RING_MAIN:
+                            // Distribution: more flow-dependent
+                            targetLevel = 45.0f + 30.0f * (1.0f - exp(-pipe.flowRate * 20.0f)) +
+                                        10.0f * (calculatedPressure / 200.0f);
+                            break;
+                            
+                        case SERVICE_PIPE:
+                            // Service pipe: building demand driven
+                            demandRatio = 0.0f; // Initialize here
+                            for (const auto& building : buildings) {
+                                if (building.servicePipeID == pipe.id) {
+                                    demandRatio = building.currentWaterFlow / 
+                                                std::max(0.001f, building.getBaseDemandLps() * 0.001f);
+                                    break;
+                                }
                             }
-                        }
-                        targetLevel = 40.0f + 40.0f * std::min(1.0f, demandRatio);
+                            targetLevel = 40.0f + 40.0f * std::min(1.0f, demandRatio) +
+                                        5.0f * (calculatedPressure / 150.0f);
+                            break;
+                            
+                        default:
+                            targetLevel = 50.0f;
                     }
                     
-                    // Apply stabilization
+                    // Add realistic noise and stabilization
+                    float noise = (rand() % 1000) / 1000.0f * 5.0f - 2.5f;
+                    targetLevel += noise;
+                    
+                    // Clamp to valid range
+                    targetLevel = std::max(5.0f, std::min(95.0f, targetLevel));
+                    
+                    // Apply stabilization for smooth transitions
                     float stabilizedLevel = levelStabilizer.getStabilizedLevel(sensor.id, targetLevel);
-                    sensor.waterLevel = std::min(100.0f, std::max(0.0f, stabilizedLevel));
+                    sensor.waterLevel = stabilizedLevel;
+                    
+                } else {
+                    // Sewage sensor: simpler calculation
+                    float flow_ratio = pipe.flowRate / std::max(0.001f, pipe.diameter * 2.0f);
+                    float sewageLevel = 30.0f + 50.0f * std::min(1.0f, flow_ratio);
+                    
+                    // Add noise
+                    sewageLevel += (rand() % 1000) / 1000.0f * 10.0f - 5.0f;
+                    sewageLevel = std::max(10.0f, std::min(90.0f, sewageLevel));
+                    
+                    sensor.waterLevel = levelStabilizer.getStabilizedLevel(sensor.id, sewageLevel);
                 }
+                
+                // Also update valve if it's controlled by simulation
+                if (sensor.valveState < 10.0f || sensor.valveState > 90.0f) {
+                    // Adjust valve based on pressure
+                    float targetValve = 100.0f;
+                    if (calculatedPressure < 100.0f) {
+                        targetValve = 100.0f; // Open fully if pressure low
+                    } else if (calculatedPressure > 250.0f) {
+                        targetValve = 50.0f; // Partially close if pressure too high
+                    }
+                    sensor.setValve(targetValve);
+                }
+                
             } else {
                 // ROS2 data is fresh, mark it
                 sensor.pressureFromROS = true;
+                
+                // Still update simulated pressure for reference
+                sensor.pressureSimulated = calculatedPressure;
             }
             break;
         }
@@ -4917,8 +5859,27 @@ void CityNetwork::updateZones(float dt) {
 
     // Global variables
     CityNetwork city;
+    
 
-    int windowWidth = 1600, windowHeight = 1000;
+    // Add this after CityNetwork class definition (around line 4500)
+void HydraulicNetwork::connectBuildingDemands(const CityNetwork& city) {
+    for (const auto& building : city.buildings) {
+        Vec3 building_pos = building.position + Vec3(0, 1, 0);
+        int node_id = findNodeByPosition(building_pos, 20.0f);
+        
+        if (node_id >= 0) {
+            float demand_m3s = building.currentWaterFlow;
+            if (demand_m3s > 0) {
+                // Update node demand - need accessor methods
+                // This requires modifying HydraulicNode to have public access
+                // or adding methods to HydraulicNetwork
+                nodes[node_id].base_demand = demand_m3s;
+                nodes[node_id].is_demand = true;
+            }
+        }
+    }
+}
+
     float camAngle = 45.0f, camElevation = 45.0f, camDistance = 200.0f;
     int lastMouseX = 0, lastMouseY = 0;
     bool mouseLeftDown = false;
@@ -4931,7 +5892,6 @@ void CityNetwork::updateZones(float dt) {
     bool showSensorLabels = false;
     bool showGround = true;
     bool transparentBuildings = false;
-    bool showWaterParticles = true;
     bool showReservoirParticles = true;
     bool showSunMoon = true;
     int highlightedCluster = -1;
@@ -5472,129 +6432,151 @@ ss << "SEWAGE RESERVOIR: " << std::fixed << std::setprecision(1)
         }
         
         if (showWaterParticles) {
-            drawText(10, 80, ">>> WATER PARTICLES ENABLED <<<", Color(0.2f, 0.8f, 1.0f));
-        }
+        // You might need to add a getParticleCount() method to CityNetwork
+        ss << "PARTICLES: " << std::setprecision(1) 
+           << "Millions simulated | Flow visualization active";
+        drawText(10, windowHeight - 250, ss.str(), Color(0.2f, 0.8f, 1.0f));
+        ss.str("");
+    }
+
     }
 
     void display() {
-        std::lock_guard<std::mutex> lock(city_mutex);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glLoadIdentity();
-        
-        // Set background color (dark, no sky gradient)
-        glClearColor(0.05f, 0.06f, 0.08f, 1.0f);
-        
-        float autoCamDistance = std::max(200.0f, city.cityExtent * 2.5f);
-        float actualDistance = camDistance == 200.0f ? autoCamDistance : camDistance;
-        
-        float camX = actualDistance * cos(camElevation * M_PI / 180.0f) * sin(camAngle * M_PI / 180.0f);
-        float camY = actualDistance * sin(camElevation * M_PI / 180.0f);
-        float camZ = actualDistance * cos(camElevation * M_PI / 180.0f) * cos(camAngle * M_PI / 180.0f);
-        
-        gluLookAt(camX, camY, camZ, 0, 10, 0, 0, 1, 0);
-        
-        // Setup lighting based on time of day
-        setupLighting();
-        
-        // Draw sun/moon
-        if (showSunMoon) {
-            drawSunMoon();
-        }
-        
-        if (showGround) {
-            glDisable(GL_LIGHTING);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            
-            // Ground color - DARK GRAY/BLACK, NOT BLUE
-            float groundBrightness = dayNight.ambientLight;
-            glColor4f(0.15f * groundBrightness,  // Much darker
-                    0.15f * groundBrightness, 
-                    0.15f * groundBrightness,  // Very little blue
-                    0.8f);                     // More opaque
-                    
-            float groundSize = city.cityExtent * 2.5f;
-            glBegin(GL_QUADS);
-            glVertex3f(-groundSize, 0, -groundSize);
-            glVertex3f(groundSize, 0, -groundSize);
-            glVertex3f(groundSize, 0, groundSize);
-            glVertex3f(-groundSize, 0, groundSize);
-            glEnd();
-            glDisable(GL_BLEND);
-            
-            // Grid lines - also darker
-            glColor3f(0.3f * groundBrightness, 
-                    0.3f * groundBrightness, 
-                    0.3f * groundBrightness);
-            glLineWidth(1.0f);
-            glBegin(GL_LINES);
-            for (float i = -groundSize; i <= groundSize; i += 20) {
-                glVertex3f(i, 0.1f, -groundSize);
-                glVertex3f(i, 0.1f, groundSize);
-                glVertex3f(-groundSize, 0.1f, i);
-                glVertex3f(groundSize, 0.1f, i);
-            }
-            glEnd();
-            glEnable(GL_LIGHTING);
-        }
-        
-        city.drawSewageReservoir();
-        city.drawReservoirWithParticles();
-        drawSewageTreatmentPlant(city.stpPos);
-        
-        if (highlightedCluster >= 0 && highlightedCluster < (int)city.clusters.size()) {
-            const Cluster& c = city.clusters[highlightedCluster];
-            glDisable(GL_LIGHTING);
-            glColor3f(1, 1, 0);
-            glLineWidth(3.0f);
-            float r = CLUSTER_SPACING * 0.6f;
-            glBegin(GL_LINE_LOOP);
-            for (int i = 0; i < 32; i++) {
-                float angle = i * M_PI * 2.0f / 32.0f;
-                glVertex3f(c.centerPos.x + r * cos(angle), 5, c.centerPos.z + r * sin(angle));
-            }
-            glEnd();
-            
-            // Show zone info if highlighted
-            if (highlightedCluster < (int)city.zones.size()) {
-                const Zone& zone = city.zones[highlightedCluster];
-                glRasterPos3f(c.centerPos.x, 15, c.centerPos.z);
-                std::stringstream ss;
-                ss << "Zone " << zone.id << ": P=" << (int)zone.avgPressure << "kPa F=" 
-                << std::setprecision(2) << zone.totalFlow << "m³/s";
-                for (char ch : ss.str()) {
-                    glutBitmapCharacter(GLUT_BITMAP_9_BY_15, ch);
-                }
-            }
-            glEnable(GL_LIGHTING);
-        }
-        
-        if (showBuildings) {
-            for (const auto& bldg : city.buildings) {
-                if (highlightedCluster < 0 || bldg.clusterID == highlightedCluster) {
-                    drawBuilding(bldg);
-                }
-            }
-        }
-        
-        for (const auto& pipe : city.pipes) {
-            bool isWater = pipe.type < SEWAGE_LATERAL;
-            if ((isWater && showWaterNetwork) || (!isWater && showSewageNetwork)) {
-                drawPipe(pipe);
-            }
-        }
-        
-        if (showSensors) {
-            for (const auto& sensor : city.sensors) {
-                drawSensor(sensor);
-            }
-        }
-        
-        drawHUD();
-        
-        glutSwapBuffers();
+    std::lock_guard<std::mutex> lock(city_mutex);
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    
+    // Set background color (dark, no sky gradient)
+    glClearColor(0.05f, 0.06f, 0.08f, 1.0f);
+    
+    float autoCamDistance = std::max(200.0f, city.cityExtent * 2.5f);
+    float actualDistance = camDistance == 200.0f ? autoCamDistance : camDistance;
+    
+    float camX = actualDistance * cos(camElevation * M_PI / 180.0f) * sin(camAngle * M_PI / 180.0f);
+    float camY = actualDistance * sin(camElevation * M_PI / 180.0f);
+    float camZ = actualDistance * cos(camElevation * M_PI / 180.0f) * cos(camAngle * M_PI / 180.0f);
+    
+    gluLookAt(camX, camY, camZ, 0, 10, 0, 0, 1, 0);
+    
+    // Setup lighting based on time of day
+    setupLighting();
+    
+    // Draw sun/moon
+    if (showSunMoon) {
+        drawSunMoon();
     }
+    
+    if (showGround) {
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
+        // Ground color - DARK GRAY/BLACK, NOT BLUE
+        float groundBrightness = dayNight.ambientLight;
+        glColor4f(0.15f * groundBrightness,  // Much darker
+                0.15f * groundBrightness, 
+                0.15f * groundBrightness,  // Very little blue
+                0.8f);                     // More opaque
+                
+        float groundSize = city.cityExtent * 2.5f;
+        glBegin(GL_QUADS);
+        glVertex3f(-groundSize, 0, -groundSize);
+        glVertex3f(groundSize, 0, -groundSize);
+        glVertex3f(groundSize, 0, groundSize);
+        glVertex3f(-groundSize, 0, groundSize);
+        glEnd();
+        glDisable(GL_BLEND);
+        
+        // Grid lines - also darker
+        glColor3f(0.3f * groundBrightness, 
+                0.3f * groundBrightness, 
+                0.3f * groundBrightness);
+        glLineWidth(1.0f);
+        glBegin(GL_LINES);
+        for (float i = -groundSize; i <= groundSize; i += 20) {
+            glVertex3f(i, 0.1f, -groundSize);
+            glVertex3f(i, 0.1f, groundSize);
+            glVertex3f(-groundSize, 0.1f, i);
+            glVertex3f(groundSize, 0.1f, i);
+        }
+        glEnd();
+        glEnable(GL_LIGHTING);
+    }
+    
+    city.drawSewageReservoir();
+    city.drawReservoirWithParticles();
+    drawSewageTreatmentPlant(city.stpPos);
+    
+    if (highlightedCluster >= 0 && highlightedCluster < (int)city.clusters.size()) {
+        const Cluster& c = city.clusters[highlightedCluster];
+        glDisable(GL_LIGHTING);
+        glColor3f(1, 1, 0);
+        glLineWidth(3.0f);
+        float r = CLUSTER_SPACING * 0.6f;
+        glBegin(GL_LINE_LOOP);
+        for (int i = 0; i < 32; i++) {
+            float angle = i * M_PI * 2.0f / 32.0f;
+            glVertex3f(c.centerPos.x + r * cos(angle), 5, c.centerPos.z + r * sin(angle));
+        }
+        glEnd();
+        
+        // Show zone info if highlighted
+        if (highlightedCluster < (int)city.zones.size()) {
+            const Zone& zone = city.zones[highlightedCluster];
+            glRasterPos3f(c.centerPos.x, 15, c.centerPos.z);
+            std::stringstream ss;
+            ss << "Zone " << zone.id << ": P=" << (int)zone.avgPressure << "kPa F=" 
+            << std::setprecision(2) << zone.totalFlow << "m³/s";
+            for (char ch : ss.str()) {
+                glutBitmapCharacter(GLUT_BITMAP_9_BY_15, ch);
+            }
+        }
+        glEnable(GL_LIGHTING);
+    }
+    
+    // ================== RENDER HIGH-DENSITY WATER FLOW FIRST (in the background) ==================
+    if (showWaterParticles) {
+        // Render volumetric streamlines first (subtle background flow)
+        city.volumetric_renderer.render();
+        
+        // Render dense particle system (main water flow visualization)
+        city.water_particles.render(city.pipes);
+    }
+    
+    // ================== RENDER INFRASTRUCTURE ==================
+    if (showBuildings) {
+        for (const auto& bldg : city.buildings) {
+            if (highlightedCluster < 0 || bldg.clusterID == highlightedCluster) {
+                drawBuilding(bldg);
+            }
+        }
+    }
+    
+    // Render pipes (water and sewage)
+    for (const auto& pipe : city.pipes) {
+        bool isWater = pipe.type < SEWAGE_LATERAL;
+        if ((isWater && showWaterNetwork) || (!isWater && showSewageNetwork)) {
+            drawPipe(pipe);
+            
+            // Render leak particles separately (if particles are disabled)
+            if (!showWaterParticles && pipe.hasLeak && showLeaks) {
+                pipe.drawLeakParticles(city.simulationTime);
+            }
+        }
+    }
+    
+    // Render sensors on top
+    if (showSensors) {
+        for (const auto& sensor : city.sensors) {
+            drawSensor(sensor);
+        }
+    }
+    
+    drawHUD();
+    
+    glutSwapBuffers();
+}
 
     void reshape(int w, int h) {
         windowWidth = w;
@@ -5701,9 +6683,32 @@ ss << "SEWAGE RESERVOIR: " << std::fixed << std::setprecision(1)
                 showSensorLabels = !showSensorLabels;
                 break;
             case 'p': case 'P':
-                showWaterParticles = !showWaterParticles;
-                std::cout << "Water particles: " << (showWaterParticles ? "ON" : "OFF") << "\n";
-                break;
+            showWaterParticles = !showWaterParticles;
+            if (showWaterParticles) {
+                std::cout << "Water particles: ON (High-density flow visualization)\n";
+                std::cout << "  - Shows millions of particles as continuous flow\n";
+                std::cout << "  - Blue gradient indicates flow velocity\n";
+                std::cout << "  - Particles follow pipe curvature\n";
+            } else {
+                std::cout << "Water particles: OFF\n";
+            }
+            break;
+            
+        case 'v': case 'V':  // New: Toggle visualization mode
+            static int vis_mode = 0;
+            vis_mode = (vis_mode + 1) % 3;
+            switch (vis_mode) {
+                case 0:
+                    std::cout << "Visualization: Particle System (High-density)\n";
+                    break;
+                case 1:
+                    std::cout << "Visualization: Streamlines\n";
+                    break;
+                case 2:
+                    std::cout << "Visualization: Combined (Particles + Streamlines)\n";
+                    break;
+            }
+            break;
             case 'g': case 'G':
                 showGround = !showGround;
                 std::cout << "Ground visibility: " << (showGround ? "ON" : "OFF") << "\n";

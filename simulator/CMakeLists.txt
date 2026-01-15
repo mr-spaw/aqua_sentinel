@@ -14,6 +14,7 @@ find_package(std_msgs REQUIRED)
 # ---------------- OpenGL ----------------
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
+find_package(GLEW REQUIRED)
 
 # ---------------- jsoncpp ----------------
 find_package(PkgConfig REQUIRED)
@@ -23,12 +24,14 @@ add_executable(sim sim.cpp)
 
 target_include_directories(sim PRIVATE
   ${OPENGL_INCLUDE_DIRS}
+  ${GLEW_INCLUDE_DIRS}
   ${GLUT_INCLUDE_DIRS}
   ${JSONCPP_INCLUDE_DIRS}
 )
 
 target_link_libraries(sim
   ${OPENGL_LIBRARIES}
+  ${GLEW_LIBRARIES}
   ${GLUT_LIBRARIES}
   ${JSONCPP_LIBRARIES}
   pthread

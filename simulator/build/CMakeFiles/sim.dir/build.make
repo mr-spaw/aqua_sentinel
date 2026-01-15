@@ -95,6 +95,7 @@ sim: CMakeFiles/sim.dir/build.make
 sim: /usr/lib/x86_64-linux-gnu/libOpenGL.so
 sim: /usr/lib/x86_64-linux-gnu/libGLX.so
 sim: /usr/lib/x86_64-linux-gnu/libGLU.so
+sim: /usr/lib/x86_64-linux-gnu/libGLEW.so
 sim: /usr/lib/x86_64-linux-gnu/libglut.so
 sim: /usr/lib/x86_64-linux-gnu/libXmu.so
 sim: /usr/lib/x86_64-linux-gnu/libXi.so
