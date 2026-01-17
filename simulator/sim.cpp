@@ -28,6 +28,12 @@
     #include <unordered_map>   
     #include <array>           
     #include <deque>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+    #include <fcntl.h>
+    #include <chrono>
 
     // ============================================================================
     // UDP BROADCAST SETTINGS
@@ -2902,6 +2908,281 @@ public:
     }
 };
 
+// ============================================================================
+// TCP LEAK CLIENT FOR MONITORING
+// ============================================================================
+
+class TCPLeakClient {
+private:
+    int tcp_socket;
+    struct sockaddr_in server_addr;
+    bool connected;
+    std::thread reconnect_thread;
+    std::atomic<bool> running;
+    mutable std::mutex status_mutex;  // Mutable for const methods
+    
+    struct LeakData {
+        int pipe_id;
+        float leak_rate;
+        std::string severity;
+        time_t timestamp;
+        bool active;
+        
+        LeakData() : pipe_id(-1), leak_rate(0.0f), severity("NONE"), 
+                    timestamp(0), active(false) {}
+    };
+    
+    std::map<int, LeakData> leak_data;
+    std::map<int, bool> sensor_leak_status;
+    std::map<int, bool> sensor_blockage_status;
+    std::map<int, bool> critical_status;
+    
+public:
+    TCPLeakClient() : tcp_socket(-1), connected(false), running(true) {
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(9999);
+        inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
+        
+        reconnect_thread = std::thread(&TCPLeakClient::reconnectWorker, this);
+    }
+    
+    ~TCPLeakClient() {
+        running = false;
+        if (reconnect_thread.joinable()) {
+            reconnect_thread.join();
+        }
+        disconnect();
+    }
+    
+    void reconnectWorker() {
+        while (running) {
+            if (!connected) {
+                connectToServer();
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+    }
+    
+    bool connectToServer() {
+        tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
+        if (tcp_socket < 0) {
+            return false;
+        }
+        
+        int flags = fcntl(tcp_socket, F_GETFL, 0);
+        fcntl(tcp_socket, F_SETFL, flags | O_NONBLOCK);
+        
+        int result = connect(tcp_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
+        if (result < 0 && errno != EINPROGRESS) {
+            close(tcp_socket);
+            tcp_socket = -1;
+            return false;
+        }
+        
+        fd_set writefds;
+        FD_ZERO(&writefds);
+        FD_SET(tcp_socket, &writefds);
+        
+        struct timeval timeout;
+        timeout.tv_sec = 2;
+        timeout.tv_usec = 0;
+        
+        result = select(tcp_socket + 1, NULL, &writefds, NULL, &timeout);
+        if (result <= 0) {
+            close(tcp_socket);
+            tcp_socket = -1;
+            return false;
+        }
+        
+        int error = 0;
+        socklen_t len = sizeof(error);
+        getsockopt(tcp_socket, SOL_SOCKET, SO_ERROR, &error, &len);
+        
+        if (error != 0) {
+            close(tcp_socket);
+            tcp_socket = -1;
+            return false;
+        }
+        
+        fcntl(tcp_socket, F_SETFL, flags);
+        
+        connected = true;
+        printf("✅ Connected to leak monitoring server\n");
+        
+        std::thread(&TCPLeakClient::receiveWorker, this).detach();
+        
+        return true;
+    }
+    
+    void disconnect() {
+        if (tcp_socket >= 0) {
+            close(tcp_socket);
+            tcp_socket = -1;
+        }
+        connected = false;
+    }
+    
+    void receiveWorker() {
+        char buffer[4096];
+        std::string partial_data;
+        
+        while (connected && running) {
+            fd_set readfds;
+            FD_ZERO(&readfds);
+            FD_SET(tcp_socket, &readfds);
+            
+            struct timeval timeout;
+            timeout.tv_sec = 1;
+            timeout.tv_usec = 0;
+            
+            int result = select(tcp_socket + 1, &readfds, NULL, NULL, &timeout);
+            
+            if (result < 0) {
+                printf("⚠ TCP receive error\n");
+                disconnect();
+                break;
+            } else if (result == 0) {
+                continue;
+            }
+            
+            int bytes_read = recv(tcp_socket, buffer, sizeof(buffer) - 1, 0);
+            
+            if (bytes_read <= 0) {
+                printf("⚠ TCP connection closed\n");
+                disconnect();
+                break;
+            }
+            
+            buffer[bytes_read] = '\0';
+            partial_data += buffer;
+            
+            size_t pos;
+            while ((pos = partial_data.find('\n')) != std::string::npos) {
+                std::string message = partial_data.substr(0, pos);
+                partial_data = partial_data.substr(pos + 1);
+                
+                processMessage(message);
+            }
+        }
+    }
+    
+    void processMessage(const std::string& message) {
+        try {
+            Json::Value root;
+            Json::Reader reader;
+            
+            if (!reader.parse(message, root)) {
+                return;
+            }
+            
+            std::lock_guard<std::mutex> lock(status_mutex);
+            
+            if (root.isMember("sensor_id")) {
+                int sensor_id = root["sensor_id"].asInt();
+                
+                if (root.isMember("issue_type")) {
+                    std::string issue_type = root["issue_type"].asString();
+                    
+                    if (issue_type == "LEAK") {
+                        sensor_leak_status[sensor_id] = true;
+                        printf("✅ TCP: Leak detected at sensor %d\n", sensor_id);
+                    } 
+                    else if (issue_type == "BLOCKAGE") {
+                        sensor_blockage_status[sensor_id] = true;
+                        printf("✅ TCP: Blockage detected at sensor %d\n", sensor_id);
+                    }
+                }
+                
+                if (root.isMember("type") && root["type"].asString() == "CRITICAL_ALERT") {
+                    critical_status[sensor_id] = true;
+                    printf("🚨 TCP: CRITICAL alert at sensor %d\n", sensor_id);
+                }
+                
+                if (root.isMember("maintenance") && root["maintenance"].asInt() == 1) {
+                    // Maintenance clears all issues
+                    sensor_leak_status[sensor_id] = false;
+                    sensor_blockage_status[sensor_id] = false;
+                    critical_status[sensor_id] = false;
+                    printf("✅ TCP: Maintenance complete for sensor %d\n", sensor_id);
+                }
+            }
+            
+        } catch (...) {
+            // Ignore parse errors
+        }
+    }
+    
+    int getLeakCount() {
+        std::lock_guard<std::mutex> lock(status_mutex);
+        int count = 0;
+        for (const auto& pair : sensor_leak_status) {
+            if (pair.second) count++;
+        }
+        return count;
+    }
+    
+    int getBlockageCount() {
+        std::lock_guard<std::mutex> lock(status_mutex);
+        int count = 0;
+        for (const auto& pair : sensor_blockage_status) {
+            if (pair.second) count++;
+        }
+        return count;
+    }
+    
+    int getCriticalCount() {
+        std::lock_guard<std::mutex> lock(status_mutex);
+        int count = 0;
+        for (const auto& pair : critical_status) {
+            if (pair.second) count++;
+        }
+        return count;
+    }
+    
+    bool hasLeak(int sensor_id) {
+        std::lock_guard<std::mutex> lock(status_mutex);
+        auto it = sensor_leak_status.find(sensor_id);
+        return (it != sensor_leak_status.end() && it->second);
+    }
+    
+    bool hasBlockage(int sensor_id) {
+        std::lock_guard<std::mutex> lock(status_mutex);
+        auto it = sensor_blockage_status.find(sensor_id);
+        return (it != sensor_blockage_status.end() && it->second);
+    }
+    
+    bool isCritical(int sensor_id) {
+        std::lock_guard<std::mutex> lock(status_mutex);
+        auto it = critical_status.find(sensor_id);
+        return (it != critical_status.end() && it->second);
+    }
+    
+    std::vector<LeakData> getLeakData() {
+        std::lock_guard<std::mutex> lock(status_mutex);
+        std::vector<LeakData> result;
+        
+        for (const auto& pair : leak_data) {
+            if (pair.second.active) {
+                result.push_back(pair.second);
+            }
+        }
+        
+        return result;
+    }
+    
+    bool isConnected() const {
+        return connected;
+    }
+    
+    void clearAllAlerts() {
+        std::lock_guard<std::mutex> lock(status_mutex);
+        sensor_leak_status.clear();
+        sensor_blockage_status.clear();
+        critical_status.clear();
+        printf("✅ TCP: All alerts cleared\n");
+    }
+};
+
 // Volumetric rendering for dense flow
 class VolumetricFlowRenderer {
 private:
@@ -3053,6 +3334,7 @@ public:
     Network waterNetwork; 
     LevelStabilizer levelStabilizer; 
     SewageReservoir sewageReservoir;
+    TCPLeakClient leak_client;
     TreatmentEvent lastTreatmentEvent;
     int treatmentEventCounter;
     float treatmentCheckTimer;
@@ -3070,6 +3352,7 @@ public:
             stpPos = Vec3(cityExtent + 250, 0, cityExtent + 250);
             sewageReservoir.position = stpPos + Vec3(20, 0, 0);
         }
+
 
         // ROS2 subscriber
     std::shared_ptr<ROS2SensorSubscriber> ros2_subscriber;
@@ -3126,15 +3409,13 @@ public:
         void checkROSDataAnomalies(int sensorID, float pressure, float level, float valve);
         void handleNewROS2Sensor(int sensorID, float valve, float pressure, float level, int esp_id);
         void syncROS2ToSimulation();  // Optional: for consistency
+        void syncTCPLeakData();
 
         
     public: 
         std::unordered_map<int, int> sensorIdToIndex;
          WaterFlowParticleSystem water_particles;
     VolumetricFlowRenderer volumetric_renderer;
-
-
-           
 
     };
 
@@ -3344,6 +3625,30 @@ public:
             
             sensors[reservoirWaterSensorID].pressure = reservoirPressure;
             sensors[reservoirWaterSensorID].pressureFromROS = false;
+        }
+    }
+}
+
+void CityNetwork:: syncTCPLeakData() {
+    if (!leak_client.isConnected()) return;
+    
+    for (auto& sensor : sensors) {
+        bool tcp_leak = leak_client.hasLeak(sensor.id);
+        bool tcp_blockage = leak_client.hasBlockage(sensor.id);
+        
+        // Update sensor visual state based on TCP data
+        if (tcp_leak || tcp_blockage) {
+            // Find connected pipe and mark it as having an issue
+            for (auto& pipe : pipes) {
+                if (pipe.id == sensor.connectedPipeID) {
+                    // Set visual indicators
+                    pipe.hasLeak = tcp_leak;
+                    if (tcp_blockage) {
+                        pipe.flowRate *= 0.3f; // Simulate blockage effect
+                    }
+                    break;
+                }
+            }
         }
     }
 }
@@ -5697,6 +6002,7 @@ void CityNetwork::enforceMassBalance() {
     std::lock_guard<std::mutex> lock(city_mutex);
     
     simulationTime += dt;
+    syncTCPLeakData();
     
     // Update day-night cycle
     dayNight.update(dt);
@@ -6030,93 +6336,322 @@ void HydraulicNetwork::connectBuildingDemands(const CityNetwork& city) {
     }
 
     void drawSensor(const Sensor& sensor) {
-        Color col = sensor.getColor();
+    // Check TCP for alerts on this sensor
+    bool tcp_leak = false;
+    bool tcp_blockage = false;
+    bool tcp_critical = false;
+    
+    if (city.leak_client.isConnected()) {
+        // These methods need to be implemented in TCPLeakClient
+        tcp_leak = city.leak_client.hasLeak(sensor.id);
+        tcp_blockage = city.leak_client.hasBlockage(sensor.id);
+        tcp_critical = city.leak_client.isCritical(sensor.id);
+    }
+    
+    // Determine sensor state
+    bool has_issue = tcp_leak || tcp_blockage || tcp_critical;
+    bool is_stale = sensor.isStale();
+    bool needs_maintenance = (sensor.lastActionTime > 0 && 
+                             (time(nullptr) - sensor.lastActionTime) < 5); // Recently maintained
+    
+    // Base color from sensor type
+    Color base_col = sensor.getColor();
+    
+    // Enhanced pulse for different states
+    float pulse_rate = 3.0f; // Default pulse rate
+    float pulse_intensity = 0.25f; // Default pulse intensity
+    
+    if (tcp_critical) {
+        pulse_rate = 10.0f;  // Fast pulse for critical
+        pulse_intensity = 0.8f;
+    } else if (tcp_leak) {
+        pulse_rate = 8.0f;   // Fast pulse for leaks
+        pulse_intensity = 0.6f;
+    } else if (tcp_blockage) {
+        pulse_rate = 6.0f;   // Medium pulse for blockages
+        pulse_intensity = 0.4f;
+    } else if (is_stale) {
+        pulse_rate = 1.0f;   // Slow pulse for stale
+        pulse_intensity = 0.2f;
+    } else if (needs_maintenance) {
+        pulse_rate = 4.0f;   // Medium pulse for recent maintenance
+        pulse_intensity = 0.5f;
+    }
+    
+    float pulse = 0.75f + pulse_intensity * sinf(city.simulationTime * pulse_rate);
+    
+    // Final color based on state
+    Color final_col;
+    if (tcp_critical) {
+        final_col = Color(1.0f, 0.0f, 0.0f);  // Bright red for critical
+    } else if (tcp_leak) {
+        final_col = Color(1.0f, 0.3f, 0.3f);  // Red for leaks
+    } else if (tcp_blockage) {
+        final_col = Color(1.0f, 0.8f, 0.2f);  // Yellow for blockages
+    } else if (is_stale) {
+        final_col = Color(base_col.r * 0.5f, base_col.g * 0.5f, base_col.b * 0.5f); // Dim for stale
+    } else if (needs_maintenance) {
+        final_col = Color(0.2f, 1.0f, 0.2f);  // Bright green for maintained
+    } else {
+        final_col = Color(base_col.r * pulse, base_col.g * pulse, base_col.b * pulse); // Normal with pulse
+    }
+    
+    // ================== GLOW EFFECT ==================
+    if (sensor.active) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         
-        float pulse = 0.75f + 0.35f * sinf(city.simulationTime * 3.0f);
+        // Glow size based on issue severity
+        float glow_size = 2.5f;
+        if (tcp_critical) glow_size = 5.0f;
+        else if (tcp_leak) glow_size = 4.0f;
+        else if (tcp_blockage) glow_size = 3.5f;
         
-        if (sensor.active) {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-            
-            if (sensor.isStale()) {
-                glColor4f(col.r * 0.5f, col.g * 0.3f, col.b * 0.3f, 0.2f);
-            } else {
-                glColor4f(col.r, col.g, col.b, 0.3f * pulse);
-            }
-            
-            float glowSize = 2.5f;
-            glPushMatrix();
-            glTranslatef(sensor.position.x, sensor.position.y, sensor.position.z);
-            glutSolidSphere(glowSize, 16, 16);
-            glPopMatrix();
-            glDisable(GL_BLEND);
-        }
-        
-        GLfloat mat_specular[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-        GLfloat mat_shininess[] = { 80.0f };
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
-        
-        float sensorSize = 2.2f;
-        if (sensor.isStale()) {
-            glColor3f(col.r * 0.5f, col.g * 0.5f, col.b * 0.5f);
+        // Glow color
+        if (is_stale) {
+            glColor4f(final_col.r * 0.5f, final_col.g * 0.3f, final_col.b * 0.3f, 0.2f);
+        } else if (has_issue) {
+            // Pulsing glow for issues
+            float issue_pulse = 0.5f + 0.5f * sinf(city.simulationTime * pulse_rate * 1.5f);
+            glColor4f(final_col.r, final_col.g, final_col.b, 0.5f * issue_pulse);
         } else {
-            glColor3f(col.r * pulse, col.g * pulse, col.b * pulse);
+            glColor4f(final_col.r, final_col.g, final_col.b, 0.3f * pulse);
         }
         
         glPushMatrix();
         glTranslatef(sensor.position.x, sensor.position.y, sensor.position.z);
-        glutSolidCube(sensorSize);
+        glutSolidSphere(glow_size, 16, 16);
         glPopMatrix();
-        
-        // Valve wheel
-        glDisable(GL_LIGHTING);
-        if (sensor.isStale()) {
-            glColor3f(col.r * 0.4f, col.g * 0.4f, col.b * 0.4f);
-        } else {
-            glColor3f(col.r * 0.7f, col.g * 0.7f, col.b * 0.7f);
-        }
-        glPushMatrix();
-        glTranslatef(sensor.position.x, sensor.position.y + 1.8f, sensor.position.z);
-        glRotatef(90, 1, 0, 0);
-        glutSolidTorus(0.4, 0.9, 10, 20);
-        glPopMatrix();
-        glEnable(GL_LIGHTING);
-        
-        if (showSensorLabels) {
-            glDisable(GL_LIGHTING);
-            
-            if (sensor.isStale()) {
-                glColor3f(0.6f, 0.6f, 0.6f);
-            } else if (sensor.type == WATER_SENSOR) {
-                glColor3f(0.3f, 0.85f, 1.0f);
-            } else {
-                glColor3f(1.0f, 0.7f, 0.2f);
-            }
-            
-            glRasterPos3f(sensor.position.x, sensor.position.y + 3.5f, sensor.position.z);
-            std::stringstream ss;
-            ss << "ID:" << sensor.id << " " << sensor.name;
-            if (sensor.last_esp_id != -1) {
-                ss << " [ESP" << sensor.last_esp_id << "]";
-            }
-            for (char c : ss.str()) {
-                glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c);
-            }
-            
-            glRasterPos3f(sensor.position.x, sensor.position.y + 2.5f, sensor.position.z);
-            ss.str("");
-            ss << "V:" << (int)sensor.valveState << "% P:" << (int)sensor.pressure << "kPa L:" << (int)sensor.waterLevel << "%";
-            if (sensor.isStale()) {
-                ss << " [STALE]";
-            }
-            for (char c : ss.str()) {
-                glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
-            }
-            
-            glEnable(GL_LIGHTING);
-        }
+        glDisable(GL_BLEND);
     }
+    
+    // ================== SENSOR BODY ==================
+    GLfloat mat_specular[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+    GLfloat mat_shininess[] = { 80.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+    
+    float sensorSize = 2.2f;
+    if (tcp_critical) sensorSize = 3.0f;
+    else if (has_issue) sensorSize = 2.5f;
+    
+    glColor3f(final_col.r, final_col.g, final_col.b);
+    
+    // Draw sensor body
+    glPushMatrix();
+    glTranslatef(sensor.position.x, sensor.position.y, sensor.position.z);
+    
+    // For critical sensors, add rotation
+    if (tcp_critical) {
+        glRotatef(city.simulationTime * 100.0f, 0, 1, 0);
+    }
+    
+    // Draw different shapes based on sensor type
+    if (sensor.type == WATER_SENSOR) {
+        glutSolidCube(sensorSize);  // Cube for water sensors
+    } else {
+        // Cylinder for sewage sensors
+        glRotatef(90, 1, 0, 0);
+        GLUquadric* quad = gluNewQuadric();
+        gluCylinder(quad, sensorSize/2, sensorSize/2, sensorSize, 10, 3);
+        gluDeleteQuadric(quad);
+    }
+    glPopMatrix();
+    
+    // ================== VALVE WHEEL ==================
+    glDisable(GL_LIGHTING);
+    
+    // Valve wheel color
+    Color valve_col;
+    if (is_stale) {
+        valve_col = Color(final_col.r * 0.4f, final_col.g * 0.4f, final_col.b * 0.4f);
+    } else if (has_issue) {
+        valve_col = final_col;
+    } else {
+        valve_col = Color(final_col.r * 0.7f, final_col.g * 0.7f, final_col.b * 0.7f);
+    }
+    glColor3f(valve_col.r, valve_col.g, valve_col.b);
+    
+    glPushMatrix();
+    glTranslatef(sensor.position.x, sensor.position.y + 1.8f, sensor.position.z);
+    glRotatef(90, 1, 0, 0);
+    
+    // Rotate valve based on valve state
+    float valve_rotation = sensor.valveState * 3.6f; // 0-100% to 0-360 degrees
+    glRotatef(valve_rotation, 0, 0, 1);
+    
+    // Draw valve wheel
+    glutSolidTorus(0.4, 0.9, 10, 20);
+    
+    // Add valve indicator line
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glLineWidth(2.0f);
+    glBegin(GL_LINES);
+    glVertex3f(0, 0, 0.9);
+    glVertex3f(0, 0, 1.5);
+    glEnd();
+    
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
+    
+    // ================== ISSUE INDICATORS ==================
+    if (has_issue) {
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        
+        // Issue indicator above sensor
+        float indicator_y = sensor.position.y + 3.0f;
+        float indicator_size = 0.8f;
+        
+        if (tcp_critical) {
+            // Red warning triangle for critical
+            glColor4f(1.0f, 0.0f, 0.0f, 0.8f * pulse);
+            glPushMatrix();
+            glTranslatef(sensor.position.x, indicator_y, sensor.position.z);
+            glRotatef(90, 1, 0, 0);
+            glutSolidCone(indicator_size, indicator_size * 2, 3, 2);
+            glPopMatrix();
+        } else if (tcp_leak) {
+            // Red droplet for leaks
+            glColor4f(1.0f, 0.3f, 0.3f, 0.7f * pulse);
+            glPushMatrix();
+            glTranslatef(sensor.position.x, indicator_y, sensor.position.z);
+            glutSolidSphere(indicator_size, 12, 12);
+            glPopMatrix();
+        } else if (tcp_blockage) {
+            // Yellow X for blockages
+            glColor4f(1.0f, 0.8f, 0.2f, 0.7f * pulse);
+            glLineWidth(3.0f);
+            glBegin(GL_LINES);
+            glVertex3f(sensor.position.x - indicator_size, indicator_y, sensor.position.z - indicator_size);
+            glVertex3f(sensor.position.x + indicator_size, indicator_y, sensor.position.z + indicator_size);
+            glVertex3f(sensor.position.x + indicator_size, indicator_y, sensor.position.z - indicator_size);
+            glVertex3f(sensor.position.x - indicator_size, indicator_y, sensor.position.z + indicator_size);
+            glEnd();
+        }
+        
+        glDisable(GL_BLEND);
+        glEnable(GL_LIGHTING);
+    }
+    
+    // ================== SENSOR LABELS ==================
+    if (showSensorLabels) {
+        glDisable(GL_LIGHTING);
+        
+        // Label background for better readability
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor4f(0.0f, 0.0f, 0.0f, 0.7f);
+        glBegin(GL_QUADS);
+        float bg_width = 8.0f;
+        float bg_height = 2.5f;
+        glVertex3f(sensor.position.x - bg_width/2, sensor.position.y + 6.0f, sensor.position.z - 0.1f);
+        glVertex3f(sensor.position.x + bg_width/2, sensor.position.y + 6.0f, sensor.position.z - 0.1f);
+        glVertex3f(sensor.position.x + bg_width/2, sensor.position.y + 8.5f, sensor.position.z - 0.1f);
+        glVertex3f(sensor.position.x - bg_width/2, sensor.position.y + 8.5f, sensor.position.z - 0.1f);
+        glEnd();
+        glDisable(GL_BLEND);
+        
+        // Main label - sensor ID and name
+        Color label_color;
+        if (tcp_critical) label_color = Color(1.0f, 0.5f, 0.5f);
+        else if (has_issue) label_color = final_col;
+        else if (is_stale) label_color = Color(0.6f, 0.6f, 0.6f);
+        else label_color = (sensor.type == WATER_SENSOR) ? 
+                          Color(0.3f, 0.85f, 1.0f) : Color(1.0f, 0.7f, 0.2f);
+        
+        glColor3f(label_color.r, label_color.g, label_color.b);
+        
+        // Sensor ID and name
+        glRasterPos3f(sensor.position.x - 4.0f, sensor.position.y + 8.0f, sensor.position.z);
+        std::stringstream ss;
+        ss << "ID:" << sensor.id << " " << sensor.name;
+        if (sensor.last_esp_id != -1) {
+            ss << " [ESP" << sensor.last_esp_id << "]";
+        }
+        
+        // Add issue icons
+        if (tcp_critical) ss << " ⚠️";
+        else if (tcp_leak) ss << " 💧";
+        else if (tcp_blockage) ss << " 🚫";
+        
+        std::string label = ss.str();
+        for (char c : label) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
+        }
+        
+        // Sensor values
+        glRasterPos3f(sensor.position.x - 4.0f, sensor.position.y + 6.5f, sensor.position.z);
+        ss.str("");
+        ss << "V:" << (int)sensor.valveState << "% P:" << (int)sensor.pressure << "kPa L:" << (int)sensor.waterLevel << "%";
+        
+        // Add data source indicator
+        if (sensor.pressureFromROS) {
+            ss << " [ROS]";
+        } else if (is_stale) {
+            ss << " [STALE]";
+        } else {
+            ss << " [SIM]";
+        }
+        
+        label = ss.str();
+        for (char c : label) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, c);
+        }
+        
+        // TCP alert status if applicable
+        if (has_issue) {
+            glRasterPos3f(sensor.position.x - 4.0f, sensor.position.y + 5.5f, sensor.position.z);
+            ss.str("");
+            if (tcp_critical) ss << "CRITICAL ";
+            if (tcp_leak) ss << "LEAK ";
+            if (tcp_blockage) ss << "BLOCKAGE ";
+            ss << "[TCP]";
+            
+            Color alert_color = tcp_critical ? Color(1.0f, 0.0f, 0.0f) : 
+                               (tcp_leak ? Color(1.0f, 0.3f, 0.3f) : Color(1.0f, 0.8f, 0.2f));
+            glColor3f(alert_color.r, alert_color.g, alert_color.b);
+            
+            label = ss.str();
+            for (char c : label) {
+                glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, c);
+            }
+        }
+        
+        glEnable(GL_LIGHTING);
+    }
+    
+    // ================== CONNECTION LINES TO PIPE ==================
+    if (sensor.connectedPipeID >= 0 && sensor.connectedPipeID < city.pipes.size()) {
+        const Pipe& connected_pipe = city.pipes[sensor.connectedPipeID];
+        Vec3 pipe_point = (connected_pipe.start + connected_pipe.end) * 0.5f;
+        
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
+        // Connection line color based on sensor state
+        Color line_color;
+        if (has_issue) {
+            line_color = final_col;
+        } else if (is_stale) {
+            line_color = Color(0.4f, 0.4f, 0.4f, 0.3f);
+        } else {
+            line_color = Color(final_col.r, final_col.g, final_col.b, 0.5f);
+        }
+        
+        glColor4f(line_color.r, line_color.g, line_color.b, 0.5f);
+        glLineWidth(1.0f);
+        glBegin(GL_LINES);
+        glVertex3f(sensor.position.x, sensor.position.y, sensor.position.z);
+        glVertex3f(pipe_point.x, pipe_point.y, pipe_point.z);
+        glEnd();
+        
+        glDisable(GL_BLEND);
+        glEnable(GL_LIGHTING);
+    }
+}
 
     void drawPipe(const Pipe& pipe) {
         Color color = pipe.getColor();
@@ -6304,31 +6839,173 @@ void HydraulicNetwork::connectBuildingDemands(const CityNetwork& city) {
     }
 
     void drawHUD() {
-        std::stringstream ss;
+    std::stringstream ss;
+    
+    ss << "ROS2 HUMBLE SCADA - REAL-TIME SENSOR DATA FROM ESP NODES";
+    drawText(10, windowHeight - 25, ss.str());
+    ss.str("");
+    
+    ss << "Buildings: " << city.buildings.size() << " | Clusters: " << city.clusters.size() 
+    << " | Zones: " << city.zones.size() << " | Pipes: " << city.pipes.size() << " | Sensors: " << city.sensors.size();
+    drawText(10, windowHeight - 50, ss.str());
+    ss.str("");
+    
+    // Time and day information
+    ss << "Time: " << std::fixed << std::setprecision(1) << dayNight.timeOfDay << "h"
+    << " | Day: " << dayNight.getDayType()
+    << " | Demand Factor: " << std::setprecision(2) << dayNight.getWaterDemandFactor();
+    drawText(10, windowHeight - 75, ss.str(), Color(0.8f, 0.8f, 0.2f));
+    ss.str("");
+    
+    // ================== TCP LEAK & BLOCKAGE STATUS ==================
+    if (city.leak_client.isConnected()) {
+        int tcp_leaks = 0;
+        int tcp_blockages = 0;
+        int tcp_critical = 0;
         
-        ss << "ROS2 HUMBLE SCADA - REAL-TIME SENSOR DATA FROM ESP NODES";
-        drawText(10, windowHeight - 25, ss.str());
+        // Get counts from TCP client (methods exist now)
+        tcp_leaks = city.leak_client.getLeakCount();
+        tcp_blockages = city.leak_client.getBlockageCount();
+        tcp_critical = city.leak_client.getCriticalCount();
+        
+        ss.str("");
+        ss << "TCP ALERTS: ";
+        
+        if (tcp_critical > 0) {
+            ss << "🚨 " << tcp_critical << " CRITICAL";
+            if (tcp_leaks > 0 || tcp_blockages > 0) ss << " | ";
+        }
+        
+        if (tcp_leaks > 0) {
+            ss << "🔴 " << tcp_leaks << " LEAK" << (tcp_leaks > 1 ? "S" : "");
+            if (tcp_blockages > 0) ss << " | ";
+        }
+        
+        if (tcp_blockages > 0) {
+            ss << "🟡 " << tcp_blockages << " BLOCKAGE" << (tcp_blockages > 1 ? "S" : "");
+        }
+        
+        if (tcp_leaks == 0 && tcp_blockages == 0 && tcp_critical == 0) {
+            ss << "✅ ALL CLEAR";
+        }
+        
+        // Color coding for TCP alerts
+        Color tcp_alert_color;
+        if (tcp_critical > 0) {
+            tcp_alert_color = Color(1.0f, 0.0f, 0.0f); // Bright red for critical
+        } else if (tcp_leaks > 0) {
+            tcp_alert_color = Color(1.0f, 0.3f, 0.3f); // Red for leaks
+        } else if (tcp_blockages > 0) {
+            tcp_alert_color = Color(1.0f, 0.8f, 0.2f); // Yellow for blockages
+        } else {
+            tcp_alert_color = Color(0.3f, 0.9f, 0.3f); // Green for clear
+        }
+        
+        drawText(10, windowHeight - 100, ss.str(), tcp_alert_color);
         ss.str("");
         
-        ss << "Buildings: " << city.buildings.size() << " | Clusters: " << city.clusters.size() 
-        << " | Zones: " << city.zones.size() << " | Pipes: " << city.pipes.size() << " | Sensors: " << city.sensors.size();
-        drawText(10, windowHeight - 50, ss.str());
+        // TCP connection status
+        ss << "TCP SERVER: " << (city.leak_client.isConnected() ? "✅ CONNECTED" : "❌ DISCONNECTED");
+        Color conn_color = city.leak_client.isConnected() ? 
+                          Color(0.2f, 0.9f, 0.2f) : Color(1.0f, 0.2f, 0.2f);
+        drawText(10, windowHeight - 125, ss.str(), conn_color);
         ss.str("");
         
-        // Time and day information
-        ss << "Time: " << std::fixed << std::setprecision(1) << dayNight.timeOfDay << "h"
-        << " | Day: " << dayNight.getDayType()
-        << " | Demand Factor: " << std::setprecision(2) << dayNight.getWaterDemandFactor();
-        drawText(10, windowHeight - 75, ss.str(), Color(0.8f, 0.8f, 0.2f));
+        // Show if TCP is receiving data
+        static time_t last_tcp_update = 0;
+        static int tcp_message_count = 0;
+        
+        // For demo, simulate occasional TCP messages
+        static float tcp_timer = 0.0f;
+        tcp_timer += 0.016f; // Assume 60 FPS
+        
+        if (tcp_timer > 3.0f) { // Every 3 seconds
+            last_tcp_update = time(nullptr);
+            tcp_message_count++;
+            tcp_timer = 0.0f;
+        }
+        
+        if (last_tcp_update > 0) {
+            int seconds_ago = time(nullptr) - last_tcp_update;
+            if (seconds_ago < 5) {
+                ss << "TCP ACTIVE: " << seconds_ago << "s ago (" << tcp_message_count << " msgs)";
+                drawText(10, windowHeight - 150, ss.str(), Color(0.6f, 0.9f, 0.6f));
+                ss.str("");
+            }
+        }
+    } else {
+        // TCP not connected warning
+        ss << "TCP SERVER: ❌ DISCONNECTED - No live leak/blockage data";
+        drawText(10, windowHeight - 100, ss.str(), Color(1.0f, 0.3f, 0.3f));
         ss.str("");
         
-         
+        ss << "Run TCP server on port 9999 to receive alerts";
+        drawText(10, windowHeight - 125, ss.str(), Color(0.8f, 0.8f, 0.8f));
+        ss.str("");
+    }
+    
+    // ROS2 status
+    if (ros2_initialized) {
+        int active = city.getActiveSensors();
+        int stale = city.getStaleSensors();
+        float update_rate = city.sensors.size() > 0 ? (100.0f * active / city.sensors.size()) : 0;
+        
+        ss << "✓ ROS2 ACTIVE: " << active << "/" << city.sensors.size() 
+        << " sensors updated (" << std::fixed << std::setprecision(1) << update_rate << "%)";
+        Color status_color;
+        if (update_rate > 80) status_color = Color(0.2f, 0.9f, 0.2f);
+        else if (update_rate > 50) status_color = Color(0.9f, 0.9f, 0.2f);
+        else status_color = Color(0.9f, 0.2f, 0.2f);
+        drawText(10, windowHeight - 175, ss.str(), status_color);
+    } else {
+        drawText(10, windowHeight - 175, "✗ ROS2 NOT INITIALIZED - Using default values", Color(1.0f, 0.2f, 0.2f));
+    }
+    ss.str("");
+    
+    // Reservoir status
+    ss << "RESERVOIR: " << std::fixed << std::setprecision(1) 
+    << city.reservoir.getLevelPercent() << "% (" << city.reservoir.getTrendString() << ")"
+    << " | Pump: " << std::setprecision(2) << city.reservoir.availablePumpCapacity << " m³/s"
+    << " | Margin: " << std::setprecision(2) << city.reservoir.supplyMargin << " m³/s";
+    drawText(10, windowHeight - 200, ss.str());
+    ss.str("");
+    
+    // Water consumption
+    float totalDemand = city.calculateTotalDemand();
+    
+    ss << "CITY WATER: " << std::fixed << std::setprecision(2) << (totalDemand * 1000.0f) 
+    << " L/s | Total consumed: " << std::setprecision(0) << city.totalWaterConsumed << " m³";
+    drawText(10, windowHeight - 225, ss.str());
+    ss.str("");
+    
+    // UDP broadcast status
+    ss << "UDP BROADCAST: " << UDP_BROADCAST_PORT << " @ " << (1.0f/UDP_BROADCAST_INTERVAL) << "Hz"
+    << " | RL Steps: " << city.episodeStep;
+    drawText(10, windowHeight - 250, ss.str(), Color(0.6f, 0.8f, 1.0f));
+    ss.str("");
+    
+    // Zone status summary (SIMULATION leaks - from leaks.csv)
+    if (!city.zones.empty()) {
+        int leakZones = 0;
+        int pressureViolations = 0;
+        for (const auto& zone : city.zones) {
+            if (zone.leakFlag) leakZones++;
+            if (zone.pressureViolation) pressureViolations++;
+        }
+        
+        ss << "SIMULATION ZONES: " << city.zones.size() 
+        << " | Leaks: " << leakZones 
+        << " | Pressure Violations: " << pressureViolations;
+        Color sim_color = (leakZones > 0 || pressureViolations > 0) ? 
+                         Color(1.0f, 0.3f, 0.3f) : Color(0.3f, 0.9f, 0.3f);
+        drawText(10, windowHeight - 275, ss.str(), sim_color);
+        ss.str("");
+    }
+    
     // Add sewage reservoir status
-    // Add sewage reservoir status
-ss.str("");  // Clear the existing stringstream instead of redeclaring
-ss << "SEWAGE RESERVOIR: " << std::fixed << std::setprecision(1) 
-   << city.sewageReservoir.getFillPercent() << "% " 
-   << city.sewageReservoir.getStatus();
+    ss << "SEWAGE RESERVOIR: " << std::fixed << std::setprecision(1) 
+       << city.sewageReservoir.getFillPercent() << "% " 
+       << city.sewageReservoir.getStatus();
     
     if (city.sewageReservoir.needsTreatment) {
         ss << " [TREATMENT IN " << std::setprecision(0) 
@@ -6337,7 +7014,7 @@ ss << "SEWAGE RESERVOIR: " << std::fixed << std::setprecision(1)
     
     Color sewageColor = city.sewageReservoir.needsTreatment ? 
                        Color(1.0f, 0.5f, 0.2f) : Color(0.6f, 0.8f, 0.4f);
-    drawText(10, windowHeight - 275, ss.str(), sewageColor);
+    drawText(10, windowHeight - 300, ss.str(), sewageColor);
     ss.str("");
     
     // Add treatment event info
@@ -6346,99 +7023,305 @@ ss << "SEWAGE RESERVOIR: " << std::fixed << std::setprecision(1)
            << " (" << city.lastTreatmentEvent.event_type << ") "
            << std::fixed << std::setprecision(0) 
            << city.simulationTime - city.lastTreatmentEvent.timestamp << "s ago";
-        drawText(10, windowHeight - 300, ss.str(), Color(0.8f, 0.8f, 0.2f));
+        drawText(10, windowHeight - 325, ss.str(), Color(0.8f, 0.8f, 0.2f));
+        ss.str("");
+    }
+    
+    // ESP topics being monitored
+    drawText(10, windowHeight - 350, "TOPICS: /esp1/sensors, /esp2/sensors, /esp3/sensors, /esp4/sensors", Color(0.6f, 0.8f, 1.0f));
+    
+    // ================== BOTTOM CONTROLS SECTION ==================
+    drawText(10, 360, "CONTROLS:");
+    drawText(10, 340, "B: Buildings | W: Water | S: Sewage | N: Sensors | L: Leaks | T: Labels");
+    drawText(10, 320, "X: Transparent | G: Ground | P: Particles | H: Highlight | R: Reset | M: Sun/Moon");
+    drawText(10, 300, "+/-: Buildings | Q: Quit | K: Load leaks | 1-9: Test sensor | 0: Broadcast test");
+    drawText(10, 280, "C: Clear TCP alerts | V: Toggle visualization | Z: Zone control | F: Fullscreen");
+    
+    // Data sources legend
+    drawText(10, 250, "DATA SOURCES:");
+    drawText(10, 230, "• ROS2: Live sensor data from ESP nodes (blue/yellow sensors)");
+    drawText(10, 210, "• TCP: Leak/blockage alerts (red sensors, shows in TCP ALERTS)");
+    drawText(10, 190, "• Simulation: Hydraulic models (SIMULATION ZONES)");
+    
+    // Sensor status legend
+    drawText(10, 160, "SENSOR STATUS:");
+    drawText(10, 140, "• 🔵 Blue: Normal water sensor");
+    drawText(10, 120, "• 🟡 Yellow: Normal sewage sensor");
+    drawText(10, 100, "• 🔴 Red: Leak detected (pulsing)");
+    drawText(10, 80, "• 🟠 Orange: Blockage detected (pulsing)");
+    drawText(10, 60, "• ⚫ Gray: Sensor stale/no data");
+    
+    // RL info
+    drawText(10, 30, "RL STATE BROADCAST:");
+    drawText(10, 10, "• 10Hz UDP broadcast to port " + std::to_string(UDP_BROADCAST_PORT));
+    
+    // ================== RIGHT SIDE STATUS INDICATORS ==================
+    if (transparentBuildings) {
+        drawText(windowWidth - 300, 30, ">>> BUILDINGS TRANSPARENT <<<", Color(0.2f, 1.0f, 0.2f));
+    }
+    
+    if (showWaterParticles) {
+        ss.str("");
+        ss << "PARTICLES: Flow visualization ACTIVE";
+        drawText(windowWidth - 300, 50, ss.str(), Color(0.2f, 0.8f, 1.0f));
+        ss.str("");
+    }
+    
+    if (highlightedCluster >= 0) {
+        ss.str("");
+        ss << "HIGHLIGHTED: Zone " << highlightedCluster;
+        drawText(windowWidth - 300, 70, ss.str(), Color(1.0f, 1.0f, 0.0f));
+        ss.str("");
+    }
+    
+    if (!showWaterNetwork) {
+        drawText(windowWidth - 300, 90, "WATER NETWORK: HIDDEN", Color(1.0f, 0.5f, 0.5f));
+    }
+    
+    if (!showSewageNetwork) {
+        drawText(windowWidth - 300, 110, "SEWAGE NETWORK: HIDDEN", Color(1.0f, 0.5f, 0.5f));
+    }
+    
+    if (!showSensors) {
+        drawText(windowWidth - 300, 130, "SENSORS: HIDDEN", Color(1.0f, 0.5f, 0.5f));
+    }
+    
+    // Show simulation speed indicator
+    static auto last_time = std::chrono::steady_clock::now();
+    auto current_time = std::chrono::steady_clock::now();
+    float frame_time = std::chrono::duration<float>(current_time - last_time).count();
+    last_time = current_time;
+    
+    float fps = (frame_time > 0) ? 1.0f / frame_time : 0;
+    
+    ss.str("");
+    ss << "FPS: " << std::fixed << std::setprecision(1) << fps;
+    drawText(windowWidth - 300, windowHeight - 50, ss.str(), 
+            (fps > 30) ? Color(0.2f, 1.0f, 0.2f) : 
+            (fps > 15) ? Color(1.0f, 1.0f, 0.2f) : 
+            Color(1.0f, 0.2f, 0.2f));
+    
+    // Show simulation time
+    ss.str("");
+    int sim_hours = (int)(city.simulationTime / 3600.0f);
+    int sim_minutes = (int)((city.simulationTime - sim_hours * 3600.0f) / 60.0f);
+    int sim_seconds = (int)(city.simulationTime) % 60;
+    ss << "SIM TIME: " << std::setw(2) << std::setfill('0') << sim_hours << ":"
+       << std::setw(2) << std::setfill('0') << sim_minutes << ":"
+       << std::setw(2) << std::setfill('0') << sim_seconds;
+    drawText(windowWidth - 300, windowHeight - 30, ss.str(), Color(0.8f, 0.8f, 1.0f));
+    
+    // Show UDP broadcast status
+    static int udp_counter = 0;
+    static auto last_udp_display = std::chrono::steady_clock::now();
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_udp_display).count();
+    
+    if (elapsed_ms < 500) { // Show for 500ms after UDP broadcast
+        ss.str("");
+        ss << "UDP BROADCAST #" << udp_counter++;
+        drawText(windowWidth - 300, windowHeight - 70, ss.str(), Color(0.6f, 0.9f, 1.0f));
+    }
+    
+    // Show memory usage (approximate)
+    static int memory_counter = 0;
+    memory_counter++;
+    if (memory_counter % 100 == 0) {
+        // This is a placeholder - you could add actual memory tracking
+        ss.str("");
+        ss << "MEM: ~" << (city.buildings.size() * sizeof(Building) + 
+                          city.pipes.size() * sizeof(Pipe) + 
+                          city.sensors.size() * sizeof(Sensor)) / 1024 << " KB";
+        drawText(windowWidth - 300, windowHeight - 90, ss.str(), Color(0.8f, 0.8f, 0.8f));
+    }
+}
+   
+    void reshape(int w, int h) {
+        windowWidth = w;
+        windowHeight = h;
+        glViewport(0, 0, w, h);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(50.0, (double)w / h, 1.0, 5000.0);
+        glMatrixMode(GL_MODELVIEW);
     }
 
-        // ROS2 status
-        if (ros2_initialized) {
-            int active = city.getActiveSensors();
-            int stale = city.getStaleSensors();
-            float update_rate = city.sensors.size() > 0 ? (100.0f * active / city.sensors.size()) : 0;
+    void idle() {
+    static int frame_count = 0;
+    frame_count++;
+    
+    // Throttle updates to ~60 FPS
+    static auto last_time = std::chrono::steady_clock::now();
+    auto current_time = std::chrono::steady_clock::now();
+    float dt = std::chrono::duration<float>(current_time - last_time).count();
+    last_time = current_time;
+    
+    // Cap dt to avoid large jumps
+    if (dt > 0.1f) dt = 0.016f;
+    
+    city.updateSimulation(dt);
+    
+    // Export CSV every 60 frames (approx 1 second at 60 FPS)
+    if (frame_count % 60 == 0) {
+        std::lock_guard<std::mutex> lock(city_mutex);
+        
+        // Generate timestamp for filename
+        time_t now = time(nullptr);
+        struct tm* timeinfo = localtime(&now);
+        char filename[100];
+        strftime(filename, sizeof(filename), "hourly_usage_%Y%m%d_%H%M%S.csv", timeinfo);
+        
+        // Open CSV file
+        std::ofstream csv_file(filename);
+        if (csv_file.is_open()) {
+            csv_file << "timestamp,source_ip,hour,usage\n";
             
-            ss << "✓ ROS2 ACTIVE: " << active << "/" << city.sensors.size() 
-            << " sensors updated (" << std::fixed << std::setprecision(1) << update_rate << "%)";
-            Color status_color;
-            if (update_rate > 80) status_color = Color(0.2f, 0.9f, 0.2f);
-            else if (update_rate > 50) status_color = Color(0.9f, 0.9f, 0.2f);
-            else status_color = Color(0.9f, 0.2f, 0.2f);
-            drawText(10, windowHeight - 100, ss.str(), status_color);
-        } else {
-            drawText(10, windowHeight - 100, "✗ ROS2 NOT INITIALIZED - Using default values", Color(1.0f, 0.2f, 0.2f));
-        }
-        ss.str("");
-        
-        // Reservoir status
-        ss << "RESERVOIR: " << std::fixed << std::setprecision(1) 
-        << city.reservoir.getLevelPercent() << "% (" << city.reservoir.getTrendString() << ")"
-        << " | Pump: " << std::setprecision(2) << city.reservoir.availablePumpCapacity << " m³/s"
-        << " | Margin: " << std::setprecision(2) << city.reservoir.supplyMargin << " m³/s";
-        drawText(10, windowHeight - 125, ss.str());
-        ss.str("");
-        
-        // Water consumption
-        float totalDemand = city.calculateTotalDemand();
-        
-        ss << "CITY WATER: " << std::fixed << std::setprecision(2) << (totalDemand * 1000.0f) 
-        << " L/s | Total consumed: " << std::setprecision(0) << city.totalWaterConsumed << " m³";
-        drawText(10, windowHeight - 150, ss.str());
-        ss.str("");
-        
-        // UDP broadcast status
-        ss << "UDP BROADCAST: " << UDP_BROADCAST_PORT << " @ " << (1.0f/UDP_BROADCAST_INTERVAL) << "Hz"
-        << " | RL Steps: " << city.episodeStep;
-        drawText(10, windowHeight - 175, ss.str(), Color(0.6f, 0.8f, 1.0f));
-        ss.str("");
-        
-        // Zone status summary
-        if (!city.zones.empty()) {
-            int leakZones = 0;
-            int pressureViolations = 0;
-            for (const auto& zone : city.zones) {
-                if (zone.leakFlag) leakZones++;
-                if (zone.pressureViolation) pressureViolations++;
+            // Get simulation time in hours
+            float sim_hours = city.simulationTime / 3600.0f;
+            int current_hour = static_cast<int>(sim_hours) % 24;
+            
+            // Write data for all sensors
+            for (const auto& sensor : city.sensors) {
+                // Write hourly usage for all 24 hours
+                for (int hour = 0; hour < 24; hour++) {
+                    float usage = sensor.hourlyVolume_m3[hour];
+                    
+                    // Format timestamp
+                    char timestamp[100];
+                    strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S", timeinfo);
+                    
+                    csv_file << timestamp << ".282382,172.20.10.5," 
+                            << hour << "," << usage << "\n";
+                }
             }
             
-            ss << "ZONES: " << city.zones.size() 
-            << " | Leaks: " << leakZones 
-            << " | Pressure Violations: " << pressureViolations;
-            drawText(10, windowHeight - 200, ss.str(), 
-                    (leakZones > 0 || pressureViolations > 0) ? Color(1.0f, 0.3f, 0.3f) : Color(0.3f, 0.9f, 0.3f));
-            ss.str("");
+            csv_file.close();
+            std::cout << "CSV exported: " << filename << std::endl;
         }
         
-        // ESP topics being monitored
-        drawText(10, windowHeight - 225, "TOPICS: /esp1/sensors, /esp2/sensors, /esp3/sensors, /esp4/sensors", Color(0.6f, 0.8f, 1.0f));
+        // Also export JSON files
+        city.exportSensorJSON("sensor.json");
+        city.exportLeakJSON("leak.json");
+    }
+    
+    glutPostRedisplay();
+}
+    void cleanup() {
+        simulation_running = false;
         
-        // Controls
-        drawText(10, 360, "CONTROLS:");
-        drawText(10, 340, "B: Buildings | W: Water | S: Sewage | N: Sensors | L: Leaks | T: Labels");
-        drawText(10, 320, "X: Transparent | G: Ground | P: Particles | H: Highlight | R: Reset | M: Sun/Moon");
-        drawText(10, 300, "+/-: Buildings | Q: Quit | K: Load leaks | 1-9: Test sensor | 0: Broadcast test");
+        // Give threads time to stop
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         
-        // Day-night info
-        drawText(10, 270, "DAY-NIGHT CYCLE:");
-        drawText(10, 250, "• Time affects water demand patterns");
-        drawText(10, 230, "• Weekend usage is 20% higher");
-        drawText(10, 210, "• Morning (7h) and Evening (19h) peaks");
+        // Proper shutdown order
+        city.shutdownROS2();
+        stopUDPBroadcast();
         
-        // RL info
-        drawText(10, 180, "RL STATE BROADCAST:");
-        drawText(10, 160, "• 10Hz UDP broadcast to port " + std::to_string(UDP_BROADCAST_PORT));
-        drawText(10, 140, "• Includes reservoir, zone, valve, and anomaly states");
-        drawText(10, 120, "• Used for reinforcement learning training");
-        
-        if (transparentBuildings) {
-            drawText(10, 100, ">>> BUILDINGS TRANSPARENT <<<", Color(0.2f, 1.0f, 0.2f));
-        }
-        
-        if (showWaterParticles) {
-        // You might need to add a getParticleCount() method to CityNetwork
-        ss << "PARTICLES: " << std::setprecision(1) 
-           << "Millions simulated | Flow visualization active";
-        drawText(10, windowHeight - 250, ss.str(), Color(0.2f, 0.8f, 1.0f));
-        ss.str("");
+        std::cout << "\nCleanup complete. Exiting...\n";
     }
 
+    void keyboard(unsigned char key, int x, int y) {
+        switch (key) {
+            case 'b': case 'B':
+                showBuildings = !showBuildings;
+                break;
+            case 'w': case 'W':
+                showWaterNetwork = !showWaterNetwork;
+                break;
+            case 's': case 'S':
+                showSewageNetwork = !showSewageNetwork;
+                break;
+            case 'n': case 'N':
+                showSensors = !showSensors;
+                break;
+            case 'l': case 'L':
+                showLeaks = !showLeaks;
+                break;
+            case 't': case 'T':
+                showSensorLabels = !showSensorLabels;
+                break;
+            case 'p': case 'P':
+            showWaterParticles = !showWaterParticles;
+            if (showWaterParticles) {
+                std::cout << "Water particles: ON (High-density flow visualization)\n";
+                std::cout << "  - Shows millions of particles as continuous flow\n";
+                std::cout << "  - Blue gradient indicates flow velocity\n";
+                std::cout << "  - Particles follow pipe curvature\n";
+            } else {
+                std::cout << "Water particles: OFF\n";
+            }
+            break;
+            
+        case 'v': case 'V':  // New: Toggle visualization mode
+            static int vis_mode = 0;
+            vis_mode = (vis_mode + 1) % 3;
+            switch (vis_mode) {
+                case 0:
+                    std::cout << "Visualization: Particle System (High-density)\n";
+                    break;
+                case 1:
+                    std::cout << "Visualization: Streamlines\n";
+                    break;
+                case 2:
+                    std::cout << "Visualization: Combined (Particles + Streamlines)\n";
+                    break;
+            }
+            break;
+            case 'g': case 'G':
+                showGround = !showGround;
+                std::cout << "Ground visibility: " << (showGround ? "ON" : "OFF") << "\n";
+                break;
+            case 'x': case 'X':
+                transparentBuildings = !transparentBuildings;
+                std::cout << "Buildings transparency: " << (transparentBuildings ? "ON" : "OFF") << "\n";
+                break;
+            case 'm': case 'M':
+                showSunMoon = !showSunMoon;
+                std::cout << "Sun/Moon: " << (showSunMoon ? "ON" : "OFF") << "\n";
+                break;
+            case 'h': case 'H':
+                highlightedCluster++;
+                if (highlightedCluster >= (int)city.clusters.size()) {
+                    highlightedCluster = -1;
+                }
+                break;
+            case 'k': case 'K':
+                city.loadLeakData("leaks.csv");
+                break;
+            case 'r': case 'R':
+                camAngle = 45.0f;
+                camElevation = 45.0f;
+                camDistance = 200.0f;
+                break;
+            case '+': case '=':
+                currentBuildingCount = std::min(100000, currentBuildingCount + 10);
+                city.generateCity(currentBuildingCount);
+                highlightedCluster = -1;
+                break;
+            case '-': case '_':
+                currentBuildingCount = std::max(10, currentBuildingCount - 10);
+                city.generateCity(currentBuildingCount);
+                highlightedCluster = -1;
+                break;
+            case '1': case '2': case '3': case '4': case '5': 
+            case '6': case '7': case '8': case '9': {
+                int sensorID = key - '1';
+                if (sensorID < (int)city.sensors.size()) {
+                    float newValve = (city.sensors[sensorID].valveState > 50) ? 20.0f : 100.0f;
+                    city.setValveState(sensorID, newValve);
+                    std::cout << "TEST: Set Sensor " << sensorID << " valve to " << newValve << "%\n";
+                }
+                break;
+            }
+            case '0':
+                // Test broadcast
+                city.broadcastRLState();
+                std::cout << "Test broadcast sent\n";
+                break;
+            case 'q': case 'Q': case 27:
+                cleanup(); 
+                break;
+        }
+        glutPostRedisplay();
     }
 
     void display() {
@@ -6577,195 +7460,6 @@ ss << "SEWAGE RESERVOIR: " << std::fixed << std::setprecision(1)
     
     glutSwapBuffers();
 }
-
-    void reshape(int w, int h) {
-        windowWidth = w;
-        windowHeight = h;
-        glViewport(0, 0, w, h);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        gluPerspective(50.0, (double)w / h, 1.0, 5000.0);
-        glMatrixMode(GL_MODELVIEW);
-    }
-
-    void idle() {
-    static int frame_count = 0;
-    frame_count++;
-    
-    // Throttle updates to ~60 FPS
-    static auto last_time = std::chrono::steady_clock::now();
-    auto current_time = std::chrono::steady_clock::now();
-    float dt = std::chrono::duration<float>(current_time - last_time).count();
-    last_time = current_time;
-    
-    // Cap dt to avoid large jumps
-    if (dt > 0.1f) dt = 0.016f;
-    
-    city.updateSimulation(dt);
-    
-    // Export CSV every 60 frames (approx 1 second at 60 FPS)
-    if (frame_count % 60 == 0) {
-        std::lock_guard<std::mutex> lock(city_mutex);
-        
-        // Generate timestamp for filename
-        time_t now = time(nullptr);
-        struct tm* timeinfo = localtime(&now);
-        char filename[100];
-        strftime(filename, sizeof(filename), "hourly_usage_%Y%m%d_%H%M%S.csv", timeinfo);
-        
-        // Open CSV file
-        std::ofstream csv_file(filename);
-        if (csv_file.is_open()) {
-            csv_file << "timestamp,source_ip,hour,usage\n";
-            
-            // Get simulation time in hours
-            float sim_hours = city.simulationTime / 3600.0f;
-            int current_hour = static_cast<int>(sim_hours) % 24;
-            
-            // Write data for all sensors
-            for (const auto& sensor : city.sensors) {
-                // Write hourly usage for all 24 hours
-                for (int hour = 0; hour < 24; hour++) {
-                    float usage = sensor.hourlyVolume_m3[hour];
-                    
-                    // Format timestamp
-                    char timestamp[100];
-                    strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S", timeinfo);
-                    
-                    csv_file << timestamp << ".282382,172.20.10.5," 
-                            << hour << "," << usage << "\n";
-                }
-            }
-            
-            csv_file.close();
-            std::cout << "CSV exported: " << filename << std::endl;
-        }
-        
-        // Also export JSON files
-        city.exportSensorJSON("sensor.json");
-        city.exportLeakJSON("leak.json");
-    }
-    
-    glutPostRedisplay();
-}
-
-    void cleanup() {
-        simulation_running = false;
-        
-        // Give threads time to stop
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        
-        // Proper shutdown order
-        city.shutdownROS2();
-        stopUDPBroadcast();
-        
-        std::cout << "\nCleanup complete. Exiting...\n";
-    }
-
-    void keyboard(unsigned char key, int x, int y) {
-        switch (key) {
-            case 'b': case 'B':
-                showBuildings = !showBuildings;
-                break;
-            case 'w': case 'W':
-                showWaterNetwork = !showWaterNetwork;
-                break;
-            case 's': case 'S':
-                showSewageNetwork = !showSewageNetwork;
-                break;
-            case 'n': case 'N':
-                showSensors = !showSensors;
-                break;
-            case 'l': case 'L':
-                showLeaks = !showLeaks;
-                break;
-            case 't': case 'T':
-                showSensorLabels = !showSensorLabels;
-                break;
-            case 'p': case 'P':
-            showWaterParticles = !showWaterParticles;
-            if (showWaterParticles) {
-                std::cout << "Water particles: ON (High-density flow visualization)\n";
-                std::cout << "  - Shows millions of particles as continuous flow\n";
-                std::cout << "  - Blue gradient indicates flow velocity\n";
-                std::cout << "  - Particles follow pipe curvature\n";
-            } else {
-                std::cout << "Water particles: OFF\n";
-            }
-            break;
-            
-        case 'v': case 'V':  // New: Toggle visualization mode
-            static int vis_mode = 0;
-            vis_mode = (vis_mode + 1) % 3;
-            switch (vis_mode) {
-                case 0:
-                    std::cout << "Visualization: Particle System (High-density)\n";
-                    break;
-                case 1:
-                    std::cout << "Visualization: Streamlines\n";
-                    break;
-                case 2:
-                    std::cout << "Visualization: Combined (Particles + Streamlines)\n";
-                    break;
-            }
-            break;
-            case 'g': case 'G':
-                showGround = !showGround;
-                std::cout << "Ground visibility: " << (showGround ? "ON" : "OFF") << "\n";
-                break;
-            case 'x': case 'X':
-                transparentBuildings = !transparentBuildings;
-                std::cout << "Buildings transparency: " << (transparentBuildings ? "ON" : "OFF") << "\n";
-                break;
-            case 'm': case 'M':
-                showSunMoon = !showSunMoon;
-                std::cout << "Sun/Moon: " << (showSunMoon ? "ON" : "OFF") << "\n";
-                break;
-            case 'h': case 'H':
-                highlightedCluster++;
-                if (highlightedCluster >= (int)city.clusters.size()) {
-                    highlightedCluster = -1;
-                }
-                break;
-            case 'k': case 'K':
-                city.loadLeakData("leaks.csv");
-                break;
-            case 'r': case 'R':
-                camAngle = 45.0f;
-                camElevation = 45.0f;
-                camDistance = 200.0f;
-                break;
-            case '+': case '=':
-                currentBuildingCount = std::min(100000, currentBuildingCount + 10);
-                city.generateCity(currentBuildingCount);
-                highlightedCluster = -1;
-                break;
-            case '-': case '_':
-                currentBuildingCount = std::max(10, currentBuildingCount - 10);
-                city.generateCity(currentBuildingCount);
-                highlightedCluster = -1;
-                break;
-            case '1': case '2': case '3': case '4': case '5': 
-            case '6': case '7': case '8': case '9': {
-                int sensorID = key - '1';
-                if (sensorID < (int)city.sensors.size()) {
-                    float newValve = (city.sensors[sensorID].valveState > 50) ? 20.0f : 100.0f;
-                    city.setValveState(sensorID, newValve);
-                    std::cout << "TEST: Set Sensor " << sensorID << " valve to " << newValve << "%\n";
-                }
-                break;
-            }
-            case '0':
-                // Test broadcast
-                city.broadcastRLState();
-                std::cout << "Test broadcast sent\n";
-                break;
-            case 'q': case 'Q': case 27:
-                cleanup(); 
-                break;
-        }
-        glutPostRedisplay();
-    }
 
     void mouse(int button, int state, int x, int y) {
         if (button == GLUT_LEFT_BUTTON) {

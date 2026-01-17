@@ -1,8 +1,35 @@
 {
-  "timestamp": 1768498652,
-  "sim_time": 28802.797,
-  "total_leaks": 0,
+  "timestamp": 1768625579,
+  "sim_time": 28807.484,
+  "total_leaks": 04
   "leaks": [
-
+    {
+      "pipe_id": 311,
+      "sensor_id": 211,
+      "leak": 1,
+      "leak_rate_lps": 0.00,
+      "valve": 1
+    },
+    {
+      "pipe_id": 316,
+      "sensor_id": 216,
+      "leak": 1,
+      "leak_rate_lps": 0.00,
+      "valve": 1
+    },
+    {
+      "pipe_id": 318,
+      "sensor_id": 218,
+      "leak": 1,
+      "leak_rate_lps": 0.00,
+      "valve": 1
+    },
+    {
+      "pipe_id": 320,
+      "sensor_id": 220,
+      "leak": 1,
+      "leak_rate_lps": 0.00,
+      "valve": 1
+    }
   ]
 }

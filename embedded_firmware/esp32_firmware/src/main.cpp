@@ -95,6 +95,7 @@ InitialSensorState initialStates[TOTAL_PIPES];
 Sensor sensors[TOTAL_PIPES];
 unsigned long lastUpdate = 0;
 unsigned long nextDegradeTime = 0;
+
 int remainingToDegrade = TOTAL_PIPES;
 unsigned long lastMqttPublish = 0;
 int mqttPublishIndex = 0;
@@ -115,7 +116,6 @@ static DynamicJsonDocument mqttDoc(MQTT_BUFFER_SIZE);
 // Task handles for FreeRTOS
 TaskHandle_t physicsTaskHandle = NULL;
 SemaphoreHandle_t sensorMutex = NULL;
-
 
 float frand(float minVal, float maxVal) {
   return minVal + (float)random(0, 10000) / 10000.0 * (maxVal - minVal);
