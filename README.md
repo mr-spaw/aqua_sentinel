@@ -4,13 +4,15 @@
 
 **Aqua Sentinel** is an digital twin platform that simulates, monitors, and controls water distribution networks using distributed ESP32 sensors and advanced control algorithms. This system solves critical infrastructure challenges faced by municipal water authorities, industrial plants, and research institutions worldwide.
 
-![System Architecture](https://img.shields.io/badge/System-Distributed%20Control%20Architecture-blue)
-![Control Plane](https://img.shields.io/badge/Control-REST%20%7C%20ROS%202-orange)
+![Architecture](https://img.shields.io/badge/Architecture-City--Scale%20Cyber--Physical%20System-blue)
+![Control Stack](https://img.shields.io/badge/Control-Supervisory%20RL%20%7C%20PLC-orange)
 ![ROS 2](https://img.shields.io/badge/ROS%202-Humble-brightgreen)
 ![DDS Middleware](https://img.shields.io/badge/Middleware-DDS%20%28FastDDS%29-informational)
-![Networking](https://img.shields.io/badge/Networking-DDS%20%7C%20UDP%20%7C%20TCP-informational)
-![Firmware](https://img.shields.io/badge/Firmware-ESP32%20%7C%20FreeRTOS-yellow)
-![Hardware](https://img.shields.io/badge/MCU-Dual--Core%20Xtensa-yellow)
+![Networking](https://img.shields.io/badge/Networking-DDS%20%7C%20UDP%20%7C%20TCP%20%7C%20MQTT-informational)
+![Simulation](https://img.shields.io/badge/Simulation-OpenGL%20Physics-blueviolet)
+![Rendering](https://img.shields.io/badge/Rendering-OpenGL%204.x-blueviolet)
+![Edge Firmware](https://img.shields.io/badge/Firmware-ESP32%20%7C%20FreeRTOS-yellow)
+![Safety](https://img.shields.io/badge/Safety-Fail--Safe%20%7C%20Fallback-red)
 ![License](https://img.shields.io/badge/License-MIT-success)
 
 
