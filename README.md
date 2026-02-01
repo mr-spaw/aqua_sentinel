@@ -26,7 +26,6 @@
 A hierarchical industrial control architecture, where reinforcement learning is used only as a supervisory optimization layer executing validated commands in real time, and an independent emergency system has ultimate override authority; the critical idea is that every RL decision is passed through strict safety and constraint validation, so if anything is unsafe, uncertain, or out-of-bounds, control immediately falls back to proven rule-based PLC logic, making the system robust, certifiable, and suitable for city-scale, safety-critical infrastructure without ever allowing AI to bypass physical or regulatory safeguards.
 
 ### **2. Industrial Plant Monitoring**
-![Industrial Plant Integration](./images/plant_integration.png)
 *Integration with industrial PLCs (Siemens, Allen-Bradley) and SCADA systems*
 
 ### **3. Research & Development Platform**
@@ -128,11 +127,11 @@ RETURN ON INVESTMENT:
 ### **1. 3D Network Simulation**
 ![Simulation](docs/simulation_2.png)
 ![Simulation](docs/simulation_4.png)
-*Real-time 3D visualization of water distribution network showing pressure gradients (red=high, blue=low), flow vectors, and sensor telemetry*
+*Real-time 3D visualization of water distribution network showing pressure gradients, flow vectors, and sensor telemetry*
 
 ### **2. Linux Terminal Interface**
 ![Control Room Terminal](docs/terminal.png)
-*Industrial control room terminal showing real-time monitoring, RL-based control decisions, and emergency response protocols*
+* Linux terminal showing real-time monitoring, RL-based control decisions, and emergency response protocols*
 
 ---
 
