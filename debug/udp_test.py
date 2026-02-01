@@ -41,15 +41,15 @@ class RawUDPMonitor:
         # Create save directory
         self.create_save_directory()
         
-        print(f"🔬 RAW UDP MONITOR - Port {port}")
-        print(f"💾 Saving data to: {os.path.abspath(save_dir)}")
+        print(f" RAW UDP MONITOR - Port {port}")
+        print(f" Saving data to: {os.path.abspath(save_dir)}")
         print("=" * 80)
         
     def create_save_directory(self):
         """Create directory for saving data"""
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
-            print(f"✓ Created directory: {self.save_dir}")
+            print(f" Created directory: {self.save_dir}")
             
         # Create metadata file
         metadata = {
@@ -100,7 +100,7 @@ class RawUDPMonitor:
                     self.print_summary()
                     
         except KeyboardInterrupt:
-            print("\n\n🛑 Capture stopped by user")
+            print("\n\n Capture stopped by user")
             self.save_to_disk()  # Final save
             self.print_final_summary()
         finally:
@@ -169,13 +169,13 @@ class RawUDPMonitor:
         try:
             with open(filepath, 'w') as f:
                 json.dump(data_to_save, f, indent=2, default=str)
-            print(f"💾 Saved {len(self.data_buffer)} packets to {filename}")
+            print(f" Saved {len(self.data_buffer)} packets to {filename}")
             
             # Also create a summary file
             self.create_summary_file()
             
         except Exception as e:
-            print(f"✗ Error saving to disk: {e}")
+            print(f"Error saving to disk: {e}")
             
     def create_summary_file(self):
         """Create a summary file with statistics"""
@@ -305,7 +305,7 @@ class RawUDPMonitor:
         """Analyze the UDP payload"""
         if fragment_offset > 0 or more_fragments:
             self.fragmented_packets += 1
-            print(f"   ⚠ FRAGMENTED: Offset={fragment_offset}, More={more_fragments}")
+            print(f"    FRAGMENTED: Offset={fragment_offset}, More={more_fragments}")
             return None
             
         # Try multiple decoding methods
@@ -318,7 +318,7 @@ class RawUDPMonitor:
             if text.strip().startswith('{') and text.strip().endswith('}'):
                 json_data = json.loads(text)
                 self.complete_packets += 1
-                print(f"   ✓ COMPLETE JSON: {len(text):,} characters")
+                print(f" COMPLETE JSON: {len(text):,} characters")
                 self.print_json_summary(json_data)
                 decoded = True
                 return json_data
@@ -362,7 +362,7 @@ class RawUDPMonitor:
                 pass
                 
         if not decoded:
-            print(f"   📦 RAW DATA: {len(data):,} bytes")
+            print(f" RAW DATA: {len(data):,} bytes")
             # Show first 100 bytes in hex
             hex_dump = binascii.hexlify(data[:100]).decode('utf-8')
             print(f"      Hex: {hex_dump[:80]}...")
@@ -401,7 +401,7 @@ class RawUDPMonitor:
         print(f"   Size: {size:,} bytes")
         
         if fragment_offset > 0 or more_fragments:
-            print(f"   ⚠ Fragmented: Offset={fragment_offset}, More={more_fragments}")
+            print(f"    Fragmented: Offset={fragment_offset}, More={more_fragments}")
             
     def print_summary(self):
         """Print periodic summary"""
@@ -412,7 +412,7 @@ class RawUDPMonitor:
             bandwidth = self.byte_count / elapsed / 1024  # KB/s
             
             print("\n" + "=" * 80)
-            print("📊 LIVE STATISTICS:")
+            print("LIVE STATISTICS:")
             print(f"   Packets: {self.packet_count:,} ({rate:.1f}/sec)")
             print(f"   Data Rate: {bandwidth:.1f} KB/s")
             print(f"   Total Data: {self.byte_count/1024/1024:.2f} MB")
@@ -434,7 +434,7 @@ class RawUDPMonitor:
         elapsed = time.time() - self.start_time
         
         print("\n" + "=" * 80)
-        print("🎯 FINAL CAPTURE REPORT")
+        print(" FINAL CAPTURE REPORT")
         print("=" * 80)
         print(f"Capture Duration: {elapsed:.1f} seconds")
         print(f"Total Packets: {self.packet_count:,}")
@@ -486,8 +486,8 @@ def simple_udp_monitor():
     data_buffer = []
     last_save_time = time.time()
     
-    print("📡 Simple UDP Monitor (no root required)")
-    print(f"💾 Saving data to: {os.path.abspath(save_dir)}")
+    print(" Simple UDP Monitor (no root required)")
+    print(f" Saving data to: {os.path.abspath(save_dir)}")
     print("=" * 80)
     print("Listening on UDP port 8888...")
     print("Press Ctrl+C to stop\n")
@@ -518,7 +518,7 @@ def simple_udp_monitor():
                 text = data.decode('utf-8')
                 if text.strip().startswith('{') and text.strip().endswith('}'):
                     json_data = json.loads(text)
-                    print(f"   ✓ COMPLETE JSON")
+                    print(f"   COMPLETE JSON")
                     packet_record["complete"] = True
                     packet_record["data"] = json_data
                     
@@ -537,11 +537,11 @@ def simple_udp_monitor():
                         json_str = text[start:end]
                         try:
                             json_data = json.loads(json_str)
-                            print(f"   ✓ PARTIAL JSON ({len(json_str):,} chars)")
+                            print(f"   PARTIAL JSON ({len(json_str):,} chars)")
                             packet_record["data"] = json_data
                         except:
                             packet_record["raw_data"] = text[:500] + "..." if len(text) > 500 else text
-                            print(f"   📦 RAW: {len(text):,} chars")
+                            print(f"    RAW: {len(text):,} chars")
                             if len(text) > 100:
                                 print(f"      Preview: {text[:100]}...")
                     else:
@@ -549,7 +549,7 @@ def simple_udp_monitor():
             except:
                 # Binary data
                 packet_record["raw_data_base64"] = binascii.b2a_base64(data).decode('utf-8').strip()
-                print(f"   📦 BINARY: {len(data):,} bytes")
+                print(f"    BINARY: {len(data):,} bytes")
                 # Show hex dump
                 hex_data = binascii.hexlify(data[:50]).decode('utf-8')
                 print(f"      Hex: {hex_data}...")
@@ -561,7 +561,7 @@ def simple_udp_monitor():
             if packet_count % 10 == 0:
                 elapsed = current_time - start_time
                 rate = packet_count / elapsed
-                print(f"\n📊 {packet_count} packets, {rate:.1f}/sec")
+                print(f"\n {packet_count} packets, {rate:.1f}/sec")
                 
             # Save to disk every 30 seconds or every 100 packets
             if current_time - last_save_time > 30 or len(data_buffer) >= 100:
@@ -570,7 +570,7 @@ def simple_udp_monitor():
                 last_save_time = current_time
                 
     except KeyboardInterrupt:
-        print(f"\n\n📊 Captured {packet_count} packets in {time.time()-start_time:.1f}s")
+        print(f"\n\n Captured {packet_count} packets in {time.time()-start_time:.1f}s")
         # Save remaining data
         if data_buffer:
             save_data_to_file(save_dir, data_buffer, packet_count, start_time)
@@ -602,7 +602,7 @@ def save_data_to_file(save_dir, data_buffer, packet_count, start_time):
     try:
         with open(filepath, 'w') as f:
             json.dump(data_to_save, f, indent=2, default=str)
-        print(f"💾 Saved {len(data_buffer)} packets to {filename}")
+        print(f" Saved {len(data_buffer)} packets to {filename}")
     except Exception as e:
         print(f"✗ Error saving to disk: {e}")
 

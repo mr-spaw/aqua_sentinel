@@ -1,1 +1,1 @@
-rclpy:std_msgs
+python3-flask:python3-flask-cors:python3-gymnasium:python3-numpy:python3-pandas:python3-psutil:python3-requests:python3-sb3-contrib:python3-scikit-learn:python3-stable-baselines3:python3-torch:rclpy:sensor_msgs:std_msgs

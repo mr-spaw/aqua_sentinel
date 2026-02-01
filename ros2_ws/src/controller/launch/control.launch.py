@@ -2,9 +2,8 @@
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch.conditions import IfCondition
 
 def generate_launch_description():
     
@@ -30,10 +29,9 @@ def generate_launch_description():
     api_port_arg = DeclareLaunchArgument(
         'api_port',
         default_value='5000',
-        description='REST API server port'
+        description='REST API server port for controller'
     )
     
-    # Pipe monitor node
     pipe_monitor_node = Node(
         package='controller',
         executable='controller',
@@ -45,40 +43,10 @@ def generate_launch_description():
             'tcp_port': LaunchConfiguration('tcp_port'),
             'api_port': LaunchConfiguration('api_port')
         }],
-        respawn=True,  # Auto-restart if crashes
-        respawn_delay=5.0,  # Wait 5 seconds before restarting
+        respawn=True,
+        respawn_delay=5.0,
     )
 
-    echo_esp1 = ExecuteProcess(
-        cmd=['ros2', 'topic', 'echo', '/esp1/sensors'],
-        output='screen',
-        condition=IfCondition(LaunchConfiguration('debug_echo', default='false'))
-    )
-    
-    echo_valve = ExecuteProcess(
-        cmd=['ros2', 'topic', 'echo', '/valve_control'],
-        output='screen',
-        condition=IfCondition(LaunchConfiguration('debug_echo', default='false'))
-    )
-    
-    echo_maintenance = ExecuteProcess(
-        cmd=['ros2', 'topic', 'echo', '/maintenance/request'],
-        output='screen',
-        condition=IfCondition(LaunchConfiguration('debug_echo', default='false'))
-    )
-    
-    # Delayed health check (starts after 10 seconds)
-    health_check = TimerAction(
-        period=10.0,
-        actions=[
-            ExecuteProcess(
-                cmd=['curl', '-s', 'http://localhost:5000/status'],
-                output='screen',
-                condition=IfCondition(LaunchConfiguration('health_check', default='false'))
-            )
-        ]
-    )
-    
     return LaunchDescription([
         # Arguments
         safety_mode_arg,
@@ -86,7 +54,6 @@ def generate_launch_description():
         tcp_port_arg,
         api_port_arg,
         
-        # Nodes
+        # Core system nodes (always run)
         pipe_monitor_node,
-        
     ])

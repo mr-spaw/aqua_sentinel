@@ -1,0 +1,24 @@
+[0.805s] Invoking command in '/home/arka/aqua_sentinel/ros2_ws/src/controller': PYTHONPATH=/home/arka/aqua_sentinel/ros2_ws/build/controller/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/arka/aqua_sentinel/ros2_ws/install/controller/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/controller build --build-base /home/arka/aqua_sentinel/ros2_ws/build/controller/build install --record /home/arka/aqua_sentinel/ros2_ws/build/controller/install.log --single-version-externally-managed install_data
+[0.995s] running egg_info
+[0.995s] writing ../../build/controller/controller.egg-info/PKG-INFO
+[0.998s] writing dependency_links to ../../build/controller/controller.egg-info/dependency_links.txt
+[0.998s] writing entry points to ../../build/controller/controller.egg-info/entry_points.txt
+[0.998s] writing requirements to ../../build/controller/controller.egg-info/requires.txt
+[0.998s] writing top-level names to ../../build/controller/controller.egg-info/top_level.txt
+[1.000s] reading manifest file '../../build/controller/controller.egg-info/SOURCES.txt'
+[1.001s] writing manifest file '../../build/controller/controller.egg-info/SOURCES.txt'
+[1.001s] running build
+[1.001s] running build_py
+[1.001s] copying controller/controller.py -> /home/arka/aqua_sentinel/ros2_ws/build/controller/build/lib/controller
+[1.004s] running install
+[1.004s] running install_lib
+[1.005s] copying /home/arka/aqua_sentinel/ros2_ws/build/controller/build/lib/controller/controller.py -> /home/arka/aqua_sentinel/ros2_ws/install/controller/lib/python3.10/site-packages/controller
+[1.009s] byte-compiling /home/arka/aqua_sentinel/ros2_ws/install/controller/lib/python3.10/site-packages/controller/controller.py to controller.cpython-310.pyc
+[1.017s] running install_data
+[1.017s] running install_egg_info
+[1.018s] removing '/home/arka/aqua_sentinel/ros2_ws/install/controller/lib/python3.10/site-packages/controller-0.0.1-py3.10.egg-info' (and everything under it)
+[1.019s] Copying ../../build/controller/controller.egg-info to /home/arka/aqua_sentinel/ros2_ws/install/controller/lib/python3.10/site-packages/controller-0.0.1-py3.10.egg-info
+[1.021s] running install_scripts
+[1.046s] Installing controller script to /home/arka/aqua_sentinel/ros2_ws/install/controller/lib/controller
+[1.047s] writing list of installed files to '/home/arka/aqua_sentinel/ros2_ws/build/controller/install.log'
+[1.071s] Invoked command in '/home/arka/aqua_sentinel/ros2_ws/src/controller' returned '0': PYTHONPATH=/home/arka/aqua_sentinel/ros2_ws/build/controller/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/arka/aqua_sentinel/ros2_ws/install/controller/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/controller build --build-base /home/arka/aqua_sentinel/ros2_ws/build/controller/build install --record /home/arka/aqua_sentinel/ros2_ws/build/controller/install.log --single-version-externally-managed install_data

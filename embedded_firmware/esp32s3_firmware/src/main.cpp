@@ -11,7 +11,6 @@ const char* WIFI_PASSWORD = "123456789";
 const char* MQTT_SERVER = "172.20.10.5";  //Linux System wlan ip  
 const int MQTT_PORT = 1883;
 
-
 //const char* MQTT_TOPIC = "pipes/sensors1";  //ESP_CHANGE
 //const char* MQTT_CLIENT_ID = "ESP32_PipeSystem1";  //ESP_CHANGE
 
@@ -146,27 +145,32 @@ void initializeInitialStates() {
   }
 }
 
-// Calculate friction factor using Colebrook-White equation 
+// Calculate friction factor using improved models
 float calculateFrictionFactor(float reynolds, float diameter, float roughness) {
   if (reynolds < 1.0f) {
     return 0.0f;
   } 
   else if (reynolds < 2300.0f) {
-    return 64.0f / reynolds;   // laminar
+    return 64.0f / reynolds;   // Laminar: f = 64/Re
   }
-  else if (reynolds < 4000.0f) {
-    float laminar = 64.0f / 2300.0f;
-    float turbulent = 0.02f;
+  else if (reynolds <= 4000.0f) {
+    float f_laminar = 64.0f / 2300.0f;
+    float f_turbulent = 0.25f / pow(log10(roughness/(3.7f*diameter) + 5.74f/pow(4000.0f, 0.9f)), 2.0f);
+    
+    // Smooth transition using cubic interpolation
     float t = (reynolds - 2300.0f) / 1700.0f;
-    return laminar + t * (turbulent - laminar);
+    float t2 = t * t;
+    float t3 = t2 * t;
+    
+    // Cubic hermite interpolation for smoother transition
+    return f_laminar * (2.0f*t3 - 3.0f*t2 + 1.0f) + f_turbulent * (-2.0f*t3 + 3.0f*t2);
   } 
   else {
-    float term1 = roughness / (3.7f * diameter);
-    float term2 = 5.74f / pow(reynolds, 0.9f);
-    return 0.25f / pow(log10(term1 + term2), 2.0f);
+    // Fully turbulent - Haaland equation 
+    float term = roughness / (3.7f * diameter) + 5.74f / pow(reynolds, 0.9f);
+    return 0.25f / pow(log10(term), 2.0f);
   }
 }
-
 
 // Calculate head loss using Darcy-Weisbach equation
 float calculateHeadLoss(float frictionFactor, float length, float diameter, float velocity) {
@@ -187,26 +191,31 @@ float pressureToHead(float pressure) {
 float calculateLeakFlow(float pressure, float leakCoeff, float diameter) {
   if (leakCoeff < 0.001f) return 0.0f;
   
-  // Gauge pressure (above atmospheric)
-  float gaugePressure = max(0.0f, pressure - AIR_PRESSURE);
-  if (gaugePressure < 1000.0f) return 0.0f;
-  
-  float leakSizeRatio = leakCoeff * 0.1f; 
+  // Gauge pressure (above atmospheric) 
+  float gaugePressure = pressure - AIR_PRESSURE;
+  float leakSizeRatio = min(leakCoeff * 0.05f, 0.05f); 
   float leakArea = leakSizeRatio * PI * diameter * diameter / 4.0f;
   
-  // Convert pressure to head
-  float head = gaugePressure / (WATER_DENSITY * GRAVITY);
+  float dischargeCoeff = 0.62f;
   
-  // Orifice equation with high discharge 
-  float dischargeCoeff = 0.8f;
-  float leakFlow = dischargeCoeff * leakArea * sqrt(2.0f * GRAVITY * head);
-  
-  return leakFlow;
+  if (gaugePressure > 1000.0f) {
+
+    // PRESSURE-DRIVEN LEAK (normal): Q = C_d * A * √(2ΔP/ρ)
+    return dischargeCoeff * leakArea * sqrt(2.0f * fabs(gaugePressure) / WATER_DENSITY);
+  }
+  else if (gaugePressure > -10000.0f && gaugePressure < 1000.0f) {
+    float equivalentHead = 1.0f + leakCoeff; // 1-2 meters
+    return dischargeCoeff * leakArea * sqrt(2.0f * GRAVITY * equivalentHead) * 0.2f;
+  }
+  else {
+    return -0.000001f;
+  }
 }
 
 // Calculate blockage effect on flow
 float applyBlockage(float flow, float blockageCoeff) {
-    float blockageFactor = exp(-blockageCoeff * 3.0f);
+    if (blockageCoeff < 0.01f) return flow;
+    float blockageFactor = exp(-blockageCoeff * 2.0f);
     return flow * blockageFactor;
 }
 
@@ -237,33 +246,48 @@ void initSystem() {
       sensors[i].supplyPressure = 300000.0f + (i % 21) * 10000.0f; 
       sensors[i].demandFlow = 0.001f + (i % 10) * 0.001f; 
       
-      // UNIQUE initial pressure
-      sensors[i]._pressurePa = sensors[i].supplyPressure * (0.6f + (i % 5) * 0.1f);
+      // Start with pressure accounting for elevation
+      float elevationPressure = -WATER_DENSITY * GRAVITY * sensors[i].elevation;
+      sensors[i]._pressurePa = sensors[i].supplyPressure + elevationPressure;
+      sensors[i]._pressurePa *= (0.6f + (i % 5) * 0.1f); // Add variation
+      
       sensors[i].pressure = sensors[i]._pressurePa / 1000.0f;
       sensors[i].flowRate = sensors[i].demandFlow;
       sensors[i].level = 70.0f + (i % 31) * 1.0f; 
       
     } else {
-   
+      // Sewage pipes - each one DIFFERENT
       sensors[i].diameter = 0.10f + (i % 21) * 0.01f; 
       sensors[i].length = 50.0f + (i % 20) * 25.0f;  
       sensors[i].roughness = 0.00006f + (i % 5) * 0.00001f;
       sensors[i].elevation = -20.0f + (i % 19) * 1.0f; 
       sensors[i].temperature = 15.0f + (i % 11) * 1.0f; 
       
+      // Sewage supply is atmospheric + small head
       sensors[i].supplyPressure = AIR_PRESSURE + 5000.0f + (i % 16) * 1000.0f;
       sensors[i].demandFlow = 0.002f + (i % 14) * 0.001f; 
       
-      sensors[i]._pressurePa = AIR_PRESSURE + 5000.0f + (i % 11) * 1000.0f;
+      // Sewage: hydrostatic pressure based on level
+      sensors[i].level = 30.0f + (i % 71) * 1.0f; 
+      float fluidHeight = (sensors[i].level / 100.0f) * sensors[i].diameter;
+      sensors[i]._pressurePa = AIR_PRESSURE + WATER_DENSITY * GRAVITY * fluidHeight;
+      
       sensors[i].pressure = sensors[i]._pressurePa / 1000.0f;
       sensors[i].flowRate = sensors[i].demandFlow;
-      sensors[i].level = 30.0f + (i % 71) * 1.0f; 
     }
     
     sensors[i].crossSection = PI * sensors[i].diameter * sensors[i].diameter / 4.0f;
-    sensors[i].velocity = sensors[i].flowRate / sensors[i].crossSection;
     
-    // Initialize Reynolds number
+    // Calculate initial velocity
+    if (sensors[i].type == FRESH_WATER) {
+      sensors[i].velocity = sensors[i].flowRate / sensors[i].crossSection;
+    } else {
+      float levelRatio = max(sensors[i].level / 100.0f, 0.01f);
+      float filledArea = sensors[i].crossSection * levelRatio;
+      sensors[i].velocity = sensors[i].flowRate / filledArea;
+    }
+    
+    // Initialize Reynolds number with TEMPERATURE-ADJUSTED viscosity
     float effectiveDiameter = sensors[i].diameter;
     if (sensors[i].type == SEWAGE) {
       float levelRatio = max(sensors[i].level / 100.0f, 0.01f);
@@ -275,13 +299,40 @@ void initSystem() {
     
     if (sensors[i].velocity < 0.00001f || effectiveDiameter < 0.00001f) {
       sensors[i].reynoldsNumber = 0.0f;
+      sensors[i].frictionFactor = 0.0f;
+      sensors[i].headLoss = 0.0f;
     } else {
-      sensors[i].reynoldsNumber = calculateReynolds(sensors[i].velocity, effectiveDiameter, WATER_VISCOSITY);
+      // USE SAME VISCOSITY FORMULA AS updatePhysics()
+      float initViscosity = 0.00179f * exp(-0.024f * sensors[i].temperature);
+      sensors[i].reynoldsNumber = calculateReynolds(sensors[i].velocity, effectiveDiameter, initViscosity);
+      
+      // Calculate initial friction factor
+      sensors[i].frictionFactor = calculateFrictionFactor(sensors[i].reynoldsNumber, 
+                                                         effectiveDiameter, 
+                                                         sensors[i].roughness);
+      
+      // Calculate initial head loss
+      float minorLossCoefficient = 2.5f; // valves open initially
+      float minorHeadLoss = minorLossCoefficient * (sensors[i].velocity * sensors[i].velocity) / (2.0f * GRAVITY);
+      float frictionHeadLoss = calculateHeadLoss(sensors[i].frictionFactor, 
+                                                sensors[i].length, 
+                                                effectiveDiameter, 
+                                                sensors[i].velocity);
+      
+      sensors[i].headLoss = frictionHeadLoss + minorHeadLoss;
     }
+    
+    // Store initial state for maintenance reset
+    initialStates[i].initialPressure = sensors[i].pressure;
+    initialStates[i].initialLevel = sensors[i].level;
+    initialStates[i].initialValve = sensors[i].valveOpen ? 1 : 0;
+    initialStates[i].stored = true;
   }
   
-  Serial.println("System initialized with unique sensor properties");
-  Serial.println("------------------------------------------------");
+  Serial.println(" System initialized with physically consistent properties");
+  Serial.println(" Temperature-adjusted viscosity for Reynolds number");
+  Serial.println(" Proper initial head loss calculation");
+  Serial.println("--------------------------------------------------------");
 }
 
 /* ================= DEGRADATION ================= */
@@ -352,34 +403,57 @@ void updatePhysics(float dt) {
     if (!s.valveOpen) {
       s.flowRate = 0.0f;
       s.velocity = 0.0f;
+      s.reynoldsNumber = 0.0f;
+      s.frictionFactor = 0.0f;
+      s.headLoss = 0.0f;
       continue;
     }
     
-    // Calculate leak flow 
+    // ========== 1. LEAK FLOW CALCULATION ==========
     float leakFlow = 0.0f;
     if (s.leakCoeff > 0.001f) {
       leakFlow = calculateLeakFlow(s._pressurePa, s.leakCoeff, s.diameter);
     }
     
-    // Calculate target flow 
+    // ========== 2. TARGET FLOW CALCULATION ==========
     float targetFlow = s.demandFlow;
+    float blockageFlowFactor = 1.0f;
+    float blockageDiameterFactor = 1.0f;
+    
+    // Calculate blockage effects ONCE
+    if (s.blockageCoeff > 0.01f) {
+      blockageFlowFactor = exp(-s.blockageCoeff * 2.0f);
+      blockageDiameterFactor = exp(-s.blockageCoeff * 1.5f);
+    }
     
     if (s.type == FRESH_WATER) {
-    float pressureHead = pressureToHead(s._pressurePa);
-    float pressureFactor = clampf(pressureHead / (30.0f + (i % 10)), 0.0f, 1.2f);
-    targetFlow = s.demandFlow * pressureFactor;
+      // Pressure-driven flow: Q ∝ √(P_sensor/P_supply)
+      float pressureRatio = clampf(s._pressurePa / s.supplyPressure, 0.05f, 1.5f);
+      float pressureFactor = sqrt(pressureRatio);
+      
+      targetFlow = s.demandFlow * pressureFactor * blockageFlowFactor;
+      
+      // Leak flow is LOST from system (mass conservation)
+      if (leakFlow > 0.0f) {
+        targetFlow = max(0.0f, targetFlow - leakFlow * 0.8f);
+      }
+    } else {
+      // Sewage: flow depends on level (open channel)
+      float levelFactor = clampf(s.level / 80.0f, 0.0f, 1.2f);
+      targetFlow = s.demandFlow * levelFactor * blockageFlowFactor;
+      
+      // Leaks reduce available flow
+      if (leakFlow > 0.0f) {
+        targetFlow = max(0.0f, targetFlow - leakFlow * 0.5f);
+      }
+    }
     
-
-    targetFlow = max(0.0f, targetFlow - leakFlow);
-    targetFlow = applyBlockage(targetFlow, s.blockageCoeff);
-}
-    
-    // Smooth flow changes with random variation
-    float smoothing = 0.5f + frand(-0.1f, 0.1f);
+    // Smooth flow changes (first-order lag)
+    float smoothing = 0.3f + frand(-0.05f, 0.05f);
     s.flowRate += (targetFlow - s.flowRate) * dt * smoothing;
     s.flowRate = max(0.0f, s.flowRate);
     
-    // Calculate velocity 
+    // ========== 3. VELOCITY CALCULATION ==========
     if (s.type == FRESH_WATER) {
       s.velocity = s.flowRate / max(s.crossSection, 0.0001f);
     } else {
@@ -388,7 +462,9 @@ void updatePhysics(float dt) {
       s.velocity = max(s.flowRate / filledArea, 0.0f);
     }
     
-    // Reynolds number calculation
+    // ========== 4. REYNOLDS & FRICTION CALCULATION ==========
+    float effectiveViscosity = 0.00179f * exp(-0.024f * s.temperature);
+    
     float effectiveDiameter = s.diameter;
     if (s.type == SEWAGE) {
       float levelRatio = max(s.level / 100.0f, 0.01f);
@@ -398,109 +474,131 @@ void updatePhysics(float dt) {
       effectiveDiameter = clampf(effectiveDiameter, 0.02f, s.diameter);
     }
     
+    // Apply blockage diameter reduction 
+    effectiveDiameter *= blockageDiameterFactor;
+    
     if (s.velocity < 0.001f || effectiveDiameter < 0.001f) {
       s.reynoldsNumber = 0.0f;
       s.frictionFactor = 0.0f;
       s.headLoss = 0.0f;
     } else {
-      float localViscosity = WATER_VISCOSITY * (1.0f + frand(-0.05f, 0.05f));
-      s.reynoldsNumber = calculateReynolds(s.velocity, effectiveDiameter, localViscosity);
+      s.reynoldsNumber = calculateReynolds(s.velocity, effectiveDiameter, effectiveViscosity);
       s.frictionFactor = calculateFrictionFactor(s.reynoldsNumber, effectiveDiameter, s.roughness);
-      s.headLoss = calculateHeadLoss(s.frictionFactor, s.length, effectiveDiameter, s.velocity);
+      
+      // Minor losses: valves, bends, fittings
+      float minorLossCoefficient = s.valveOpen ? 2.5f : 1e6f;  // Closed valve = infinite loss
+      float minorHeadLoss = minorLossCoefficient * (s.velocity * s.velocity) / (2.0f * GRAVITY);
+      float frictionHeadLoss = calculateHeadLoss(s.frictionFactor, s.length, effectiveDiameter, s.velocity);
+      
+      s.headLoss = frictionHeadLoss + minorHeadLoss;
     }
     
-    // Update pressure 
+    // ========== 5. PRESSURE CALCULATION ==========
     if (s.type == FRESH_WATER) {
+
+      // Convert head loss to pressure loss
       float pressureLoss = headToPressure(s.headLoss);
-      float elevationPressure = WATER_DENSITY * GRAVITY * s.elevation;
-      s._pressurePa = s.supplyPressure - pressureLoss - elevationPressure;
-     
-      if (s.leakCoeff > 0.001f) {
-        float leakPressureDrop = s.leakCoeff * s.leakCoeff * 150000.0f;
-        s._pressurePa -= leakPressureDrop;
+      
+      // Elevation effect: P_elev = ρgΔz where Δz = z_supply - z_sensor
+      // Assuming supply at z=0, sensor at z = s.elevation
+      float elevationPressure = -WATER_DENSITY * GRAVITY * s.elevation;
+      
+      // Bernoulli: P_sensor = P_supply + elevation_effect - total_losses
+      s._pressurePa = s.supplyPressure + elevationPressure - pressureLoss;
+      
+      // LEAK EFFECT is already accounted for in:
+      if (s.leakCoeff > 0.1f) {
+        float leakTurbulence = s.leakCoeff * frand(-5000.0f, 3000.0f);
+        s._pressurePa += leakTurbulence;
       }
       
-      s._pressurePa = clampf(s._pressurePa, 50000.0f, 800000.0f);
-      s.pressure = s._pressurePa / 1000.0f; 
+      // Ensure realistic pressure range
+      s._pressurePa = clampf(s._pressurePa, 50000.0f, 500000.0f);
+      s.pressure = s._pressurePa / 1000.0f;
       
-      // Level variations
+      // Level variations for fresh water (tank simulation)
       if (s.leakCoeff > 0.01f) {
-        s.level -= s.leakCoeff * s.leakCoeff * 100.0f * dt;
-}
+        s.level -= s.leakCoeff * 0.15f * dt; // Slow level drop
+      } else {
+        // Normal level fluctuations
+        float targetLevel = 70.0f + (i % 31) * 1.0f;
+        s.level += (targetLevel - s.level) * 0.003f * dt;
+      }
       
-      // Add random variations to level
-      s.level += frand(-0.1f, 0.1f);
       s.level = clampf(s.level, 0.0f, 100.0f);
       
     } else {
-      // Sewage: unique level changes
-      float inflow = s.demandFlow * dt;
-      float outflow = s.flowRate * dt;
-      float volumeChange = (inflow - outflow);
+      // SEWAGE: Open channel flow - HYDROSTATIC PRESSURE ONLY
+      float volumeChange = frand(-0.00001f, 0.00001f); // Small random variation
       
-      // Add random variation
-      volumeChange += frand(-0.0001f, 0.0001f);
+      // Blockage causes level rise (backup)
+      if (s.blockageCoeff > 0.01f) {
+        volumeChange += s.blockageCoeff * 0.0001f * dt;
+      }
+      
+      // Leak causes level drop
+      if (s.leakCoeff > 0.01f) {
+        volumeChange -= s.leakCoeff * 0.00005f * dt;
+      }
       
       float levelChange = (volumeChange / (s.crossSection * s.length)) * 100.0f;
       s.level += levelChange;
-      s.level = clampf(s.level, 0.0f, 100.0f); 
-      
-      // Blockage causes level rise 
-      if (s.blockageCoeff > 0.1f) {
-        s.level += s.blockageCoeff * 0.3f * dt;
-      }
-      
-      // Leak causes level drop in sewage
-      if (s.leakCoeff > 0.01f) {
-    // Sewage leaks are less dramatic since pipes aren't always full
-    s.level -= s.leakCoeff * s.leakCoeff * 50.0f * dt;
-}
+      s.level = clampf(s.level, 10.0f, 100.0f);
       
       float fluidHeight = (s.level / 100.0f) * s.diameter;
       s._pressurePa = AIR_PRESSURE + WATER_DENSITY * GRAVITY * fluidHeight;
-      s.pressure = s._pressurePa / 1000.0f; 
+      
+      s.pressure = s._pressurePa / 1000.0f;
     }
     
-    // DEGRADATION EFFECTS 
+    // ========== 6. DEGRADATION EFFECTS ==========
     if (s.degrading) {
-      //FRESH WATER PIPES
       if (s.type == FRESH_WATER) {
         if (s.leakCoeff > 0.0f) {
-          s.leakCoeff += (0.002f + (i % 10) * 0.0005f) * dt;
-          s.leakCoeff = min(1.0f, s.leakCoeff);
-          s.roughness += frand(0.0000005f, 0.000002f) * dt;
+            s.leakCoeff += 0.001f * dt;
+            s.leakCoeff = min(1.0f, s.leakCoeff);
+            s.roughness += 0.0000001f * dt;
         }
         
-        if (s.type == FRESH_WATER && s.blockageCoeff > 0.01f) {
-        float blockagePressureDrop = s.blockageCoeff * 300000.0f;  
-        s._pressurePa -= blockagePressureDrop;
-    
-} else if (s.type == SEWAGE && s.blockageCoeff > 0.01f) {
-    float blockagePressureDrop = s.blockageCoeff * 100000.0f;
-    s._pressurePa -= blockagePressureDrop;
-}
-      } 
-      //SEWAGE PIPES
-      else {
         if (s.blockageCoeff > 0.0f) {
-          s.blockageCoeff += (0.003f + (i % 10) * 0.0007f) * dt;
-          s.blockageCoeff = min(0.95f, s.blockageCoeff);
-          s.roughness += frand(0.000001f, 0.000003f) * dt;
+            s.blockageCoeff += 0.0005f * dt;
+            s.blockageCoeff = min(0.8f, s.blockageCoeff);
+            s.roughness += 0.0000003f * dt;
         }
-        if (s.leakCoeff > 0.0f) {
-          s.leakCoeff += (0.001f + (i % 10) * 0.0002f) * dt;
-          s.leakCoeff = min(0.6f, s.leakCoeff);  
-          s.roughness += frand(0.0000005f, 0.000002f) * dt;
+    } else { // SEWAGE
+        if (s.blockageCoeff > 0.0f) {
+            s.blockageCoeff += 0.001f * dt;
+            s.blockageCoeff = min(0.9f, s.blockageCoeff);
+            s.roughness += 0.0000005f * dt;
+        }
+        if (s.leakCoeff > 0.0f) { 
+            s.leakCoeff += 0.0004f * dt;
+            s.leakCoeff = min(0.6f, s.leakCoeff);
         }
       }
     }
-    s.pressure += frand(-0.03f, 0.03f);
-    s.level += frand(-0.3f, 0.3f);
-    s.temperature += frand(-0.1f, 0.1f);
-    s.pressure = max(0.1f, s.pressure);
+    
+    // ========== 7. SENSOR NOISE & CLAMPING ==========
+    // Add realistic sensor noise
+    float pressureNoise = frand(-0.08f, 0.08f);
+    float levelNoise = frand(-0.2f, 0.2f);
+    float tempNoise = frand(-0.08f, 0.08f);
+    
+    s.pressure += pressureNoise;
+    s.level += levelNoise;
+    s.temperature += tempNoise;
+    
+    // Clamp to physically possible values (AFTER adding noise)
+    s.pressure = max(50.0f, s.pressure);
+    s.pressure = min(s.pressure, 500.0f);
     s.level = clampf(s.level, 0.0f, 100.0f);
+    s.temperature = clampf(s.temperature, 5.0f, 35.0f);
     s.flowRate = max(0.0f, s.flowRate);
     
+    // Update internal pressure from clamped value
+    s._pressurePa = s.pressure * 1000.0f;
+    
+    // Yield occasionally to prevent watchdog issues
     if (i % 25 == 0) {
       yield();
     }
@@ -1095,7 +1193,7 @@ void reconnectMQTT() {
       // Subscribe to config topic
       //mqttClient.subscribe("pipes/config/init1"); //ESP_CHANGE
       //mqttClient.subscribe("pipes/config/init2");
-     mqttClient.subscribe("pipes/config/init3");
+      mqttClient.subscribe("pipes/config/init3");
 
       // Subscribe to maintenance topic
       //mqttClient.subscribe("pipes/maintenance/esp1"); //ESP_CHANGE

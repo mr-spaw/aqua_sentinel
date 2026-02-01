@@ -1,6 +1,6 @@
 set(_AMENT_PACKAGE_NAME "water_scada_sim")
 set(water_scada_sim_VERSION "0.1.0")
-set(water_scada_sim_MAINTAINER "Arka <arka@example.com>")
+set(water_scada_sim_MAINTAINER "Arka <arkababu2003@gmail.com>")
 set(water_scada_sim_BUILD_DEPENDS "rclcpp" "std_msgs")
 set(water_scada_sim_BUILDTOOL_DEPENDS "ament_cmake")
 set(water_scada_sim_BUILD_EXPORT_DEPENDS "rclcpp" "std_msgs")

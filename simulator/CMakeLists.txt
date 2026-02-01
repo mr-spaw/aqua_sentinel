@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(water_scada_sim LANGUAGES CXX)
 
-# ---------------- C++ Standard ----------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -36,11 +35,8 @@ target_link_libraries(sim
   ${JSONCPP_LIBRARIES}
   pthread
 )
-
-# 🔴 THIS LINE IS THE KEY
 ament_target_dependencies(sim
   rclcpp
   std_msgs
 )
-
 ament_package()

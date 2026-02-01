@@ -23,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'controller = controller.controller:main',  # Changed from controller_node to controller
+            'controller = controller.controller:main',
+            'rl_agent = controller.network_rl:ros2_main',  # Add RL agent executable
         ],
     },
 )

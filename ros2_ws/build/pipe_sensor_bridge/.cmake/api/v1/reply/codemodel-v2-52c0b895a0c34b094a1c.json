@@ -1,0 +1,88 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-72f340ff82d08965db34.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "pipe_sensor_bridge",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "init_config_publisher::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-init_config_publisher-db8f94bb34979dd3a078.json",
+					"name" : "init_config_publisher",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "mqtt_subscriber_bridge::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-mqtt_subscriber_bridge-5c84eda1f082b5bc3946.json",
+					"name" : "mqtt_subscriber_bridge",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pipe_sensor_bridge_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pipe_sensor_bridge_uninstall-ea9c7ab5c55b54c22ab9.json",
+					"name" : "pipe_sensor_bridge_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-15644a47e2d5d6319c19.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/arka/aqua_sentinel/ros2_ws/build/pipe_sensor_bridge",
+		"source" : "/home/arka/aqua_sentinel/ros2_ws/src/pipe_sensor_bridge"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}

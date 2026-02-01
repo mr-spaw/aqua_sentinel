@@ -2,13 +2,27 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>controller</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="arkababu2003@gmail.com">arka</maintainer>
-  <license>TODO: License declaration</license>
+  <version>0.0.1</version>
+  <description>Controller package for aqua sentinel</description>
+  <maintainer email="arkababu2003@gmai.com">Arka</maintainer>
+  <license>Apache License 2.0</license>
 
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  
+  <!-- Python dependencies -->
+  <exec_depend>python3-flask</exec_depend>
+  <exec_depend>python3-flask-cors</exec_depend>
+  <exec_depend>python3-requests</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-pandas</exec_depend>
+  <exec_depend>python3-scikit-learn</exec_depend>
+  <exec_depend>python3-torch</exec_depend>
+  <exec_depend>python3-stable-baselines3</exec_depend>
+  <exec_depend>python3-gymnasium</exec_depend>
+  <exec_depend>python3-sb3-contrib</exec_depend>
+  <exec_depend>python3-psutil</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

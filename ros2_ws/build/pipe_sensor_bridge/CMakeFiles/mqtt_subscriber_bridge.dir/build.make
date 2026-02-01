@@ -137,7 +137,7 @@ mqtt_subscriber_bridge: /opt/ros/humble/lib/libbuiltin_interfaces__rosidl_typesu
 mqtt_subscriber_bridge: /opt/ros/humble/lib/librosidl_typesupport_fastrtps_c.so
 mqtt_subscriber_bridge: /opt/ros/humble/lib/libbuiltin_interfaces__rosidl_typesupport_fastrtps_cpp.so
 mqtt_subscriber_bridge: /opt/ros/humble/lib/librosidl_typesupport_fastrtps_cpp.so
-mqtt_subscriber_bridge: /opt/ros/humble/lib/libfastcdr.so.1.0.24
+mqtt_subscriber_bridge: /opt/ros/humble/lib/libfastcdr.so.1.0.29
 mqtt_subscriber_bridge: /opt/ros/humble/lib/librmw.so
 mqtt_subscriber_bridge: /opt/ros/humble/lib/libbuiltin_interfaces__rosidl_typesupport_introspection_c.so
 mqtt_subscriber_bridge: /opt/ros/humble/lib/libbuiltin_interfaces__rosidl_typesupport_introspection_cpp.so
